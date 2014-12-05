@@ -39,4 +39,7 @@
 
     <!-- Udfps vendor code -->
     <integer name="config_udfpsVendorCode">0</integer>
+
+    <!-- Notification counter -->
+    <integer name="status_bar_notification_info_maxnum">999</integer>
 </resources>
