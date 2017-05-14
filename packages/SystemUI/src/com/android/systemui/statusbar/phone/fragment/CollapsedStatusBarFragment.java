@@ -185,6 +185,8 @@ public class CollapsedStatusBarFragment extends Fragment implements CommandQueue
 
     private boolean mShowVibrateIcon;
 
+    private View mLeftLogo;
+
     private final OngoingCallListener mOngoingCallListener = new OngoingCallListener() {
         @Override
         public void onOngoingCallStateChanged(boolean animate) {
@@ -420,6 +422,7 @@ public class CollapsedStatusBarFragment extends Fragment implements CommandQueue
         mClockView = mStatusBar.findViewById(R.id.clock);
         mCenterClockView = mStatusBar.findViewById(R.id.clock_center);
         mRightClockView = mStatusBar.findViewById(R.id.clock_right);
+        mLeftLogo = mStatusBar.findViewById(R.id.statusbar_logo);
         if (!StatusBarRootModernization.isEnabled()) {
             showEndSideContent(false);
             showClock(false);
@@ -957,11 +960,13 @@ public class CollapsedStatusBarFragment extends Fragment implements CommandQueue
 
     public void hideNotificationIconArea(boolean animate) {
         StatusBarRootModernization.assertInLegacyMode();
+        animateHide(mLeftLogo, animate);
         animateHide(mNotificationIconAreaInner, animate);
     }
 
     public void showNotificationIconArea(boolean animate) {
         StatusBarRootModernization.assertInLegacyMode();
+        animateShow(mLeftLogo, animate);
         animateShow(mNotificationIconAreaInner, animate);
     }
 
