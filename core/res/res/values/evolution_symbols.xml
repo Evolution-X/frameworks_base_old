@@ -37,4 +37,8 @@
 
     <!-- KeyboxImitationHooks -->
     <java-symbol type="array" name="config_certifiedKeybox" />
+
+    <!-- Device keyhandlers -->
+    <java-symbol type="array" name="config_deviceKeyHandlerLibs" />
+    <java-symbol type="array" name="config_deviceKeyHandlerClasses" />
 </resources>
