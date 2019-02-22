@@ -23,6 +23,7 @@ import android.annotation.NonNull;
 import android.annotation.Nullable;
 import android.compat.annotation.UnsupportedAppUsage;
 import android.util.ArrayMap;
+import android.util.Log;
 import android.util.Slog;
 
 import java.io.PrintWriter;
@@ -581,8 +582,8 @@ public class RemoteCallbackList<E extends IInterface> {
     private int beginBroadcastInternal() {
         synchronized (mInterfaces) {
             if (mBroadcastCount > 0) {
-                throw new IllegalStateException(
-                        "beginBroadcast() called while already in a broadcast");
+                Log.e(TAG, "beginBroadcast() called while already in a broadcast");
+                return 0;
             }
             
             final int n = mBroadcastCount = mInterfaces.size();
@@ -644,8 +645,8 @@ public class RemoteCallbackList<E extends IInterface> {
     public void finishBroadcast() {
         synchronized (mInterfaces) {
             if (mBroadcastCount < 0) {
-                throw new IllegalStateException(
-                        "finishBroadcast() called outside of a broadcast");
+                Log.e(TAG, "finishBroadcast() called outside of a broadcast");
+                return;
             }
 
             Object[] active = mActiveBroadcast;
