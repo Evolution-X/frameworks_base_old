@@ -80,6 +80,7 @@ public class AmbientDisplayConfiguration {
     public boolean enabled(int user) {
         return pulseOnNotificationEnabled(user)
                 || pulseOnLongPressEnabled(user)
+                || pulseOnCustomDozeEventEnabled(user)
                 || alwaysOnEnabled(user)
                 || wakeLockScreenGestureEnabled(user)
                 || wakeDisplayGestureEnabled(user)
@@ -100,6 +101,12 @@ public class AmbientDisplayConfiguration {
     public boolean pulseOnNotificationAvailable() {
         return mContext.getResources().getBoolean(R.bool.config_pulseOnNotificationsAvailable)
                 && ambientDisplayAvailable();
+    }
+
+    /** {@hide} */
+    private boolean pulseOnCustomDozeEventEnabled(int user) {
+        return (Settings.System.getIntForUser(mContext.getContentResolver(), "doze_trigger_doubletap", 0, user) != 0)
+                && pulseOnNotificationAvailable();
     }
 
     /** @hide */
