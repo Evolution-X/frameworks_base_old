@@ -217,4 +217,8 @@
     </string>
     <string name="config_batterymeterLandPowersavePathOneUI7" translatable="false">@string/config_batterymeterLandPerimeterPathOneUI7</string>
     <string name="config_batterymeterLandErrorPerimeterPathOneUI7" translatable="false">@string/config_batterymeterLandPerimeterPathOneUI7</string>
+
+    <!-- Defines the sysfs attribute path used by pocket bridge
+         to communicate pocket state to the pocket judge kernel driver. -->
+    <string name="config_pocketBridgeSysfsInpocket"></string>
 </resources>
