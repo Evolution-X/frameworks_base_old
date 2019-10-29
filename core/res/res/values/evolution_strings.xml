@@ -40,4 +40,7 @@
     <string name="notification_channel_poweroff_alarm">Power off alarm</string>
     <string name="poweroff_alarm_title">Power off alarm set</string>
     <string name="poweroff_alarm_body">An alarm was detected and the device will power on 2 minutes before it\'s due</string>
+
+    <!-- Pocket Lock -->
+    <string name="pocket_lock_message_long_press">Press and hold power button to unlock</string>
 </resources>
