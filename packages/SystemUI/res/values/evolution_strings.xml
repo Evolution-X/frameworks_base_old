@@ -22,4 +22,7 @@
 
     <!-- Text while recognizing face -->
     <string name="face_unlock_recognizing">Recognizing face...</string>
+
+    <!-- Statusbar Icons -->
+    <string name="status_bar_nfc">NFC</string>
 </resources>
