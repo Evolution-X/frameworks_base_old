@@ -385,7 +385,6 @@ public class NotificationMediaManager implements Dumpable {
                 callbacks.get(i).onPrimaryMetadataOrStateChanged(mMediaMetadata, state);
             }
             MediaSessionManager.Companion.get().onPlaybackStateChanged(state);
-        });
     }
 
     @Override
