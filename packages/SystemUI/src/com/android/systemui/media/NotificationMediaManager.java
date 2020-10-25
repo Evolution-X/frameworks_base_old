@@ -284,8 +284,9 @@ public class NotificationMediaManager implements Dumpable {
 
     private void updateMediaMetaData(MediaListener callback) {
         int playbackState = getMediaControllerPlaybackState(mMediaController);
-        mHandler.post(
-                () -> callback.onPrimaryMetadataOrStateChanged(mMediaMetadata, playbackState));
+        mHandler.post(() -> {
+            callback.onPrimaryMetadataOrStateChanged(mMediaMetadata, playbackState);
+        });
     }
 
     public void removeCallback(MediaListener callback) {
