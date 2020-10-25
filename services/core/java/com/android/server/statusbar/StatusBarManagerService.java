@@ -1014,6 +1014,16 @@ public class StatusBarManagerService extends IStatusBarService.Stub implements D
         public void passThroughShellCommand(String[] args, FileDescriptor fd) {
             StatusBarManagerService.this.passThroughShellCommand(args, fd);
         }
+
+        @Override
+        public void leftInLandscapeChanged(boolean isLeft) {
+            if (mBar != null) {
+                try {
+                    mBar.leftInLandscapeChanged(isLeft);
+                } catch (RemoteException ex) {
+                }
+            }
+        }
     };
 
     private final GlobalActionsProvider mGlobalActionsProvider = new GlobalActionsProvider() {
@@ -1610,6 +1620,23 @@ public class StatusBarManagerService extends IStatusBarService.Stub implements D
                     }
                 }
             });
+        }
+    }
+
+    /**
+     * Let systemui know screen pinning state change. This is independent of the
+     * showScreenPinningRequest() call as it does not reflect state
+     *
+     * @hide
+     */
+    @Override
+    public void screenPinningStateChanged(boolean enabled) {
+        enforceStatusBar();
+        if (mBar != null) {
+            try {
+                mBar.screenPinningStateChanged(enabled);
+            } catch (RemoteException ex) {
+            }
         }
     }
 
