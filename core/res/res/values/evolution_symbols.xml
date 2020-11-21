@@ -68,4 +68,10 @@
 
     <!-- Lock gesture -->
     <java-symbol type="string" name="gesture_locked_warning" />
+
+    <!-- Whether device has a physical display cutout -->
+    <java-symbol type="bool" name="config_physicalDisplayCutout" />
+
+    <!-- Whether device has a big physical display cutout -->
+    <java-symbol type="bool" name="config_physicalDisplayCutoutCentered" />
 </resources>
