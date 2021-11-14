@@ -276,4 +276,7 @@
          <item>com.android.contacts</item>
          <item>com.android.documentsui</item>
     </string-array>
+
+    <!-- Whether devices suports in-display fingerprint when screen is off -->
+    <bool name="config_supportScreenOffUdfps">false</bool>
 </resources>
