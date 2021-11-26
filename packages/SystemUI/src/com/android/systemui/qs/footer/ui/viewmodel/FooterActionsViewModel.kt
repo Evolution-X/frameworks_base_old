@@ -231,6 +231,15 @@ fun FooterActionsViewModel(
         footerActionsInteractor.showSettings(expandable)
     }
 
+    fun onSettingsButtonLongClicked(expandable: Expandable) {
+        if (falsingManager.isFalseTap(FalsingManager.LOW_PENALTY)) {
+            return
+        }
+
+        footerActionsInteractor.showCustomSettings(expandable)
+        return
+    }
+
     fun onPowerButtonClicked(expandable: Expandable) {
         if (falsingManager.isFalseTap(FalsingManager.LOW_PENALTY)) {
             return
@@ -271,7 +280,7 @@ fun FooterActionsViewModel(
     val userSwitcher =
         userSwitcherViewModel(qsThemedContext, footerActionsInteractor, ::onUserSwitcherClicked)
 
-    val settings = settingsButtonViewModel(qsThemedContext, ::onSettingsButtonClicked)
+    val settings = settingsButtonViewModel(qsThemedContext, ::onSettingsButtonClicked, ::onSettingsButtonLongClicked)
     val power =
         if (showPowerButton) {
             powerButtonViewModel(qsThemedContext, ::onPowerButtonClicked)
@@ -387,6 +396,7 @@ private fun userSwitcherContentDescription(
 fun settingsButtonViewModel(
     qsThemedContext: Context,
     onSettingsButtonClicked: (Expandable) -> Unit,
+    onSettingsButtonLongClicked: (Expandable) -> Unit,
 ): FooterActionsButtonViewModel {
     return FooterActionsButtonViewModel(
         id = R.id.settings_button_container,
@@ -397,6 +407,7 @@ fun settingsButtonViewModel(
         iconTint = Utils.getColorAttrDefaultColor(qsThemedContext, R.attr.onShadeInactiveVariant),
         backgroundColor = R.attr.shadeInactive,
         onSettingsButtonClicked,
+        onSettingsButtonLongClicked,
     )
 }
 
