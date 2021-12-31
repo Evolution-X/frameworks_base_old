@@ -113,6 +113,7 @@ import com.android.keyguard.KeyguardUpdateMonitor;
 import com.android.keyguard.KeyguardUpdateMonitorCallback;
 import com.android.keyguard.ViewMediatorCallback;
 import com.android.systemui.ActivityIntentHelper;
+import com.android.systemui.ArcaneIdleManager;
 import com.android.systemui.AutoReinflateContainer;
 import com.android.systemui.CoreStartable;
 import com.android.systemui.DejankUtils;
@@ -454,6 +455,9 @@ public class CentralSurfacesImpl implements CoreStartable, CentralSurfaces,
     /** Controller for the Shade. */
     private final ShadeSurface mShadeSurface;
     private final ShadeLogger mShadeLogger;
+
+   // Arcane Idle
+    private boolean isIdleManagerIstantiated = false;
 
     // settings
     private QSPanelController mQSPanelController;
@@ -2786,6 +2790,17 @@ public class CentralSurfacesImpl implements CoreStartable, CentralSurfaces,
             }
 
             DejankUtils.stopDetectingBlockingIpcs(tag);
+            if (Settings.System.getIntForUser(mContext.getContentResolver(),
+                                              Settings.System.ARCANE_IDLE_MANAGER, 1,
+                                              mLockscreenUserManager.getCurrentUserId()) == 1) {
+                if (!isIdleManagerIstantiated) {
+                    ArcaneIdleManager.initManager(mContext);
+                    isIdleManagerIstantiated = true;
+                    ArcaneIdleManager.executeManager();
+                } else {
+                    ArcaneIdleManager.executeManager();
+                }
+            }
         }
 
         @Override
@@ -2853,6 +2868,11 @@ public class CentralSurfacesImpl implements CoreStartable, CentralSurfaces,
                 }
             });
             DejankUtils.stopDetectingBlockingIpcs(tag);
+            if (Settings.System.getIntForUser(mContext.getContentResolver(),
+                                              Settings.System.ARCANE_IDLE_MANAGER, 1,
+                                              mLockscreenUserManager.getCurrentUserId()) == 1) {
+                ArcaneIdleManager.haltManager();
+            }
         }
 
         /**
