@@ -255,6 +255,9 @@ public class NotificationRowBinderImpl implements NotificationRowBinder {
         params.requireContentViews(FLAG_CONTENT_VIEW_EXPANDED);
         params.setUseMinimized(isMinimized);
         int redactionType = inflaterParams.getRedactionType();
+        if (redactionType == REDACTION_TYPE_NONE && entry.getSbn().getIsContentSecure()) {
+            redactionType = 1;
+        }
 
         params.setRedactionType(redactionType);
         if (redactionType != REDACTION_TYPE_NONE) {
