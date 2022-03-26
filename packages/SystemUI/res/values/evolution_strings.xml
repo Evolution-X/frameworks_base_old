@@ -62,4 +62,7 @@
     <string name="quick_settings_preferred_network_nr">5G / NR</string>
     <string name="quick_settings_preferred_network_3g">3G</string>
     <string name="quick_settings_preferred_network_unsupported">Unsupported</string>
+
+    <!-- Statusbar Icons -->
+    <string name="status_bar_data_saver">Data saver</string>
 </resources>
