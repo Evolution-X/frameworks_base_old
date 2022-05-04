@@ -128,4 +128,7 @@
     <string name="status_bar_hd_calling">HD calling (VoLTE/VoNR)</string>
     <!-- Name of the VoWiFi status bar icon. -->
     <string name="status_bar_vowifi">Wi-Fi calling (VoWiFi)</string>
+
+    <!-- Autobrightness tile -->
+    <string name="quick_settings_autobrightness_label">Auto brightness</string>
 </resources>
