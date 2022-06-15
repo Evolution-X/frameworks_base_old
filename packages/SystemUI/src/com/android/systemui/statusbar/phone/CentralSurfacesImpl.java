@@ -290,6 +290,8 @@ public class CentralSurfacesImpl implements CoreStartable, CentralSurfaces,
 
     private static final String STATUS_BAR_BRIGHTNESS_CONTROL =
             "system:" + Settings.System.STATUS_BAR_BRIGHTNESS_CONTROL;
+    private static final String QS_TRANSPARENCY =
+            "system:" + Settings.System.QS_TRANSPARENCY;
     private static final String PULSE_ON_NEW_TRACKS =
             Settings.Secure.PULSE_ON_NEW_TRACKS;
 
@@ -978,6 +980,7 @@ public class CentralSurfacesImpl implements CoreStartable, CentralSurfaces,
         createAndAddWindows(result);
 
         mTunerService.addTunable(this, STATUS_BAR_BRIGHTNESS_CONTROL);
+        mTunerService.addTunable(this, QS_TRANSPARENCY);
         mTunerService.addTunable(this, PULSE_ON_NEW_TRACKS);
 
         // Set up the initial notification state. This needs to happen before CommandQueue.disable()
@@ -3122,6 +3125,10 @@ public class CentralSurfacesImpl implements CoreStartable, CentralSurfaces,
                         TunerService.parseIntegerSwitch(newValue, false);
                 if (mPhoneStatusBarViewController != null)
                     mPhoneStatusBarViewController.setBrightnessControlEnabled(mBrightnessControl);
+                break;
+            case QS_TRANSPARENCY:
+                mScrimController.setCustomScrimAlpha(
+                        TunerService.parseInteger(newValue, 100));
                 break;
             case PULSE_ON_NEW_TRACKS:
                 boolean showPulseOnNewTracks =
