@@ -136,4 +136,9 @@
     <string name="screenrecord_delete_label">Delete</string>
     <!-- A toast message shown after successfully deleting a screen recording [CHAR LIMIT=NONE] -->
     <string name="screenrecord_delete_description">Screen recording deleted</string>
+
+    <!-- VPN tethering QS tile -->
+    <string name="vpn_tethering_label">VPN tethering</string>
+    <string name="vpn_tethering_changed_off">VPN tethering turned off.</string>
+    <string name="vpn_tethering_changed_on">VPN tethering turned on.</string>
 </resources>
