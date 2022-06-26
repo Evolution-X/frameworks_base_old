@@ -30,6 +30,7 @@ import android.graphics.Rect
 import android.media.AudioManager
 import android.net.Uri
 import android.os.Process
+import android.os.RemoteException
 import android.os.UserHandle
 import android.os.UserManager
 import android.os.VibrationEffect
@@ -46,6 +47,7 @@ import android.widget.Toast
 import android.window.WindowContext
 import androidx.core.animation.doOnEnd
 import com.android.internal.logging.UiEventLogger
+import com.android.internal.statusbar.IStatusBarService
 import com.android.settingslib.applications.InterestingConfigChanges
 import com.android.systemui.broadcast.BroadcastDispatcher
 import com.android.systemui.broadcast.BroadcastSender
@@ -84,6 +86,7 @@ internal constructor(
     private val imageCapture: ImageCapture,
     private val scrollCaptureExecutor: ScrollCaptureExecutor,
     private val screenshotHandler: TimeoutHandler,
+    private val statusBarService: IStatusBarService,
     private val broadcastSender: BroadcastSender,
     private val broadcastDispatcher: BroadcastDispatcher,
     private val packageManager: PackageManager,
@@ -455,6 +458,12 @@ internal constructor(
             {
                 val intent = createLongScreenshotIntent(owner, context)
                 context.startActivity(intent)
+
+                try {
+                    statusBarService.collapsePanels()
+                } catch (e: RemoteException) {
+                    Log.e(TAG, "Error during collapsing panels", e)
+                }
             },
             { viewProxy.restoreNonScrollingUi() },
             { transitionDestination: Rect, onTransitionEnd: Runnable, longScreenshot: LongScreenshot
