@@ -166,7 +166,8 @@ public class DividerRoundedCorner extends View {
 
             final RoundedCorner roundedCorner = getDisplay().getRoundedCorner(cornerPosition);
             if (mIsSplitScreen) {
-                mRadius = roundedCorner == null ? 0 : roundedCorner.getRadius();
+                mRadius = roundedCorner == null ? 0 :
+                        getResources().getDimensionPixelSize(R.dimen.split_divider_corner_size);
             } else {
                 mRadius = mContext
                         .getResources()
@@ -174,7 +175,6 @@ public class DividerRoundedCorner extends View {
                                 com.android.wm.shell.shared.R.dimen
                                         .desktop_windowing_freeform_rounded_corner_radius);
             }
-
 
             // Starts with a filled square, and then subtracting out a circle from the appropriate
             // corner.
