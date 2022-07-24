@@ -32,6 +32,7 @@ phony {
         "NavigationBarModeGesturalOverlay",
         "TransparentNavigationBarOverlay",
         "NotesRoleEnabledOverlay",
+        "NotchBarKillerOverlay",
         "preinstalled-packages-platform-overlays.xml",
     ],
 }
