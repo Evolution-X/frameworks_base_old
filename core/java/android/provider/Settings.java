@@ -7199,6 +7199,12 @@ public final class Settings {
         }
 
         /**
+         * Enable/Disable fingerprint lockout
+         * @hide
+         */
+        public static final String FINGERPRINT_LOCKOUT = "fingerprint_lockout";
+
+        /**
          * When to use Wi-Fi calling
          *
          * @see android.telephony.TelephonyManager.WifiCallingChoices
