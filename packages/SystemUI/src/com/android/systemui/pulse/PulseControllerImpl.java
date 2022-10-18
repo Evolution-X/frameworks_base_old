@@ -60,9 +60,9 @@ import com.android.systemui.dagger.qualifiers.UiBackground;
 import com.android.systemui.navigationbar.views.NavigationBarFrame;
 import com.android.systemui.statusbar.CommandQueue;
 import com.android.systemui.statusbar.CommandQueue.Callbacks;
-import com.android.systemui.statusbar.NotificationMediaManager;
 import com.android.systemui.statusbar.phone.CentralSurfacesImpl;
 import com.android.systemui.statusbar.policy.ConfigurationController;
+import com.android.systemui.media.NotificationMediaManager;
 
 import java.util.concurrent.Executor;
 
@@ -511,6 +511,11 @@ public class PulseControllerImpl implements
             mIsMediaPlaying = isPlaying;
             doLinkage();
         }
+    }
+
+    @Override
+    public void setMediaNotificationColor(int color) {
+        mColorController.setMediaNotificationColor(color);
     }
 
     @Override

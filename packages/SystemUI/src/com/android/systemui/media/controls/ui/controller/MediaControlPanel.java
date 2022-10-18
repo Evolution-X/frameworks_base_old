@@ -89,6 +89,7 @@ import com.android.systemui.bluetooth.BroadcastDialogController;
 import com.android.systemui.broadcast.BroadcastSender;
 import com.android.systemui.communal.domain.interactor.CommunalSceneInteractor;
 import com.android.systemui.communal.widgets.CommunalTransitionAnimatorController;
+import com.android.systemui.colorextraction.SysuiColorExtractor;
 import com.android.systemui.dagger.qualifiers.Background;
 import com.android.systemui.dagger.qualifiers.Main;
 import com.android.systemui.media.controls.domain.pipeline.MediaDataManager;
@@ -240,6 +241,8 @@ public class MediaControlPanel {
     private boolean mWasPlaying = false;
     private boolean mButtonClicked = false;
 
+    private final SysuiColorExtractor mSysuiColorExtractor;
+
     private final PaintDrawCallback mNoiseDrawCallback =
             new PaintDrawCallback() {
                 @Override
@@ -290,7 +293,8 @@ public class MediaControlPanel {
             CommunalSceneInteractor communalSceneInteractor,
             NotificationLockscreenUserManager lockscreenUserManager,
             BroadcastDialogController broadcastDialogController,
-            GlobalSettings globalSettings
+            GlobalSettings globalSettings,
+            SysuiColorExtractor colorExtractor
     ) {
         mContext = context;
         mBackgroundExecutor = backgroundExecutor;
@@ -309,6 +313,7 @@ public class MediaControlPanel {
         mLockscreenUserManager = lockscreenUserManager;
         mBroadcastDialogController = broadcastDialogController;
         mCommunalSceneInteractor = communalSceneInteractor;
+        mSysuiColorExtractor = colorExtractor;
 
         mSeekBarViewModel.setLogSeek(() -> {
             if (mPackageName != null && mInstanceId != null) {
@@ -926,6 +931,7 @@ public class MediaControlPanel {
                         appIconView.setImageResource(R.drawable.ic_music_note);
                     }
                 }
+                mSysuiColorExtractor.setMediaBackgroundColor(mColorSchemeTransition.getAppIconColor());
                 Trace.endAsyncSection(traceName, traceCookie);
             });
         });
