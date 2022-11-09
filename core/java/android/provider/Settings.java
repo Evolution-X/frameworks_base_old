@@ -7281,6 +7281,12 @@ public final class Settings {
         public static final String MAX_VISIBLE_NOTIFICATION_ICONS = "max_visible_notification_icons";
 
         /**
+         * Whether to show daily data usage in the QS footer.
+         * @hide
+         */
+        public static final String QS_SHOW_DATA_USAGE = "qs_show_data_usage";
+
+        /**
          * Keys we no longer back up under the current schema, but want to continue to
          * process when restoring historical backup datasets.
          *
