@@ -42,4 +42,7 @@
 
     <!-- Show 5G toggle in internet dialog when available -->
     <bool name="config_supportsVONR">true</bool>
+
+    <!-- Whether to disable Smart Pixels on UDFPS -->
+    <bool name="config_disableSmartPixelsOnUDFPS">false</bool>
 </resources>
