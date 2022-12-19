@@ -37,6 +37,7 @@ import com.android.systemui.qs.tiles.PreferredNetworkTile
 import com.android.systemui.qs.tiles.ProfilesTile
 import com.android.systemui.qs.tiles.ReadingModeTile
 import com.android.systemui.qs.tiles.RefreshRateTile
+import com.android.systemui.qs.tiles.ScreenshotTile
 import com.android.systemui.qs.tiles.SoundTile
 import com.android.systemui.qs.tiles.SyncTile
 import com.android.systemui.qs.tiles.UsbTetherTile
@@ -139,6 +140,12 @@ interface LineageModule {
     @IntoMap
     @StringKey(RefreshRateTile.TILE_SPEC)
     fun bindRefreshRateTile(refreshRateTile: RefreshRateTile): QSTileImpl<*>
+
+    /** Inject ScreenshotTile into tileMap in QSModule */
+    @Binds
+    @IntoMap
+    @StringKey(ScreenshotTile.TILE_SPEC)
+    fun bindScreenshotTile(screenshotTile: ScreenshotTile): QSTileImpl<*>
 
     /** Inject SoundTile into tileMap in QSModule */
     @Binds
@@ -323,6 +330,21 @@ interface LineageModule {
                 uiConfig = QSTileUIConfig.Resource(
                     iconRes = R.drawable.ic_qs_compass,
                     labelRes = R.string.quick_settings_compass_label
+                ),
+                instanceId = uiEventLogger.getNewInstanceId(),
+                category = TileCategory.UTILITIES
+            )
+        }
+
+        @Provides
+        @IntoMap
+        @StringKey(ScreenshotTile.TILE_SPEC)
+        fun provideScreenshotTile(uiEventLogger: QsEventLogger): QSTileConfig {
+            return QSTileConfig(
+                tileSpec = TileSpec.create(ScreenshotTile.TILE_SPEC),
+                uiConfig = QSTileUIConfig.Resource(
+                    iconRes = com.android.internal.R.drawable.ic_screenshot,
+                    labelRes = com.android.internal.R.string.global_action_screenshot
                 ),
                 instanceId = uiEventLogger.getNewInstanceId(),
                 category = TileCategory.UTILITIES
