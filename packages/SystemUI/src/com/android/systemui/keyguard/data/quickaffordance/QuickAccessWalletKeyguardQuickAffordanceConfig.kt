@@ -79,10 +79,6 @@ constructor(
                         }
 
                         override fun onWalletCardRetrievalError(error: GetWalletCardsError) {
-                            Log.e(
-                                TAG,
-                                "Wallet card retrieval error, message: \"${error?.message}\""
-                            )
                             trySendWithFailureLogging(
                                 null,
                                 TAG,
