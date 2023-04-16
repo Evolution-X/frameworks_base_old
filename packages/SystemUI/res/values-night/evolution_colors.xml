@@ -4,5 +4,6 @@
      SPDX-License-Identifier: Apache-2.0
 -->
 <resources>
-
+    <!-- Sfps arrow color -->
+    <color name="sfps_chevron_fill">@color/material_dynamic_secondary20</color>
 </resources>
