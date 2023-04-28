@@ -1352,7 +1352,6 @@ public class OomAdjuster {
         final boolean doKillExcessiveProcesses = shouldKillExcessiveProcesses(now);
         if (!doKillExcessiveProcesses) {
             if (mNextNoKillDebugMessageTime < now) {
-                Slog.d(TAG, "Not killing cached processes"); // STOPSHIP Remove it b/222365734
                 mNextNoKillDebugMessageTime = now + 5000; // Every 5 seconds
             }
         }
