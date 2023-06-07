@@ -309,5 +309,7 @@ public class SecureSettings {
         Settings.Secure.SELECTED_SPELL_CHECKER_SUBTYPE,
         // Evolution X additions
         Settings.Secure.VPN_ENFORCE_DNS,
+        Settings.Secure.EXTRA_DIM_AUTO_MODE,
+        Settings.Secure.EXTRA_DIM_AUTO_TIME,
     };
 }
