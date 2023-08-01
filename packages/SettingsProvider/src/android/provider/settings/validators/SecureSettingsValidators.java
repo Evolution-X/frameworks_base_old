@@ -509,5 +509,8 @@ public class SecureSettingsValidators {
         VALIDATORS.put(Secure.EXTRA_DIM_AUTO_MODE, new DiscreteValueValidator(new String[] {"0", "1", "2", "3", "4"}));
         VALIDATORS.put(Secure.EXTRA_DIM_AUTO_TIME, TIME_RANGE_VALIDATOR);
         VALIDATORS.put(Secure.HIDE_APPLIST, ANY_STRING_VALIDATOR);
+        VALIDATORS.put(Secure.DOZE_DOUBLE_TAP_GESTURE_VIBRATE, BOOLEAN_VALIDATOR);
+        VALIDATORS.put(Secure.DOZE_TAP_GESTURE_VIBRATE, BOOLEAN_VALIDATOR);
+        VALIDATORS.put(Secure.DOZE_PICK_UP_GESTURE_VIBRATE, BOOLEAN_VALIDATOR);
     }
 }
