@@ -34,4 +34,8 @@
 
     <!-- Whitelist of package names to bypass broadcast reciever validation -->
     <java-symbol type="array" name="config_broadcaseReceiverValidationBypassPackages"/>
+
+    <!-- Define device configs on boot -->
+    <java-symbol type="array" name="global_device_configs_override" />
+    <java-symbol type="array" name="device_configs_override" />
 </resources>
