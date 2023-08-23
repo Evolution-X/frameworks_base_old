@@ -119,6 +119,7 @@ open class SeekBarObserver(private val holder: MediaViewHolder) :
         holder.seekBar.isEnabled = data.seekAvailable
         progressDrawable?.animate =
             data.playing && !data.scrubbing && animationEnabled && data.listening
+            && data.enableSquiggle
         progressDrawable?.transitionEnabled = !data.seekAvailable
 
         if (holder.seekBar.maxHeight != seekBarEnabledMaxHeight) {
