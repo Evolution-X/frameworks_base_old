@@ -1935,7 +1935,7 @@ public class StatsPullAtomService extends SystemService {
 
                         @Override
                         public void onBluetoothActivityEnergyInfoError(int errorCode) {
-                            Slog.w(TAG, "error reading Bluetooth stats: " + errorCode);
+                            //Slog.w(TAG, "error reading Bluetooth stats: " + errorCode);
                             Bundle bundle = new Bundle();
                             bundle.putParcelable(
                                     BatteryStats.RESULT_RECEIVER_CONTROLLER_KEY, null);
@@ -2364,7 +2364,7 @@ public class StatsPullAtomService extends SystemService {
 
                         @Override
                         public void onError(TelephonyManager.ModemActivityInfoException e) {
-                            Slog.w(TAG, "error reading modem stats:" + e);
+                            //Slog.w(TAG, "error reading modem stats:" + e);
                             modemFuture.complete(null);
                         }
                     });
