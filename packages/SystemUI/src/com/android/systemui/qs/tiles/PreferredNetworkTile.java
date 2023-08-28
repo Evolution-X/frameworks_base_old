@@ -80,7 +80,7 @@ public class PreferredNetworkTile extends QSTileImpl<State> {
 
     @Override
     public boolean isAvailable() {
-        return true;
+        return mTelephonyManager.getPhoneType() != TelephonyManager.PHONE_TYPE_NONE;
     }
 
     @Override
