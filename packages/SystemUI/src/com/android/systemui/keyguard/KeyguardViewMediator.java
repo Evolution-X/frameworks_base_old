@@ -3879,7 +3879,11 @@ public class KeyguardViewMediator implements CoreStartable,
         Trace.beginSection("KeyguardViewMediator#handleMotifyStartedWakingUp");
         synchronized (KeyguardViewMediator.this) {
             if (DEBUG) Log.d(TAG, "handleNotifyWakingUp");
-            mKeyguardViewControllerLazy.get().onStartedWakingUp();
+            try {
+                mKeyguardViewControllerLazy.get().onStartedWakingUp();
+            } catch(Throwable t) {
+                android.util.Log.e("PHH", "handleNotifyStartedWakingUp crashed bip", t);
+            }
         }
         Trace.endSection();
     }
