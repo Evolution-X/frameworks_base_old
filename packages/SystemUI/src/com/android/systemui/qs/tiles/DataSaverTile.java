@@ -44,11 +44,12 @@ import com.android.systemui.res.R;
 import com.android.systemui.shade.domain.interactor.ShadeDialogContextInteractor;
 import com.android.systemui.statusbar.phone.SystemUIDialog;
 import com.android.systemui.statusbar.policy.DataSaverController;
+import com.android.systemui.statusbar.policy.KeyguardStateController;
 
 import javax.inject.Inject;
 
-public class DataSaverTile extends QSTileImpl<BooleanState> implements
-        DataSaverController.Listener {
+public class DataSaverTile extends SecureQSTile<BooleanState> implements
+        DataSaverController.Listener{
 
     public static final String TILE_SPEC = "saver";
 
@@ -73,10 +74,11 @@ public class DataSaverTile extends QSTileImpl<BooleanState> implements
             DataSaverController dataSaverController,
             DialogTransitionAnimator dialogTransitionAnimator,
             SystemUIDialog.Factory systemUIDialogFactory,
-            ShadeDialogContextInteractor shadeDialogContextInteractor
+            ShadeDialogContextInteractor shadeDialogContextInteractor,
+            KeyguardStateController keyguardStateController
     ) {
         super(host, uiEventLogger, backgroundLooper, mainHandler, falsingManager, metricsLogger,
-                statusBarStateController, activityStarter, qsLogger);
+                statusBarStateController, activityStarter, qsLogger, keyguardStateController);
         mDataSaverController = dataSaverController;
         mDialogTransitionAnimator = dialogTransitionAnimator;
         mSystemUIDialogFactory = systemUIDialogFactory;
@@ -95,7 +97,11 @@ public class DataSaverTile extends QSTileImpl<BooleanState> implements
     }
 
     @Override
-    protected void handleClick(@Nullable Expandable expandable) {
+    protected void handleClick(@Nullable Expandable expandable, boolean keyguardShowing) {
+        if (checkKeyguard(expandable, keyguardShowing)) {
+            return;
+        }
+
         if (mState.value
                 || Prefs.getBoolean(mContext, Prefs.Key.QS_DATA_SAVER_DIALOG_SHOWN, false)) {
             // Do it right away.
