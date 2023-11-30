@@ -131,4 +131,7 @@
     <string name="usb_use_tethering">USB tethering</string>
     <string name="usb_use_MIDI">MIDI</string>
     <string name="usb_use">Use USB for</string>
+
+    <!-- Text while recognizing face -->
+    <string name="face_unlock_recognizing">Recognizing face...</string>
 </resources>
