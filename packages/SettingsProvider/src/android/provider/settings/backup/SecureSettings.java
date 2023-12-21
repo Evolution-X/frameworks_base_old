@@ -289,5 +289,7 @@ public class SecureSettings {
         Settings.Secure.MANDATORY_BIOMETRICS_REQUIREMENTS_SATISFIED,
         Settings.Secure.ADVANCED_PROTECTION_MODE,
         Settings.Secure.ACCESSIBILITY_KEY_GESTURE_TARGETS,
+        // Evolution X additions
+        Settings.Secure.VPN_ENFORCE_DNS,
     };
 }
