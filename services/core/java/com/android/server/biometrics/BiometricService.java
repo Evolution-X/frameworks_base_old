@@ -549,10 +549,14 @@ public class BiometricService extends SystemService {
         }
 
         void notifyEnabledOnKeyguardCallbacks(int userId, int modality) {
-            List<EnabledOnKeyguardCallback> callbacks = mCallbacks;
+            EnabledOnKeyguardCallback[] callbacks = mCallbacks.toArray(new EnabledOnKeyguardCallback[0]);
             final boolean enabled = getEnabledOnKeyguard(userId, modality);
-            for (int i = 0; i < callbacks.size(); i++) {
-                callbacks.get(i).notify(enabled, userId, modality);
+            for (var cb : callbacks) {
+                if (cb == null) {
+                    Slog.d(TAG, "null callback in notifyEnabledOnKeyguardCallbacks", new Throwable());
+                    continue;
+                }
+                cb.notify(enabled, userId, modality);
             }
         }
 
