@@ -6,4 +6,7 @@
 <resources>
     <!-- Face unlock icon -->
     <dimen name="face_unlock_icon_margin_top">6dp</dimen>
+
+    <!-- HD calling icon -->
+    <dimen name="signal_icon_viewport_size">24dp</dimen>
 </resources>
