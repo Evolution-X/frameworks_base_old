@@ -73,4 +73,7 @@
     <dimen name="status_bar_battery_icon_width_landscape_ios16">24.0dip</dimen>
     <dimen name="status_bar_battery_icon_width_landscape_origami">20.0dip</dimen>
     <dimen name="status_bar_battery_icon_width_landscape_oneui7">24.0dip</dimen>
+
+    <!-- HD calling icon -->
+    <dimen name="signal_icon_viewport_size">24dp</dimen>
 </resources>
