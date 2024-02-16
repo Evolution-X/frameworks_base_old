@@ -639,7 +639,7 @@ public class FrameTracker implements HardwareRendererObserver.OnFrameMetricsAvai
                 // to ignore it for now.
                 if (mObserver != null && !info.hwuiCallbackFired) {
                     markEvent("FT#MissedHWUICallback", info.frameVsyncId);
-                    Log.w(TAG, "Missing HWUI jank callback for vsyncId: " + info.frameVsyncId
+                    Log.v(TAG, "Missing HWUI jank callback for vsyncId: " + info.frameVsyncId
                             + ", CUJ=" + name);
                 }
             }
@@ -647,7 +647,7 @@ public class FrameTracker implements HardwareRendererObserver.OnFrameMetricsAvai
                 maxFrameTimeNanos = Math.max(info.totalDurationNanos, maxFrameTimeNanos);
                 if (!info.surfaceControlCallbackFired) {
                     markEvent("FT#MissedSFCallback", info.frameVsyncId);
-                    Log.w(TAG, "Missing SF jank callback for vsyncId: " + info.frameVsyncId
+                    Log.v(TAG, "Missing SF jank callback for vsyncId: " + info.frameVsyncId
                             + ", CUJ=" + name);
                 }
             }
