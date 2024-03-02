@@ -16,6 +16,7 @@
 
 package com.android.settingslib.spaprivileged.template.app
 
+import android.content.Context
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageInfo
 import android.text.BidiFormatter
@@ -45,6 +46,8 @@ import com.android.settingslib.spa.widget.ui.SettingsBody
 import com.android.settingslib.spa.widget.ui.SettingsTitle
 import com.android.settingslib.spaprivileged.R
 import com.android.settingslib.spaprivileged.model.app.rememberAppRepository
+import java.text.DateFormat
+import java.util.Date
 
 class AppInfoProvider(private val packageInfo: PackageInfo) {
     @Composable
@@ -122,12 +125,7 @@ class AppInfoProvider(private val packageInfo: PackageInfo) {
         val context = LocalContext.current
         val footer =
             remember(packageInfo) {
-                val list = mutableListOf<String>()
-                packageInfo.versionNameBidiWrapped?.let {
-                    list += context.getString(R.string.version_text, it)
-                }
-                list += packageInfo.packageName
-                list.joinToString(separator = System.lineSeparator())
+                getFooterText(context)
             }
         if (footer.isBlank()) return
         if (!isSpaExpressiveEnabled) HorizontalDivider()
@@ -144,6 +142,56 @@ class AppInfoProvider(private val packageInfo: PackageInfo) {
         /** Wrapped the version name, so its directionality still keep same when RTL. */
         val PackageInfo.versionNameBidiWrapped: String?
             get() = BidiFormatter.getInstance().unicodeWrap(versionName)
+    }
+
+    private fun getFooterText(ctx: Context): String {
+        val pi = packageInfo
+
+        val dateFormat = android.text.format.DateFormat.getMediumDateFormat(ctx)
+        val timeFormat = android.text.format.DateFormat.getTimeFormat(ctx)
+
+        fun formatDate(unixTs: Long, dateFormat: DateFormat, timeFormat: DateFormat): String {
+            val d = Date(unixTs)
+            return dateFormat.format(d) + "; " + timeFormat.format(d)
+        }
+
+        val appInfo = pi.applicationInfo
+
+        val lines = mutableListOf<String>()
+        pi.versionNameBidiWrapped?.let {
+            lines.add(ctx.getString(R.string.version_text, it))
+            lines.add("")
+        }
+        lines.add(pi.packageName)
+        lines.add("versionCode ${pi.getLongVersionCode()}")
+        lines.add("")
+        if (appInfo != null) {
+            lines.add("targetSdk ${appInfo.targetSdkVersion}")
+            lines.add("minSdk ${appInfo.minSdkVersion}")
+        }
+
+        // some system apps report being installed in January 2009, skip showing install time for them
+        val minTime = 1_240_000_000_000 // April 2009
+
+        var addedBlankLineBeforeTime = false
+
+        if (pi.firstInstallTime > minTime) {
+            lines.add("")
+            addedBlankLineBeforeTime = true
+            val s = formatDate(pi.firstInstallTime, dateFormat, timeFormat)
+            lines.add(ctx.getString(R.string.app_info_install_time, s))
+        }
+
+        if (pi.lastUpdateTime != pi.firstInstallTime) {
+            if (!addedBlankLineBeforeTime) {
+                lines.add("")
+                addedBlankLineBeforeTime = true
+            }
+            val s = formatDate(pi.lastUpdateTime, dateFormat, timeFormat)
+            lines.add(ctx.getString(R.string.app_info_update_time, s))
+        }
+
+        return lines.joinToString(separator = System.lineSeparator())
     }
 }
 
