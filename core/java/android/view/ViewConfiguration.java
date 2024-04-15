@@ -396,6 +396,7 @@ public class ViewConfiguration {
     @UnsupportedAppUsage
     static final SparseArray<ViewConfiguration> sConfigurations =
             new SparseArray<ViewConfiguration>(2);
+    static final Object mConfigurationLock = new Object();
 
     /**
      * @deprecated Use {@link android.view.ViewConfiguration#get(android.content.Context)} instead.
@@ -594,15 +595,17 @@ public class ViewConfiguration {
     public static ViewConfiguration get(@NonNull @UiContext Context context) {
         StrictMode.assertConfigurationContext(context, "ViewConfiguration");
 
-        final int density = getDisplayDensity(context);
+        synchronized(mConfigurationLock) {
+            final int density = getDisplayDensity(context);
 
-        ViewConfiguration configuration = sConfigurations.get(density);
-        if (configuration == null) {
-            configuration = new ViewConfiguration(context);
-            sConfigurations.put(density, configuration);
+            ViewConfiguration configuration = sConfigurations.get(density);
+            if (configuration == null) {
+                configuration = new ViewConfiguration(context);
+                sConfigurations.put(density, configuration);
+            }
+
+            return configuration;
         }
-
-        return configuration;
     }
 
     /**
@@ -614,7 +617,9 @@ public class ViewConfiguration {
      */
     @VisibleForTesting
     public static void resetCacheForTesting() {
-        sConfigurations.clear();
+        synchronized(mConfigurationLock) {
+            sConfigurations.clear();
+        }
         sResourceCache = new ResourceCache();
     }
 
@@ -624,8 +629,10 @@ public class ViewConfiguration {
      * @hide
      */
     @VisibleForTesting
-    public static void setInstanceForTesting(Context context, ViewConfiguration instance) {
-        sConfigurations.put(getDisplayDensity(context), instance);
+    public static synchronized void setInstanceForTesting(Context context, ViewConfiguration instance) {
+        synchronized(mConfigurationLock) {
+            sConfigurations.put(getDisplayDensity(context), instance);
+        }
     }
 
     /**
