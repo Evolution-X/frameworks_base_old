@@ -374,4 +374,5 @@
          devices. -->
     <allow-in-power-save package="com.android.devicelockcontroller" />
     <allow-in-data-usage-save package="com.android.devicelockcontroller" />
+    <allow-in-power-save package="com.google.android.gms"/>
 </permissions>
