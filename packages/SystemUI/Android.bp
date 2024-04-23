@@ -549,7 +549,7 @@ android_library {
     additional_manifests: ["LineageManifest.xml"],
 
     javacflags: [
-        "-Adagger.fastInit=enabled",
+        // "-Adagger.fastInit=enabled",
         "-Adagger.explicitBindingConflictsWithInject=ERROR",
         "-Adagger.strictMultibindingValidation=enabled",
         "-Adagger.useBindingGraphFix=ENABLED",
