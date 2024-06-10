@@ -112,6 +112,7 @@ import android.os.SystemClock;
 import android.os.UserHandle;
 import android.os.UserManager;
 import android.os.storage.StorageManager;
+import android.provider.Settings;
 import android.service.wallpaper.IWallpaperConnection;
 import android.service.wallpaper.IWallpaperEngine;
 import android.service.wallpaper.IWallpaperService;
@@ -3081,6 +3082,8 @@ public class WallpaperManagerService extends IWallpaperManager.Stub
                 WallpaperData wallpaper = mWallpaperMap.get(userId);
                 WallpaperData lockWallpaper = mLockWallpaperMap.get(userId);
 
+                final boolean isDimBlocked = checkIsDimBlockedByUser();
+
                 // remove gone UIDs from the map
                 boolean arrayChanged = false;
                 final int uidCount = wallpaper.mUidToDimAmount.size();
@@ -3095,13 +3098,13 @@ public class WallpaperManagerService extends IWallpaperManager.Stub
                     arrayChanged = true;
                 }
 
-                if (dimAmount == 0.0f) {
+                if (dimAmount == 0.0f || isDimBlocked) {
                     wallpaper.mUidToDimAmount.remove(uid);
                 } else {
                     wallpaper.mUidToDimAmount.put(uid, dimAmount);
                 }
 
-                float maxDimAmount = getHighestDimAmountFromMap(wallpaper.mUidToDimAmount);
+                float maxDimAmount = isDimBlocked ? 0 : getHighestDimAmountFromMap(wallpaper.mUidToDimAmount);
                 if (wallpaper.mWallpaperDimAmount == maxDimAmount) return;
                 wallpaper.mWallpaperDimAmount = maxDimAmount;
                 // Also set the dim amount to the lock screen wallpaper if the lock and home screen
@@ -3172,6 +3175,11 @@ public class WallpaperManagerService extends IWallpaperManager.Stub
             maxDimAmount = Math.max(maxDimAmount, uidToDimAmountMap.valueAt(i));
         }
         return maxDimAmount;
+    }
+
+    private boolean checkIsDimBlockedByUser() {
+        return Settings.System.getInt(mContext.getContentResolver(),
+                Settings.System.BLOCK_WALLPAPER_DIMMING, 0) == 1;
     }
 
     @Override
