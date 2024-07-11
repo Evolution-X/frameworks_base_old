@@ -2957,18 +2957,22 @@ public class KeyguardViewMediator implements CoreStartable, Dumpable,
             userActivity();
             mUpdateMonitor.setKeyguardGoingAway(false);
             mKeyguardViewControllerLazy.get().setKeyguardGoingAwayState(false);
-            final int oldMask = StrictMode.getThreadPolicyMask();
-            StrictMode.setThreadPolicyMask(0);
-            System.gc();
-            System.runFinalization();
-            System.gc();
-            StrictMode.setThreadPolicyMask(oldMask);
             if (mShowKeyguardWakeLock != null)
                 mShowKeyguardWakeLock.release();
         }
         mKeyguardDisplayManager.show();
 
         scheduleNonStrongBiometricIdleTimeout();
+
+        // Delay garbage collection until display is shown
+        mHandler.postDelayed(() -> {
+            final int oldMask = StrictMode.getThreadPolicyMask();
+            StrictMode.setThreadPolicyMask(0);
+            System.gc();
+            System.runFinalization();
+            System.gc();
+            StrictMode.setThreadPolicyMask(oldMask);
+        }, 2500);
     }
 
     /**
