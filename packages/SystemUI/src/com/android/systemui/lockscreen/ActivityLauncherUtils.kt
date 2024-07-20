@@ -16,7 +16,7 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.content.pm.ResolveInfo
+import android.media.AppVolume
 import android.media.AudioManager
 import android.os.DeviceIdleManager
 import android.provider.AlarmClock
@@ -115,6 +115,20 @@ class ActivityLauncherUtils(private val context: Context) {
         }
     }
 
+    fun launchMediaPlayerApp() {
+        val packageName = getActiveMediaPackage()
+        if (packageName.isNotEmpty()) {
+            val launchIntent = packageManager.getLaunchIntentForPackage(packageName)
+            launchIntent?.let {
+                activityStarter?.startActivity(it, true)
+            }
+        }
+    }
+
+    fun getActiveMediaPackage(): String {
+        return if (getActiveVolumeApp().isEmpty()) getInstalledMusicApp() else getActiveVolumeApp()
+    }
+
     fun startSettingsActivity() {
         val settingsIntent = Intent(android.provider.Settings.ACTION_SETTINGS)
         activityStarter?.startActivity(settingsIntent, true)
@@ -126,5 +140,15 @@ class ActivityLauncherUtils(private val context: Context) {
 
     private fun showNoDefaultAppFoundToast(@StringRes appTypeResId: Int) {
         Toast.makeText(context, context.getString(appTypeResId) + " not found", Toast.LENGTH_SHORT).show()
+    }
+
+    private fun getActiveVolumeApp(): String {
+        val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
+        for (av in audioManager.listAppVolumes()) {
+            if (av.isActive()) {
+                return av.packageName
+            }
+        }
+        return ""
     }
 }

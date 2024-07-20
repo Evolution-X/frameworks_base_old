@@ -131,4 +131,37 @@
     <dimen name="nowbar_height">72dp</dimen>
     <dimen name="nowbar_width">260dp</dimen>
     <dimen name="nowbar_margin_bottom">18dp</dimen>
+
+    <!-- QS Widgets -->  
+    <dimen name="qs_controls_padding_top">260dp</dimen>
+    <dimen name="qs_controls_top_margin">16dp</dimen>
+    <dimen name="qs_controls_tile_height">150dp</dimen>
+    <dimen name="qs_controls_tile_margin_end">12dp</dimen>
+    <dimen name="qqs_header_offset_top">48dp</dimen>
+    <dimen name="qqs_control_header_height">240dp</dimen>
+    <dimen name="qs_controls_margin_bottom">16dp</dimen>
+    <dimen name="qs_controls_container_radius">20dp</dimen>
+    <dimen name="qs_controls_tile_size">24dp</dimen>
+    <dimen name="qs_controls_avatar_size">48dp</dimen>
+    <dimen name="qs_controls_circle_size">56dp</dimen>
+    <dimen name="qs_controls_corner_radius">15dp</dimen>
+    <dimen name="qs_controls_corner_radius_full">100dp</dimen>
+    <dimen name="qs_controls_tile_icon_padding">18dp</dimen>
+    <dimen name="qs_controls_tile_top_margin">12dp</dimen>
+    <dimen name="qs_controls_tile_bottom_margin">12dp</dimen>
+    <dimen name="qs_controls_tile_icon_margin_start">18dp</dimen>
+    <dimen name="qs_controls_tile_icon_margin_end">18dp</dimen>
+    <dimen name="qs_controls_slider_container_margin_end">0dp</dimen>
+    <dimen name="qs_controls_slider_margin_start">12dp</dimen>
+    <dimen name="qs_controls_slider_margin_end">12dp</dimen>
+    <dimen name="qs_controls_center_height">170dp</dimen>
+    <dimen name="qs_controls_slider_width">20dp</dimen>
+    <dimen name="qs_controls_slider_corner_radius">15dp</dimen>
+    <dimen name="qs_controls_slider_margin_top">10dp</dimen>
+    <dimen name="qs_controls_slider_margin_bottom">10dp</dimen>
+    <dimen name="qs_controls_slider_icon_margin_bottom">16dp</dimen>
+    <dimen name="qs_controls_page_indicator_size">6dp</dimen>
+    <dimen name="qs_controls_page_indicator_margin">2dp</dimen>
+    <dimen name="qs_controls_translucent_alpha">0.275</dimen>
+    <dimen name="qs_slider_swipe_threshold_dp">40dp</dimen>
 </resources>
