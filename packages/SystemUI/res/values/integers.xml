@@ -15,6 +15,7 @@
   ~ limitations under the License
   -->
 <resources>
+    <integer name="media_player_fade">55</integer>
     <integer name="biometric_dialog_text_gravity">8388611</integer> <!-- gravity start -->
     <integer name="biometric_prompt_content_list_item_max_lines_if_two_column">3</integer>
 

@@ -164,7 +164,10 @@ public class TileLayout extends ViewGroup implements QSTileLayout {
         mCellMarginHorizontal = res.getDimensionPixelSize(R.dimen.qs_tile_margin_horizontal);
         mSidePadding = useSidePadding() ? mCellMarginHorizontal / 2 : 0;
         mCellMarginVertical= res.getDimensionPixelSize(R.dimen.qs_tile_margin_vertical);
-        mMaxAllowedRows = getResourceRows();
+        int rows = TileUtils.canShowQsWidgets(mContext) ? 2 : (useSmallLandscapeLockscreenResources()
+                ? res.getInteger(R.integer.small_land_lockscreen_quick_settings_max_rows)
+                : res.getInteger(R.integer.quick_settings_max_rows));
+        mMaxAllowedRows = Math.max(getResourceRows(), rows);
         if (mLessRows) {
             mMaxAllowedRows = Math.max(mMinRows, mMaxAllowedRows - 1);
         }
