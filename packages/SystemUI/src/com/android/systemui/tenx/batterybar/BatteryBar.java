@@ -133,9 +133,10 @@ public class BatteryBar extends RelativeLayout implements Animatable, TunerServi
 
         Resources res = getResources();
 
-        mGradientColors = new int[2];
+        mGradientColors = new int[3];
         mGradientColors[0] = mLowColor;
         mGradientColors[1] = mHighColor;
+        mGradientColors[2] = mHighColor;
 
         mBarGradient = new GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT, mGradientColors);
     }
@@ -311,8 +312,10 @@ public class BatteryBar extends RelativeLayout implements Animatable, TunerServi
 
         if (mUseGradientColor) {
             float size = n / 100f;
-            mGradientColors[0] = mixColors(mLowColor, mHighColor, size);
-            mGradientColors[1] = mixColors(mHighColor, mLowColor, size);
+            float size_ = n / 150f;
+            mGradientColors[0] = mLowColor;
+            mGradientColors[1] = mixColors(mHighColor, mLowColor, size_);
+            mGradientColors[2] = mixColors(mHighColor, mLowColor, size);
             mBarGradient.setColors(mGradientColors);
             mBatteryBar.setBackgroundDrawable(mBarGradient);
         } else {
