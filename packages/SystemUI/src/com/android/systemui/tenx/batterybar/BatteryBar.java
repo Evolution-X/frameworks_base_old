@@ -21,8 +21,10 @@ import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.res.Resources;
 import android.graphics.Color;
 import android.graphics.drawable.Animatable;
+import android.graphics.drawable.GradientDrawable;
 import android.os.BatteryManager;
 import android.provider.Settings;
 import android.util.AttributeSet;
@@ -58,16 +60,22 @@ public class BatteryBar extends RelativeLayout implements Animatable, TunerServi
     int mLocation;
     private int mColor;
     private int mChargingColor;
-    private int mBatteryLowColor;
+    private int mBatteryLowColorWarning;
+    private int mLowColor = 0xFFFF4400;
+    private int mHighColor = 0xFF99CC00;
     private boolean mUseChargingColor;
     private boolean mBlendColor;
     private boolean mBlendColorReversed;
+    private boolean mUseGradientColor;
 
     LinearLayout mBatteryBarLayout;
     View mBatteryBar;
 
     LinearLayout mChargerLayout;
     View mCharger;
+
+    GradientDrawable mBarGradient;
+    int[] mGradientColors;
 
     public static final int STYLE_REGULAR = 0;
     public static final int STYLE_SYMMETRIC = 1;
@@ -80,8 +88,8 @@ public class BatteryBar extends RelativeLayout implements Animatable, TunerServi
             "system:" + Settings.System.STATUSBAR_BATTERY_BAR_COLOR;
     private static final String STATUSBAR_BATTERY_BAR_CHARGING_COLOR =
             "system:" + Settings.System.STATUSBAR_BATTERY_BAR_CHARGING_COLOR;
-    private static final String STATUSBAR_BATTERY_BAR_BATTERY_LOW_COLOR =
-            "system:" + Settings.System.STATUSBAR_BATTERY_BAR_BATTERY_LOW_COLOR;
+    private static final String STATUSBAR_BATTERY_BAR_BATTERY_LOW_COLOR_WARNING =
+            "system:" + Settings.System.STATUSBAR_BATTERY_BAR_BATTERY_LOW_COLOR_WARNING;
     private static final String STATUSBAR_BATTERY_BAR_ANIMATE =
             "system:" + Settings.System.STATUSBAR_BATTERY_BAR_ANIMATE;
     private static final String STATUSBAR_BATTERY_BAR_ENABLE_CHARGING_COLOR =
@@ -90,6 +98,12 @@ public class BatteryBar extends RelativeLayout implements Animatable, TunerServi
             "system:" + Settings.System.STATUSBAR_BATTERY_BAR_BLEND_COLOR;
     private static final String STATUSBAR_BATTERY_BAR_BLEND_COLOR_REVERSE =
             "system:" + Settings.System.STATUSBAR_BATTERY_BAR_BLEND_COLOR_REVERSE;
+    private static final String STATUSBAR_BATTERY_BAR_HIGH_COLOR =
+            "system:" + Settings.System.STATUSBAR_BATTERY_BAR_HIGH_COLOR;
+    private static final String STATUSBAR_BATTERY_BAR_LOW_COLOR =
+            "system:" + Settings.System.STATUSBAR_BATTERY_BAR_LOW_COLOR;
+    private static final String STATUSBAR_BATTERY_BAR_USE_GRADIENT_COLOR =
+            "system:" + Settings.System.STATUSBAR_BATTERY_BAR_USE_GRADIENT_COLOR;
 
     public BatteryBar(Context context) {
         this(context, null);
@@ -116,6 +130,14 @@ public class BatteryBar extends RelativeLayout implements Animatable, TunerServi
 
     public BatteryBar(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
+
+        Resources res = getResources();
+
+        mGradientColors = new int[2];
+        mGradientColors[0] = mLowColor;
+        mGradientColors[1] = mHighColor;
+
+        mBarGradient = new GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT, mGradientColors);
     }
 
     @Override
@@ -164,11 +186,14 @@ public class BatteryBar extends RelativeLayout implements Animatable, TunerServi
                 STATUSBAR_BATTERY_BAR,
                 STATUSBAR_BATTERY_BAR_COLOR,
                 STATUSBAR_BATTERY_BAR_CHARGING_COLOR,
-                STATUSBAR_BATTERY_BAR_BATTERY_LOW_COLOR,
+                STATUSBAR_BATTERY_BAR_BATTERY_LOW_COLOR_WARNING,
                 STATUSBAR_BATTERY_BAR_ANIMATE,
                 STATUSBAR_BATTERY_BAR_ENABLE_CHARGING_COLOR,
                 STATUSBAR_BATTERY_BAR_BLEND_COLOR,
-                STATUSBAR_BATTERY_BAR_BLEND_COLOR_REVERSE);
+                STATUSBAR_BATTERY_BAR_BLEND_COLOR_REVERSE,
+                STATUSBAR_BATTERY_BAR_LOW_COLOR,
+                STATUSBAR_BATTERY_BAR_HIGH_COLOR,
+                STATUSBAR_BATTERY_BAR_USE_GRADIENT_COLOR);
     }
 
     @Override
@@ -223,8 +248,8 @@ public class BatteryBar extends RelativeLayout implements Animatable, TunerServi
                 mChargingColor =
                         TunerService.parseInteger(newValue, 0xffffc90f);
                 break;
-            case STATUSBAR_BATTERY_BAR_BATTERY_LOW_COLOR:
-                mBatteryLowColor =
+            case STATUSBAR_BATTERY_BAR_BATTERY_LOW_COLOR_WARNING:
+                mBatteryLowColorWarning =
                         TunerService.parseInteger(newValue, 0xfff90028);
                 break;
             case STATUSBAR_BATTERY_BAR_ANIMATE:
@@ -242,6 +267,18 @@ public class BatteryBar extends RelativeLayout implements Animatable, TunerServi
             case STATUSBAR_BATTERY_BAR_BLEND_COLOR_REVERSE:
                 mBlendColorReversed =
                         TunerService.parseIntegerSwitch(newValue, false);
+                break;
+            case STATUSBAR_BATTERY_BAR_USE_GRADIENT_COLOR:
+                mUseGradientColor =
+                    TunerService.parseIntegerSwitch(newValue, false);
+                break;
+            case STATUSBAR_BATTERY_BAR_LOW_COLOR:
+                mLowColor =
+                    TunerService.parseInteger(newValue, 0xffff4400);
+                break;
+            case STATUSBAR_BATTERY_BAR_HIGH_COLOR:
+                mHighColor =
+                    TunerService.parseInteger(newValue, 0xff99CC00);
                 break;
             default:
                 break;
@@ -271,8 +308,42 @@ public class BatteryBar extends RelativeLayout implements Animatable, TunerServi
         }
         // Update color
         int color = getColorForPercent(n);
-        mBatteryBar.setBackgroundColor(color);
+
+        if (mUseGradientColor) {
+            float size = n / 100f;
+            mGradientColors[0] = mixColors(mLowColor, mHighColor, size);
+            mGradientColors[1] = mixColors(mHighColor, mLowColor, size);
+            mBarGradient.setColors(mGradientColors);
+            mBatteryBar.setBackgroundDrawable(mBarGradient);
+        } else {
+            mBatteryBar.setBackgroundColor(color);
+        }
         mCharger.setBackgroundColor(color);
+    }
+
+    private int mixColors(int color1, int color2, float mix) {
+        int[] rgb1 = colorToRgb(color1);
+        int[] rgb2 = colorToRgb(color2);
+
+        rgb1[0] = mixedValue(rgb1[0], rgb2[0], mix);
+        rgb1[1] = mixedValue(rgb1[1], rgb2[1], mix);
+        rgb1[2] = mixedValue(rgb1[2], rgb2[2], mix);
+        rgb1[3] = mixedValue(rgb1[3], rgb2[3], mix);
+
+        return rgbToColor(rgb1);
+    }
+
+    private int[] colorToRgb(int color) {
+        int[] rgb = {(color & 0xFF000000) >> 24, (color & 0xFF0000) >> 16, (color & 0xFF00) >> 8, (color & 0xFF)};
+        return rgb;
+    }
+
+    private int rgbToColor(int[] rgb) {
+        return (rgb[0] << 24) + (rgb[1] << 16) + (rgb[2] << 8) + rgb[3];
+    }
+
+    private int mixedValue(int val1, int val2, float mix) {
+        return (int)Math.min((mix * val1 + (1f - mix) * val2), 255f);
     }
 
     @Override
@@ -348,11 +419,10 @@ public class BatteryBar extends RelativeLayout implements Animatable, TunerServi
         if (mBatteryCharging && mUseChargingColor) {
             return mChargingColor;
         } else if (mBlendColor) {
-            return getBlendColorForPercent(mColor, mBatteryLowColor,
+            return getBlendColorForPercent(mColor, mBatteryLowColorWarning,
                     mBlendColorReversed, percentage);
         } else {
-            return percentage > BATTERY_LOW_VALUE ? mColor : mBatteryLowColor;
+            return percentage > BATTERY_LOW_VALUE ? mColor : mBatteryLowColorWarning;
         }
     }
-
 }
