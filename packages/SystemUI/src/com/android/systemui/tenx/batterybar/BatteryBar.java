@@ -63,6 +63,7 @@ public class BatteryBar extends RelativeLayout implements Animatable, TunerServi
     private int mBatteryLowColorWarning;
     private int mLowColor = 0xFFFF4400;
     private int mHighColor = 0xFF99CC00;
+    private int mChargingAnimColor = 0xFFFF2200;
     private boolean mUseChargingColor;
     private boolean mBlendColor;
     private boolean mBlendColorReversed;
@@ -104,6 +105,8 @@ public class BatteryBar extends RelativeLayout implements Animatable, TunerServi
             "system:" + Settings.System.STATUSBAR_BATTERY_BAR_LOW_COLOR;
     private static final String STATUSBAR_BATTERY_BAR_USE_GRADIENT_COLOR =
             "system:" + Settings.System.STATUSBAR_BATTERY_BAR_USE_GRADIENT_COLOR;
+    private static final String STATUSBAR_BATTERY_BAR_ANIMATE_COLOR =
+            "system:" + Settings.System.STATUSBAR_BATTERY_BAR_ANIMATE_COLOR;
 
     public BatteryBar(Context context) {
         this(context, null);
@@ -194,7 +197,8 @@ public class BatteryBar extends RelativeLayout implements Animatable, TunerServi
                 STATUSBAR_BATTERY_BAR_BLEND_COLOR_REVERSE,
                 STATUSBAR_BATTERY_BAR_LOW_COLOR,
                 STATUSBAR_BATTERY_BAR_HIGH_COLOR,
-                STATUSBAR_BATTERY_BAR_USE_GRADIENT_COLOR);
+                STATUSBAR_BATTERY_BAR_USE_GRADIENT_COLOR,
+                STATUSBAR_BATTERY_BAR_ANIMATE_COLOR);
     }
 
     @Override
@@ -281,6 +285,9 @@ public class BatteryBar extends RelativeLayout implements Animatable, TunerServi
                 mHighColor =
                     TunerService.parseInteger(newValue, 0xff99CC00);
                 break;
+            case STATUSBAR_BATTERY_BAR_ANIMATE_COLOR:
+                mChargingAnimColor =
+                    TunerService.parseInteger(newValue, 0xFFFF2200);
             default:
                 break;
         }
@@ -321,7 +328,7 @@ public class BatteryBar extends RelativeLayout implements Animatable, TunerServi
         } else {
             mBatteryBar.setBackgroundColor(color);
         }
-        mCharger.setBackgroundColor(color);
+        mCharger.setBackgroundColor(mChargingAnimColor);
     }
 
     private int mixColors(int color1, int color2, float mix) {
