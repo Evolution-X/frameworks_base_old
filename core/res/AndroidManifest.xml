@@ -959,6 +959,10 @@
     <permission android:name="com.android.permission.START_FREEFORM"
                 android:protectionLevel="signature|privileged" />
 
+    <!-- @hide -->
+    <permission android:name="com.android.permission.START_FREEFORM"
+                android:protectionLevel="signature|privileged" />
+
     <!-- ====================================================================== -->
     <!-- Permissions for accessing user's calendar                              -->
     <!-- ====================================================================== -->
