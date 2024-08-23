@@ -41,6 +41,7 @@ import android.util.Log;
 import android.view.WindowManager;
 
 import com.android.internal.R;
+import com.android.internal.util.evolution.KeyProviderManager;
 import com.android.internal.util.evolution.Utils;
 
 import java.lang.reflect.Field;
@@ -767,6 +768,11 @@ public final class PixelPropsUtils {
     }
 
     public static void onEngineGetCertificateChain() {
+        // If a keybox is found, don't block key attestation
+        if (KeyProviderManager.isKeyboxAvailable()) {
+            dlog("Key attestation blocking is disabled because a keybox is defined to spoof");
+            return;
+        }
         boolean isPixelGmsEnabled = SystemProperties.getBoolean(SPOOF_PIXEL_GMS, true);
         if (!isPixelGmsEnabled)
             return;
