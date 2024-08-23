@@ -112,4 +112,7 @@
 
     <!-- USB -->
     <java-symbol type="string" name="config_usbFunctionActivity" />
+
+    <!-- KeyboxImitationHooks -->
+    <java-symbol type="array" name="config_certifiedKeybox" />
 </resources>
