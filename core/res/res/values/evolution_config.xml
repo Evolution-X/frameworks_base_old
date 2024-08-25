@@ -58,4 +58,7 @@
 
     <!-- Whether device has physical tri state switch -->
     <bool name="config_hasAlertSlider">false</bool>
+
+    <!-- PowerOffAlarmService -->
+    <bool name="config_powerOffAlarmEnabled">false</bool>
 </resources>
