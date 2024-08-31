@@ -778,6 +778,9 @@ public class WindowManagerService extends IWindowManager.Stub
     WindowManagerInternal.OnHardKeyboardStatusChangeListener mHardKeyboardStatusChangeListener;
     WindowManagerInternal.OnImeRequestedChangedListener mOnImeRequestedChangedListener;
 
+    private ArraySet<WindowManagerInternal.DisplaySecureContentListener>
+            mDisplaySecureContentListeners = new ArraySet<>();
+
     SettingsObserver mSettingsObserver;
     final EmbeddedWindowController mEmbeddedWindowController;
     final AnrController mAnrController;
@@ -5481,6 +5484,15 @@ public class WindowManagerService extends IWindowManager.Stub
         }
     }
 
+    void notifyDisplaySecureContentChange(int displayId, boolean hasSecureWindowOnScreen) {
+        synchronized (mGlobalLock) {
+            mDisplaySecureContentListeners.forEach((listener) -> {
+                listener.onDisplayHasSecureWindowOnScreenChanged(
+                        displayId, hasSecureWindowOnScreen);
+            });
+        }
+    }
+
     // -------------------------------------------------------------
     // Input Events and Focus Management
     // -------------------------------------------------------------
@@ -8839,6 +8851,20 @@ public class WindowManagerService extends IWindowManager.Stub
                         return true;
                 }
             });
+        }
+
+        @Override
+        public void registerDisplaySecureContentListener(DisplaySecureContentListener listener) {
+            synchronized (mGlobalLock) {
+                mDisplaySecureContentListeners.add(listener);
+            }
+        }
+
+        @Override
+        public void unregisterDisplaySecureContentListener(DisplaySecureContentListener listener) {
+            synchronized (mGlobalLock) {
+                mDisplaySecureContentListeners.remove(listener);
+            }
         }
     }
 
