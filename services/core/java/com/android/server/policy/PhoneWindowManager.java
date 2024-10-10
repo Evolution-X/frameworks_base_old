@@ -281,6 +281,8 @@ import dalvik.system.PathClassLoader;
 
 import lineageos.providers.LineageSettings;
 
+import org.evolution.server.ShakeGestureService;
+
 import org.lineageos.internal.buttons.LineageButtons;
 import org.lineageos.internal.util.ActionUtils;
 
@@ -730,6 +732,8 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     Intent mVrHeadsetHomeIntent;
     boolean mPendingMetaAction;
     boolean mPendingCapsLockToggle;
+    
+    private ShakeGestureService mShakeGestures;
 
     // Tracks user-customisable behavior for certain key events
     private Action mBackLongPressAction;
@@ -7663,6 +7667,21 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         if (mVrManagerInternal != null) {
             mVrManagerInternal.addPersistentVrModeStateListener(mPersistentVrModeListener);
         }
+
+        mShakeGestures = new ShakeGestureService(mContext, new ShakeGestureService.ShakeGesturesCallbacks() {
+            @Override
+            public void onShake() {
+                Action  shakeGestureAction = Action.fromIntSafe(mShakeGestures.getAction());
+                if (shakeGestureAction == Action.NOTHING) return;
+                long now = SystemClock.uptimeMillis();
+                KeyEvent event = new KeyEvent(now, now, KeyEvent.ACTION_DOWN,
+                        KeyEvent.KEYCODE_SYSRQ, 0, 0, KeyCharacterMap.VIRTUAL_KEYBOARD, 0,
+                        KeyEvent.FLAG_FROM_SYSTEM, InputDevice.SOURCE_TOUCHSCREEN);
+                performKeyAction(shakeGestureAction, event);
+                performHapticFeedback(HapticFeedbackConstants.LONG_PRESS, "Shake Gesture");
+            }
+        });
+        mShakeGestures.systemReady();
 
         mDockObserverInternal = LocalServices.getService(DockObserverInternal.class);
         if (mDockObserverInternal != null) {
