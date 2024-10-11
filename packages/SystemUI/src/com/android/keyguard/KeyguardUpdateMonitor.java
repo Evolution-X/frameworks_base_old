@@ -147,6 +147,7 @@ import com.android.systemui.keyguard.shared.constants.TrustAgentUiEvent;
 import com.android.systemui.log.SessionTracker;
 import com.android.systemui.plugins.clocks.WeatherData;
 import com.android.systemui.plugins.statusbar.StatusBarStateController;
+import com.android.systemui.pocket.PocketStateReceiver;
 import com.android.systemui.res.R;
 import com.android.systemui.scene.domain.interactor.SceneInteractor;
 import com.android.systemui.scene.shared.flag.SceneContainerFlag;
@@ -348,6 +349,9 @@ public class KeyguardUpdateMonitor implements TrustManager.TrustListener, Dumpab
 
     // Device provisioning state
     private boolean mDeviceProvisioned;
+    
+    private PocketStateReceiver mPocketStateReceiver;
+    private boolean mIsDeviceInPocket = false;
 
     // Battery status (null until first update is received)
     @VisibleForTesting
@@ -2542,6 +2546,18 @@ public class KeyguardUpdateMonitor implements TrustManager.TrustListener, Dumpab
         mBackgroundExecutor.execute(() -> {
             getSubscriptionInfo(/* forceReload= */ true);
         });
+
+        mPocketStateReceiver = new PocketStateReceiver();
+        mPocketStateReceiver.setListener(new PocketStateReceiver.PocketStateListener() {
+            @Override
+            public void onPocketStateChanged(boolean isInPocket) {
+                mIsDeviceInPocket = isInPocket;
+                if (getFaceAuthInteractor() != null) {
+                    getFaceAuthInteractor().setPocketState(mIsDeviceInPocket);
+                }
+            }
+        });
+        mPocketStateReceiver.register(mContext);
     }
 
     @VisibleForTesting
@@ -2999,7 +3015,7 @@ public class KeyguardUpdateMonitor implements TrustManager.TrustListener, Dumpab
 
         boolean shouldListen = shouldListenKeyguardState && shouldListenUserState
                 && shouldListenBouncerState && shouldListenUdfpsState && !mBiometricPromptShowing
-                && shouldListenFpsState;
+                && shouldListenFpsState && !mIsDeviceInPocket;
         logListenerModelData(
                 new KeyguardFingerprintListenModel(
                     System.currentTimeMillis(),
@@ -3038,7 +3054,7 @@ public class KeyguardUpdateMonitor implements TrustManager.TrustListener, Dumpab
      */
     @Deprecated
     public boolean shouldListenForFace() {
-        return getFaceAuthInteractor() != null && getFaceAuthInteractor().canFaceAuthRun();
+        return getFaceAuthInteractor() != null && getFaceAuthInteractor().canFaceAuthRun() && !mIsDeviceInPocket;
     }
 
 
@@ -4171,6 +4187,7 @@ public class KeyguardUpdateMonitor implements TrustManager.TrustListener, Dumpab
         mTrustManager.unregisterTrustListener(this);
 
         mHandler.removeCallbacksAndMessages(null);
+        mPocketStateReceiver.unregister(mContext);
     }
 
     @SuppressLint("MissingPermission")
