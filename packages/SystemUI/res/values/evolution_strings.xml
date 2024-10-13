@@ -185,4 +185,13 @@
     <!-- Smart Pixels QS Tile -->
     <string name="quick_settings_smart_pixels">Smart Pixels</string>
     <string name="quick_settings_smart_pixels_on_power_save">Auto-enabled Smart Pixels</string>
+
+    <!-- Weather -->
+    <string name="weather_condition_clouds">Cloudy</string>
+    <string name="weather_condition_rain">Rainy</string>
+    <string name="weather_condition_clear">Sunny</string>
+    <string name="weather_condition_storm">Stormy</string>
+    <string name="weather_condition_snow">Snowy</string>
+    <string name="weather_condition_wind">Windy</string>
+    <string name="weather_condition_mist">Misty</string>
 </resources>
