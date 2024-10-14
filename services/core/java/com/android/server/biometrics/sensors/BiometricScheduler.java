@@ -317,6 +317,10 @@ public class BiometricScheduler<T, U> {
             Slog.d(TAG, "No operations, returning to idle");
             return;
         }
+        if (mCurrentUserRetriever == null) {
+            startNextOperationIfIdle();
+            return;
+        }
 
         // Add null check for mCurrentUserRetriever to avoid NPE
         if (mCurrentUserRetriever == null) {
