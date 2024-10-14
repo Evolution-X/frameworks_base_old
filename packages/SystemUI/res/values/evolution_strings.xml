@@ -186,6 +186,9 @@
     <string name="quick_settings_smart_pixels">Smart Pixels</string>
     <string name="quick_settings_smart_pixels_on_power_save">Auto-enabled Smart Pixels</string>
 
+    <!-- Clock Weather -->
+    <string name="clock_ide_weather_data_unavailable">null</string>
+
     <!-- Weather -->
     <string name="weather_condition_clouds">Cloudy</string>
     <string name="weather_condition_rain">Rainy</string>
