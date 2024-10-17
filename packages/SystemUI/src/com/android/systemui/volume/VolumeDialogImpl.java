@@ -183,6 +183,9 @@ import dagger.Lazy;
 public class VolumeDialogImpl implements VolumeDialog, Dumpable,
         ConfigurationController.ConfigurationListener,
         ViewTreeObserver.OnComputeInternalInsetsListener {
+
+    private final VolumeUtils mVolumeUtils;
+
     private static final String TAG = Util.logTag(VolumeDialogImpl.class);
 
     private static final long USER_ATTEMPT_GRACE_PERIOD = 1000;
@@ -407,6 +410,7 @@ public class VolumeDialogImpl implements VolumeDialog, Dumpable,
             VolumeDialogInteractor interactor) {
         mContext =
                 new ContextThemeWrapper(context, R.style.volume_dialog_theme);
+        mVolumeUtils = new VolumeUtils(mContext);
         mHandler = new H(looper);
         mVibratorHelper = vibratorHelper;
         mMSDLPlayer = msdlPlayer;
@@ -563,6 +567,7 @@ public class VolumeDialogImpl implements VolumeDialog, Dumpable,
         if (mDevicePostureController != null) {
             mDevicePostureController.removeCallback(mDevicePostureControllerCallback);
         }
+        mVolumeUtils.onDestroy();
     }
 
     @Override
