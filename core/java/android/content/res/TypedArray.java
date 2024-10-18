@@ -533,9 +533,9 @@ public class TypedArray implements AutoCloseable {
         } else if (type == TypedValue.TYPE_ATTRIBUTE) {
             final TypedValue value = mValue;
             getValueAt(index, value);
-            throw new UnsupportedOperationException(
-                    "Failed to resolve attribute at index " + attrIndex + ": " + value
-                            + ", theme=" + mTheme);
+            //throw new UnsupportedOperationException(
+            //        "Failed to resolve attribute at index " + attrIndex + ": " + value
+            //                + ", theme=" + mTheme);
         }
 
         throw new UnsupportedOperationException("Can't convert value at index " + attrIndex
@@ -569,9 +569,9 @@ public class TypedArray implements AutoCloseable {
         final TypedValue value = mValue;
         if (getValueAt(index * STYLE_NUM_ENTRIES, value)) {
             if (value.type == TypedValue.TYPE_ATTRIBUTE) {
-                throw new UnsupportedOperationException(
-                        "Failed to resolve attribute at index " + index + ": " + value
-                                + ", theme=" + mTheme);
+                //throw new UnsupportedOperationException(
+                //        "Failed to resolve attribute at index " + index + ": " + value
+                //                + ", theme=" + mTheme);
             }
             return mResources.loadComplexColor(value, value.resourceId, mTheme);
         }
@@ -605,9 +605,9 @@ public class TypedArray implements AutoCloseable {
         final TypedValue value = mValue;
         if (getValueAt(index * STYLE_NUM_ENTRIES, value)) {
             if (value.type == TypedValue.TYPE_ATTRIBUTE) {
-                throw new UnsupportedOperationException(
-                        "Failed to resolve attribute at index " + index + ": " + value
-                                + ", theme=" + mTheme);
+                //throw new UnsupportedOperationException(
+                //        "Failed to resolve attribute at index " + index + ": " + value
+                //                + ", theme=" + mTheme);
             }
             return mResources.loadColorStateList(value, value.resourceId, mTheme);
         }
@@ -647,9 +647,9 @@ public class TypedArray implements AutoCloseable {
         } else if (type == TypedValue.TYPE_ATTRIBUTE) {
             final TypedValue value = mValue;
             getValueAt(index, value);
-            throw new UnsupportedOperationException(
-                    "Failed to resolve attribute at index " + attrIndex + ": " + value
-                            + ", theme=" + mTheme);
+            //throw new UnsupportedOperationException(
+            //        "Failed to resolve attribute at index " + attrIndex + ": " + value
+            //                + ", theme=" + mTheme);
         }
 
         throw new UnsupportedOperationException("Can't convert value at index " + attrIndex
@@ -695,9 +695,9 @@ public class TypedArray implements AutoCloseable {
         } else if (type == TypedValue.TYPE_ATTRIBUTE) {
             final TypedValue value = mValue;
             getValueAt(index, value);
-            throw new UnsupportedOperationException(
-                    "Failed to resolve attribute at index " + attrIndex + ": " + value
-                            + ", theme=" + mTheme);
+            //throw new UnsupportedOperationException(
+            //        "Failed to resolve attribute at index " + attrIndex + ": " + value
+            //                + ", theme=" + mTheme);
         }
 
         throw new UnsupportedOperationException("Can't convert value at index " + attrIndex
@@ -744,9 +744,9 @@ public class TypedArray implements AutoCloseable {
         } else if (type == TypedValue.TYPE_ATTRIBUTE) {
             final TypedValue value = mValue;
             getValueAt(index, value);
-            throw new UnsupportedOperationException(
-                    "Failed to resolve attribute at index " + attrIndex + ": " + value
-                            + ", theme=" + mTheme);
+            //throw new UnsupportedOperationException(
+            //        "Failed to resolve attribute at index " + attrIndex + ": " + value
+            //                + ", theme=" + mTheme);
         }
 
         throw new UnsupportedOperationException("Can't convert value at index " + attrIndex
@@ -794,9 +794,9 @@ public class TypedArray implements AutoCloseable {
         } else if (type == TypedValue.TYPE_ATTRIBUTE) {
             final TypedValue value = mValue;
             getValueAt(index, value);
-            throw new UnsupportedOperationException(
-                    "Failed to resolve attribute at index " + attrIndex + ": " + value
-                            + ", theme=" + mTheme);
+            //throw new UnsupportedOperationException(
+            //        "Failed to resolve attribute at index " + attrIndex + ": " + value
+            //                + ", theme=" + mTheme);
         }
 
         throw new UnsupportedOperationException("Can't convert value at index " + attrIndex
@@ -839,9 +839,9 @@ public class TypedArray implements AutoCloseable {
         } else if (type == TypedValue.TYPE_ATTRIBUTE) {
             final TypedValue value = mValue;
             getValueAt(index, value);
-            throw new UnsupportedOperationException(
-                    "Failed to resolve attribute at index " + attrIndex + ": " + value
-                            + ", theme=" + mTheme);
+            //throw new UnsupportedOperationException(
+            //        "Failed to resolve attribute at index " + attrIndex + ": " + value
+            //                + ", theme=" + mTheme);
         }
 
         throw new UnsupportedOperationException(getPositionDescription()
@@ -915,9 +915,9 @@ public class TypedArray implements AutoCloseable {
         } else if (type == TypedValue.TYPE_ATTRIBUTE) {
             final TypedValue value = mValue;
             getValueAt(index, value);
-            throw new UnsupportedOperationException(
-                    "Failed to resolve attribute at index " + attrIndex + ": " + value
-                            + ", theme=" + mTheme);
+            //throw new UnsupportedOperationException(
+            //        "Failed to resolve attribute at index " + attrIndex + ": " + value
+            //                + ", theme=" + mTheme);
         }
 
         throw new UnsupportedOperationException("Can't convert value at index " + attrIndex
@@ -1014,9 +1014,9 @@ public class TypedArray implements AutoCloseable {
         final TypedValue value = mValue;
         if (getValueAt(index * STYLE_NUM_ENTRIES, value)) {
             if (value.type == TypedValue.TYPE_ATTRIBUTE) {
-                throw new UnsupportedOperationException(
-                        "Failed to resolve attribute at index " + index + ": " + value
-                                + ", theme=" + mTheme);
+                //throw new UnsupportedOperationException(
+                //        "Failed to resolve attribute at index " + index + ": " + value
+                //                + ", theme=" + mTheme);
             }
 
             if (density > 0) {
@@ -1051,9 +1051,9 @@ public class TypedArray implements AutoCloseable {
         final TypedValue value = mValue;
         if (getValueAt(index * STYLE_NUM_ENTRIES, value)) {
             if (value.type == TypedValue.TYPE_ATTRIBUTE) {
-                throw new UnsupportedOperationException(
-                        "Failed to resolve attribute at index " + index + ": " + value
-                                + ", theme=" + mTheme);
+                //throw new UnsupportedOperationException(
+                //        "Failed to resolve attribute at index " + index + ": " + value
+                //                + ", theme=" + mTheme);
             }
             return mResources.getFont(value, value.resourceId);
         }
