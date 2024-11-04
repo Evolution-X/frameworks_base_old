@@ -33,6 +33,7 @@ import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
+import android.content.ActivityNotFoundException;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.ContentResolver;
@@ -671,6 +672,9 @@ public class UsbDeviceManager implements ActivityTaskManagerInternal.ScreenObser
         protected int mCurrentGadgetHalVersion;
         protected boolean mPendingBootAccessoryHandshakeBroadcast;
         protected boolean mUserUnlockedAfterBoot;
+        protected boolean mShowedFunctionDialog;
+        protected boolean mIsFirstUnlock = true;
+
         /**
          * The persistent property which stores whether adb is enabled or not.
          * May also contain vendor-specific default functions for testing purposes.
@@ -1252,6 +1256,12 @@ public class UsbDeviceManager implements ActivityTaskManagerInternal.ScreenObser
                             }
                         }
                         updateUsbFunctions();
+                        if (mConnected && !mScreenLocked) {
+                            showFunctionDialog();
+                        } else if (!mConnected) {
+                            // reset for the next usb connection
+                            mShowedFunctionDialog = false;
+                        }
                     } else {
                         mPendingBootBroadcast = true;
                     }
@@ -1414,6 +1424,15 @@ public class UsbDeviceManager implements ActivityTaskManagerInternal.ScreenObser
                                 && mCurrentFunctions == UsbManager.FUNCTION_NONE) {
                             // Set the screen unlocked functions if current function is charging.
                             setScreenUnlockedFunctions(operationId);
+                        }
+                        if (mIsFirstUnlock) {
+                            // skip showing function dialog at the first unlock
+                            if (mConnected) {
+                                mShowedFunctionDialog = true;
+                            }
+                            mIsFirstUnlock = false;
+                        } else if (mConnected) {
+                            showFunctionDialog();
                         }
                     }
                     break;
@@ -1742,6 +1761,23 @@ public class UsbDeviceManager implements ActivityTaskManagerInternal.ScreenObser
                     mUsbNotificationId = id;
                 }
             }
+        }
+
+        private void showFunctionDialog() {
+            if (mShowedFunctionDialog) return;
+
+            Intent intent = new Intent();
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            intent.setComponent(ComponentName.unflattenFromString(mContext.getString(
+                    com.android.internal.R.string.config_usbFunctionActivity)));
+
+            try {
+                mContext.startActivityAsUser(intent, UserHandle.CURRENT);
+            } catch (ActivityNotFoundException e) {
+                Slog.e(TAG, "unable to start activity " + intent, e);
+            }
+
+            mShowedFunctionDialog = true;
         }
 
         protected boolean isAdbEnabled() {
