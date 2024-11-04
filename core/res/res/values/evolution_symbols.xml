@@ -109,4 +109,7 @@
     <java-symbol type="string" name="poweroff_alarm_title" />
     <java-symbol type="string" name="poweroff_alarm_body" />
     <java-symbol type="drawable" name="ic_alarm_on" />
+
+    <!-- USB -->
+    <java-symbol type="string" name="config_usbFunctionActivity" />
 </resources>
