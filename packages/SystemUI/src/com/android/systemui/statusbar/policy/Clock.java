@@ -25,6 +25,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.res.TypedArray;
+import android.graphics.Color;
 import android.graphics.Rect;
 import android.icu.lang.UCharacter;
 import android.icu.text.DateTimePatternGenerator;
@@ -112,6 +113,8 @@ public class Clock extends TextView implements
             "system:" + Settings.System.STATUS_BAR_CLOCK_AUTO_HIDE_HDURATION;
     public static final String STATUS_BAR_CLOCK_AUTO_HIDE_SDURATION =
             "system:" + Settings.System.STATUS_BAR_CLOCK_AUTO_HIDE_SDURATION;
+    private static final String STATUSBAR_CLOCK_CHIP =
+            "system:" + Settings.System.STATUSBAR_CLOCK_CHIP;
 
     private final UserTracker mUserTracker;
     private final CommandQueue mCommandQueue;
@@ -120,6 +123,7 @@ public class Clock extends TextView implements
     private boolean mClockAutoHideLauncher = false;
     private boolean mClockVisibleByPolicy = true;
     private boolean mClockVisibleByUser = getVisibility() == View.VISIBLE;
+    private boolean mClockBgOn;
 
     private boolean mAttached;
     private boolean mScreenReceiverRegistered;
@@ -271,7 +275,8 @@ public class Clock extends TextView implements
                     STATUS_BAR_CLOCK_DATE_FORMAT,
                     STATUS_BAR_CLOCK_AUTO_HIDE,
                     STATUS_BAR_CLOCK_AUTO_HIDE_HDURATION,
-                    STATUS_BAR_CLOCK_AUTO_HIDE_SDURATION);
+                    STATUS_BAR_CLOCK_AUTO_HIDE_SDURATION,
+                    STATUSBAR_CLOCK_CHIP);
             mCommandQueue.addCallback(this);
             if (mShowDark) {
                 Dependency.get(DarkIconDispatcher.class).addDarkReceiver(this);
@@ -493,6 +498,10 @@ public class Clock extends TextView implements
                 mShowDuration =
                         TunerService.parseInteger(newValue, SHOW_DURATION);
                 break;
+            case STATUSBAR_CLOCK_CHIP:
+                mClockBgOn =
+                        TunerService.parseIntegerSwitch(newValue, false);
+                break;
             default:
                 break;
         }
@@ -523,7 +532,7 @@ public class Clock extends TextView implements
     @Override
     public void onDarkChanged(ArrayList<Rect> areas, float darkIntensity, int tint) {
         mNonAdaptedColor = DarkIconDispatcher.getTint(areas, this, tint);
-        setTextColor(mNonAdaptedColor);
+        setTextColor(mClockBgOn ? Color.WHITE : mNonAdaptedColor);
     }
 
     // Update text color based when shade scrim changes color.
