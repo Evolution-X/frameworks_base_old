@@ -62,6 +62,7 @@ import com.android.systemui.statusbar.phone.NotificationIconContainer;
 import com.android.systemui.util.ViewController;
 import com.android.systemui.util.concurrency.DelayableExecutor;
 import com.android.systemui.util.settings.SecureSettings;
+import com.android.systemui.util.settings.SystemSettings;
 
 import com.android.systemui.clocks.ClockStyle;
 
@@ -85,6 +86,7 @@ public class KeyguardClockSwitchController extends ViewController<KeyguardClockS
     private final KeyguardSliceViewController mKeyguardSliceViewController;
     private final LockscreenSmartspaceController mSmartspaceController;
     private final SecureSettings mSecureSettings;
+    private final SystemSettings mSystemSettings;
     private final DumpManager mDumpManager;
     private final ClockEventController mClockEventController;
     private final LogBuffer mLogBuffer;
@@ -133,6 +135,8 @@ public class KeyguardClockSwitchController extends ViewController<KeyguardClockS
         }
     };
     
+    private boolean mShowLockscreenWidgets;
+    
     private boolean mEnableCustomClock = false;
     private int mClockStyle = 0;
     private final ContentObserver mCustomClockObserver = new ContentObserver(null) {
@@ -141,6 +145,15 @@ public class KeyguardClockSwitchController extends ViewController<KeyguardClockS
             mClockStyle = mSecureSettings.getIntForUser(
                 ClockStyle.CLOCK_STYLE_KEY, 0, UserHandle.USER_CURRENT);
             mEnableCustomClock = mClockStyle != 0;
+            updateDoubleLineClock();
+        }
+    };
+
+    private final ContentObserver mLockscreenWidgetObserver = new ContentObserver(null) {
+        @Override
+        public void onChange(boolean change) {
+            mShowLockscreenWidgets = mSystemSettings.getIntForUser(
+                "lockscreen_widgets_enabled", 0, UserHandle.USER_CURRENT) != 0;
             updateDoubleLineClock();
         }
     };
@@ -165,6 +178,7 @@ public class KeyguardClockSwitchController extends ViewController<KeyguardClockS
             NotificationIconContainerAlwaysOnDisplayViewBinder nicViewBinder,
             KeyguardUnlockAnimationController keyguardUnlockAnimationController,
             SecureSettings secureSettings,
+            SystemSettings systemSettings,
             @Main DelayableExecutor uiExecutor,
             @Background Executor bgExecutor,
             DumpManager dumpManager,
@@ -180,6 +194,7 @@ public class KeyguardClockSwitchController extends ViewController<KeyguardClockS
         mSmartspaceController = smartspaceController;
         mNicViewBinder = nicViewBinder;
         mSecureSettings = secureSettings;
+        mSystemSettings = systemSettings;
         mUiExecutor = uiExecutor;
         mBgExecutor = bgExecutor;
         mKeyguardUnlockAnimationController = keyguardUnlockAnimationController;
@@ -317,6 +332,12 @@ public class KeyguardClockSwitchController extends ViewController<KeyguardClockS
                     mCustomClockObserver,
                     UserHandle.USER_ALL
             );
+            mSystemSettings.registerContentObserverForUserSync(
+                    "lockscreen_widgets_enabled",
+                    false, /* notifyForDescendants */
+                    mLockscreenWidgetObserver,
+                    UserHandle.USER_ALL
+            );
         });
 
         updateDoubleLineClock();
@@ -369,6 +390,7 @@ public class KeyguardClockSwitchController extends ViewController<KeyguardClockS
             mSecureSettings.unregisterContentObserverSync(mDoubleLineClockObserver);
             mSecureSettings.unregisterContentObserverSync(mShowWeatherObserver);
             mSecureSettings.unregisterContentObserverSync(mCustomClockObserver);
+            mSystemSettings.unregisterContentObserverSync(mLockscreenWidgetObserver);
         });
 
         mKeyguardUnlockAnimationController.removeKeyguardUnlockAnimationListener(
@@ -643,7 +665,7 @@ public class KeyguardClockSwitchController extends ViewController<KeyguardClockS
                     .getInteger(com.android.internal.R.integer.config_doublelineClockDefault),
             UserHandle.USER_CURRENT) != 0;
 
-        if (mEnableCustomClock) {
+        if (mEnableCustomClock || mShowLockscreenWidgets) {
             mCanShowDoubleLineClock = false;
             if (mCanShowDoubleLineClock) {
                 mSecureSettings.putIntForUser(
