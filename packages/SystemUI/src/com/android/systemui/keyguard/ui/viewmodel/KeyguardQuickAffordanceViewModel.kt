@@ -33,6 +33,7 @@ data class KeyguardQuickAffordanceViewModel(
     val useLongPress: Boolean = false,
     val isDimmed: Boolean = false,
     val slotId: String,
+    var singleTap: Boolean = false,
 ) {
     data class OnClickedParameters(
         val configKey: String,
