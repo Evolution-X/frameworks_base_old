@@ -14779,6 +14779,7 @@ public class AudioService extends IAudioService.Stub
                 for (AudioMix mix : mMixes) {
                     mix.setVirtualDeviceId(mAttributionSource.getDeviceId());
                 }
+                mAudioSystem.registerPolicyMixes(mMixes, false);
                 return mAudioSystem.registerPolicyMixes(mMixes, true);
             } finally {
                 Binder.restoreCallingIdentity(identity);
