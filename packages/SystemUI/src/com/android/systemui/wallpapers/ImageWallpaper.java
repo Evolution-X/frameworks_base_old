@@ -30,9 +30,12 @@ import android.app.WallpaperManager;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
+import android.graphics.ColorMatrix;
+import android.graphics.ColorMatrixColorFilter;
 import android.graphics.RecordingCanvas;
 import android.graphics.Rect;
 import android.graphics.RectF;
+import android.graphics.Paint;
 import android.hardware.display.DisplayManager;
 import android.hardware.display.DisplayManager.DisplayListener;
 import android.os.HandlerThread;
@@ -336,6 +339,12 @@ public class ImageWallpaper extends WallpaperService {
                     if (blurType == 1 || (blurType == 2 && isLockScreenWallpaper()) || (blurType == 3 && !isLockScreenWallpaper())) {
                         bitmap = getBlurredBitmap(bitmap);
                     }
+                    int dimType = SystemProperties.getInt("persist.sys.wallpaper.dim_enabled", 0);
+                    // allow for both home and ls wallpaper, lockscreen only, home only
+                    if (dimType == 1 || (dimType == 2 && isLockScreenWallpaper()) || (dimType == 3 && !isLockScreenWallpaper())) {
+                        int dimLevel = SystemProperties.getInt("persist.sys.wallpaper.dim_level", 10);
+                        bitmap = getDimmedBitmap(bitmap, dimLevel);
+                    }
                     canvas.drawBitmap(bitmap, null, dest, null);
                     mDrawn = true;
                 } finally {
@@ -344,11 +353,24 @@ public class ImageWallpaper extends WallpaperService {
             }
             Trace.endSection();
         }
-        
+
 	    private boolean isLockScreenWallpaper() {
 		    return (this.getWallpaperFlags() & FLAG_LOCK)
 				    == FLAG_LOCK;
 	    }
+
+        private Bitmap getDimmedBitmap(Bitmap bitmap, int dimLevel) {
+            float dimFactor = 1 - (Math.max(0, Math.min(dimLevel, 100)) / 100f);
+            Bitmap dimmedBitmap = Bitmap.createBitmap(bitmap.getWidth(), bitmap.getHeight(), bitmap.getConfig());
+            Canvas canvas = new Canvas(dimmedBitmap);
+            Paint paint = new Paint();
+            ColorMatrix colorMatrix = new ColorMatrix();
+            colorMatrix.setScale(dimFactor, dimFactor, dimFactor, 1.0f);
+            ColorMatrixColorFilter colorFilter = new ColorMatrixColorFilter(colorMatrix);
+            paint.setColorFilter(colorFilter);
+            canvas.drawBitmap(bitmap, 0, 0, paint);
+            return dimmedBitmap;
+        }
 
         private Bitmap getBlurredBitmap(Bitmap bitmap) {
             float scaleFactor = 0.25f;
