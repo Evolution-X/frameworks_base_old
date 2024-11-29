@@ -115,4 +115,13 @@
     <dimen name="custom_aod_image_size">180dp</dimen>
     <dimen name="custom_clock_frame_margin_top">0dp</dimen>
     <dimen name="keyguard_status_area_margin_top">0dp</dimen>
+
+    <!-- Peek Display -->
+    <dimen name="peek_display_notification_icon_size_minimal">24dp</dimen>
+    <dimen name="peek_display_notification_icon_size">52dp</dimen>
+    <dimen name="peek_display_notification_icon_margin_end">16dp</dimen>
+    <dimen name="peek_notification_icon_corner_radius">100dp</dimen>
+    <dimen name="peek_notification_icon_padding">16dp</dimen>
+    <dimen name="peek_display_area_margin_top">64dp</dimen>
+    <dimen name="peek_notification_card_height">132dp</dimen>
 </resources>
