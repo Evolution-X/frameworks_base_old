@@ -503,6 +503,12 @@ constructor(
             settingsObserver,
             UserHandle.USER_ALL,
         )
+        contentResolver.registerContentObserver(
+                secureSettings.getUriFor("peek_display_notifications"),
+                true,
+                settingsObserver,
+                UserHandle.USER_ALL
+        )
         configurationController.addCallback(configChangeListener)
         statusBarStateController.addCallback(statusBarStateListener)
         bypassController.registerOnBypassStateChangedListener(bypassStateChangedListener)
@@ -643,8 +649,13 @@ constructor(
     }
 
     private fun reloadSmartspace() {
+        val peekDisplayEnabled = secureSettings.getIntForUser(
+            "peek_display_notifications",
+            0,
+            userTracker.userId
+        ) == 1
         showNotifications =
-            secureSettings.getIntForUser(LOCK_SCREEN_SHOW_NOTIFICATIONS, 0, userTracker.userId) == 1
+            secureSettings.getIntForUser(LOCK_SCREEN_SHOW_NOTIFICATIONS, 0, userTracker.userId) == 1 && !peekDisplayEnabled
 
         showSensitiveContentForCurrentUser =
             secureSettings.getIntForUser(
