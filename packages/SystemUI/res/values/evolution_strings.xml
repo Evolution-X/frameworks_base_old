@@ -184,4 +184,10 @@
     <!-- Now bar -->
     <string name="nowbar_no_media">No media playing</string>
     <string name="nowbar_unknown_title">Unknown title</string>
+
+    <!-- Volume Tile -->
+    <string name="quick_settings_volume_tile_label">Volume</string>
+    <string name="quick_settings_volume_tile_muted">Muted</string>
+    <string name="quick_settings_volume_tile_low">Low</string>
+    <string name="quick_settings_volume_tile_high">High</string>
 </resources>
