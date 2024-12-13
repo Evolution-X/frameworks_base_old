@@ -3045,7 +3045,7 @@ public class UserManagerService extends IUserManager.Stub {
         return isUserTypeEnabled(USER_TYPE_PROFILE_PRIVATE)
                 && canAddMoreProfilesToUser(USER_TYPE_PROFILE_PRIVATE,
                     userId, /* allowedToRemoveOne */ false)
-                && (parentUserInfo != null && parentUserInfo.isMain())
+                && (parentUserInfo != null && parentUserInfo.isFull())
                 && doesDeviceHardwareSupportPrivateSpace()
                 && !hasUserRestriction(UserManager.DISALLOW_ADD_PRIVATE_PROFILE, userId);
     }
