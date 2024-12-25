@@ -225,6 +225,7 @@ public final class PixelPropsUtils {
 
     // Packages to Spoof as Samsung S24 Ultra
     private static final String[] packagesToChangeS24U = {
+            "com.blizzard.diablo.immortal",
             "com.pubg.imobile",
             "com.pubg.krmobile",
             "com.rekoo.pubgm",
