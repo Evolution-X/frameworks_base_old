@@ -360,8 +360,9 @@ public class ImageWallpaper extends WallpaperService {
 	    }
 
         private Bitmap getDimmedBitmap(Bitmap bitmap, int dimLevel) {
+            bitmap = bitmap.copy(Bitmap.Config.ARGB_8888, false);
             float dimFactor = 1 - (Math.max(0, Math.min(dimLevel, 100)) / 100f);
-            Bitmap dimmedBitmap = Bitmap.createBitmap(bitmap.getWidth(), bitmap.getHeight(), bitmap.getConfig());
+            Bitmap dimmedBitmap = Bitmap.createBitmap(bitmap.getWidth(), bitmap.getHeight(), Bitmap.Config.ARGB_8888);
             Canvas canvas = new Canvas(dimmedBitmap);
             Paint paint = new Paint();
             ColorMatrix colorMatrix = new ColorMatrix();
@@ -376,8 +377,9 @@ public class ImageWallpaper extends WallpaperService {
             float scaleFactor = 0.25f;
             int scaledWidth = Math.round(bitmap.getWidth() * scaleFactor);
             int scaledHeight = Math.round(bitmap.getHeight() * scaleFactor);
+            bitmap = bitmap.copy(Bitmap.Config.ARGB_8888, false);
             Bitmap scaledBitmap = Bitmap.createScaledBitmap(bitmap, scaledWidth, scaledHeight, true);
-            Bitmap outputBitmap = Bitmap.createBitmap(scaledBitmap.getWidth(), scaledBitmap.getHeight(), scaledBitmap.getConfig());
+            Bitmap outputBitmap = Bitmap.createBitmap(scaledBitmap.getWidth(), scaledBitmap.getHeight(), Bitmap.Config.ARGB_8888);
             RenderScript rs = RenderScript.create(getDisplayContext());
             ScriptIntrinsicBlur blurScript = ScriptIntrinsicBlur.create(rs, Element.U8_4(rs));
             int blurType = SystemProperties.getInt("persist.sys.wallpaper.blur_type", 0);
