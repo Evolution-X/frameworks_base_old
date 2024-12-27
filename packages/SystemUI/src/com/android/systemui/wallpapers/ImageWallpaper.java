@@ -30,8 +30,6 @@ import android.app.WallpaperManager;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
-import android.graphics.ColorMatrix;
-import android.graphics.ColorMatrixColorFilter;
 import android.graphics.RecordingCanvas;
 import android.graphics.Rect;
 import android.graphics.RectF;
@@ -42,10 +40,6 @@ import android.os.HandlerThread;
 import android.os.Looper;
 import android.os.SystemProperties;
 import android.os.Trace;
-import android.renderscript.Allocation;
-import android.renderscript.Element;
-import android.renderscript.RenderScript;
-import android.renderscript.ScriptIntrinsicBlur;
 import android.service.wallpaper.WallpaperService;
 import android.util.Log;
 import android.view.Surface;
@@ -331,19 +325,21 @@ public class ImageWallpaper extends WallpaperService {
             } catch (IllegalStateException e) {
                 Log.w(TAG, "Unable to lock canvas", e);
             }
+
             if (canvas != null) {
                 Rect dest = mSurfaceHolder.getSurfaceFrame();
+                bitmap = WallpaperUtils.resizeAndCompress(bitmap, getDisplayContext());
                 try {
                     int blurType = SystemProperties.getInt("persist.sys.wallpaper.blur_enabled", 0);
                     // allow for both home and ls wallpaper, lockscreen only, home only
                     if (blurType == 1 || (blurType == 2 && isLockScreenWallpaper()) || (blurType == 3 && !isLockScreenWallpaper())) {
-                        bitmap = getBlurredBitmap(bitmap);
+                        bitmap = WallpaperUtils.getBlurredBitmap(bitmap, blurType, 25, getDisplayContext());
                     }
-                    int dimType = SystemProperties.getInt("persist.sys.wallpaper.dim_enabled", 0);
                     // allow for both home and ls wallpaper, lockscreen only, home only
+                    int dimType = SystemProperties.getInt("persist.sys.wallpaper.dim_enabled", 0);
                     if (dimType == 1 || (dimType == 2 && isLockScreenWallpaper()) || (dimType == 3 && !isLockScreenWallpaper())) {
                         int dimLevel = SystemProperties.getInt("persist.sys.wallpaper.dim_level", 10);
-                        bitmap = getDimmedBitmap(bitmap, dimLevel);
+                        bitmap = WallpaperUtils.getDimmedBitmap(bitmap, dimLevel);
                     }
                     canvas.drawBitmap(bitmap, null, dest, null);
                     mDrawn = true;
@@ -358,57 +354,6 @@ public class ImageWallpaper extends WallpaperService {
 		    return (this.getWallpaperFlags() & FLAG_LOCK)
 				    == FLAG_LOCK;
 	    }
-
-        private Bitmap getDimmedBitmap(Bitmap bitmap, int dimLevel) {
-            bitmap = bitmap.copy(Bitmap.Config.ARGB_8888, false);
-            float dimFactor = 1 - (Math.max(0, Math.min(dimLevel, 100)) / 100f);
-            Bitmap dimmedBitmap = Bitmap.createBitmap(bitmap.getWidth(), bitmap.getHeight(), Bitmap.Config.ARGB_8888);
-            Canvas canvas = new Canvas(dimmedBitmap);
-            Paint paint = new Paint();
-            ColorMatrix colorMatrix = new ColorMatrix();
-            colorMatrix.setScale(dimFactor, dimFactor, dimFactor, 1.0f);
-            ColorMatrixColorFilter colorFilter = new ColorMatrixColorFilter(colorMatrix);
-            paint.setColorFilter(colorFilter);
-            canvas.drawBitmap(bitmap, 0, 0, paint);
-            return dimmedBitmap;
-        }
-
-        private Bitmap getBlurredBitmap(Bitmap bitmap) {
-            float scaleFactor = 0.25f;
-            int scaledWidth = Math.round(bitmap.getWidth() * scaleFactor);
-            int scaledHeight = Math.round(bitmap.getHeight() * scaleFactor);
-            bitmap = bitmap.copy(Bitmap.Config.ARGB_8888, false);
-            Bitmap scaledBitmap = Bitmap.createScaledBitmap(bitmap, scaledWidth, scaledHeight, true);
-            Bitmap outputBitmap = Bitmap.createBitmap(scaledBitmap.getWidth(), scaledBitmap.getHeight(), Bitmap.Config.ARGB_8888);
-            RenderScript rs = RenderScript.create(getDisplayContext());
-            ScriptIntrinsicBlur blurScript = ScriptIntrinsicBlur.create(rs, Element.U8_4(rs));
-            int blurType = SystemProperties.getInt("persist.sys.wallpaper.blur_type", 0);
-            int userBlurRadius;
-            switch (blurType) {
-                case 1: // Frosted glass
-                    userBlurRadius = 200;
-                    break;
-                default: // Glass
-                    userBlurRadius = 25;
-                    break;
-            }
-            float blurRadius = Math.min(userBlurRadius, 25);
-            int passes = Math.max(1, userBlurRadius / 25);
-            Allocation input = Allocation.createFromBitmap(rs, scaledBitmap);
-            Allocation output = Allocation.createFromBitmap(rs, outputBitmap);
-            blurScript.setRadius(blurRadius);
-            for (int i = 0; i < passes; i++) {
-                blurScript.setInput(input);
-                blurScript.forEach(output);
-                output.copyTo(outputBitmap);
-                input.copyFrom(outputBitmap);
-            }
-            input.destroy();
-            output.destroy();
-            blurScript.destroy();
-            rs.destroy();
-            return Bitmap.createScaledBitmap(outputBitmap, bitmap.getWidth(), bitmap.getHeight(), true);
-        }
 
         @VisibleForTesting
         boolean isBitmapLoaded() {
