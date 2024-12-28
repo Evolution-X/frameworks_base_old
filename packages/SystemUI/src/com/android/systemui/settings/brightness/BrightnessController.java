@@ -130,6 +130,10 @@ public class BrightnessController implements ToggleSlider.Listener, MirroredBrig
             VibrationEffect.get(VibrationEffect.EFFECT_TICK);
     private boolean mBrightnessSliderHaptic;
 
+    private final boolean mHasVibrator;
+    private static final VibrationEffect BRIGHTNESS_ICON_HAPTIC =
+            VibrationEffect.get(VibrationEffect.EFFECT_CLICK);
+
     @Override
     public void setMirror(@Nullable MirrorController controller) {
         mControl.setMirrorControllerAndMirror(controller);
@@ -327,13 +331,17 @@ public class BrightnessController implements ToggleSlider.Listener, MirroredBrig
         if (mVibrator == null || !mVibrator.hasVibrator()) {
             mVibrator = null;
         }
+        mHasVibrator = mVibrator != null && mVibrator.hasVibrator();
 
         mIcon = control.getIcon();
-        mIcon.setOnClickListener(v -> Settings.System.putIntForUser(mContext.getContentResolver(),
-                Settings.System.SCREEN_BRIGHTNESS_MODE, mAutomatic ?
-                    Settings.System.SCREEN_BRIGHTNESS_MODE_MANUAL :
-                    Settings.System.SCREEN_BRIGHTNESS_MODE_AUTOMATIC,
-                UserHandle.USER_CURRENT));
+        mIcon.setOnClickListener(v -> {
+            Settings.System.putIntForUser(mContext.getContentResolver(),
+                    Settings.System.SCREEN_BRIGHTNESS_MODE, mAutomatic ?
+                        Settings.System.SCREEN_BRIGHTNESS_MODE_MANUAL :
+                        Settings.System.SCREEN_BRIGHTNESS_MODE_AUTOMATIC,
+                UserHandle.USER_CURRENT);
+            if (mHasVibrator) mVibrator.vibrate(BRIGHTNESS_ICON_HAPTIC);
+        });
     }
 
     public void registerCallbacks() {
