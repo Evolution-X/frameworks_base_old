@@ -334,11 +334,8 @@ constructor(
     fun buildAndConnectDateView(parent: ViewGroup, isLargeClock: Boolean): View? {
         execution.assertIsMainThread()
 
-        if (!isEnabled) {
-            throw RuntimeException("Cannot build view when not enabled")
-        }
-        if (!isDateWeatherDecoupled) {
-            throw RuntimeException("Cannot build date view when not decoupled")
+        if (!isEnabled || !isDateWeatherDecoupled) {
+            return null
         }
 
         val view =
@@ -357,11 +354,8 @@ constructor(
     fun buildAndConnectWeatherView(parent: ViewGroup, isLargeClock: Boolean): View? {
         execution.assertIsMainThread()
 
-        if (!isEnabled) {
-            throw RuntimeException("Cannot build view when not enabled")
-        }
-        if (!isDateWeatherDecoupled) {
-            throw RuntimeException("Cannot build weather view when not decoupled")
+        if (!isEnabled || !isDateWeatherDecoupled) {
+            return null
         }
 
         val view =
