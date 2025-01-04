@@ -27,6 +27,7 @@ import com.android.systemui.keyguard.ui.view.layout.sections.AodNotificationIcon
 import com.android.systemui.keyguard.ui.view.layout.sections.ClockSection
 import com.android.systemui.keyguard.ui.view.layout.sections.DefaultDeviceEntrySection
 import com.android.systemui.keyguard.ui.view.layout.sections.DefaultIndicationAreaSection
+import com.android.systemui.keyguard.ui.view.layout.sections.DefaultIndicationAreaTopSection
 import com.android.systemui.keyguard.ui.view.layout.sections.DefaultNotificationStackScrollLayoutSection
 import com.android.systemui.keyguard.ui.view.layout.sections.DefaultSettingsPopupMenuSection
 import com.android.systemui.keyguard.ui.view.layout.sections.DefaultShortcutsSection
@@ -70,6 +71,7 @@ constructor(
     smartspaceSection: SmartspaceSection,
     keyguardSliceViewSection: KeyguardSliceViewSection,
     udfpsAccessibilityOverlaySection: DefaultUdfpsAccessibilityOverlaySection,
+    defaultIndicationAreaTopSection: DefaultIndicationAreaTopSection,
 ) : KeyguardBlueprint {
     override val id: String = DEFAULT
 
@@ -77,6 +79,7 @@ constructor(
         listOfNotNull(
             accessibilityActionsSection,
             defaultIndicationAreaSection,
+            defaultIndicationAreaTopSection,
             defaultShortcutsSection,
             defaultAmbientIndicationAreaSection.getOrNull(),
             defaultSettingsPopupMenuSection,
