@@ -231,7 +231,7 @@ public class OptPropFactory {
                         mValue = VALUE_UNSET;
                     }
                 } catch (Exception e) {
-                    Slog.w(TAG, "Cannot read opt property " + mPropertyName);
+                    //Slog.w(TAG, "Cannot read opt property " + mPropertyName);
                     mValue = VALUE_UNSET;
                 }
             }
