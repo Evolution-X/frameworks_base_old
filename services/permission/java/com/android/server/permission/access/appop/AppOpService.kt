@@ -268,11 +268,6 @@ class AppOpService(private val service: AccessCheckingService) : AppOpsCheckingS
                     " mode = ${AppOpsManager.modeToName(mode)}," +
                     " callingUid = ${Binder.getCallingUid()}," +
                     " oldMode = ${AppOpsManager.modeToName(oldMode)}"
-            if (wouldHaveChanged) {
-                Slog.e(LOG_TAG, logMessage, RuntimeException())
-            } else {
-                Slog.w(LOG_TAG, logMessage)
-            }
             return false
         }
 
