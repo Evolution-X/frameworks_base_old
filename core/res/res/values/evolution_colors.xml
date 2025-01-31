@@ -4,5 +4,6 @@
      SPDX-License-Identifier: Apache-2.0
 -->
 <resources>
-
+    <!-- Bootleg unneccesary gradient declaration | Just for our shishu bars -->
+    <color name="bootleg_accent_gradient_end_color">@*android:color/system_accent3_600</color>
 </resources>
