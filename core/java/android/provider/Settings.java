@@ -6995,6 +6995,13 @@ public final class Settings {
         public static final String ARCANE_IDLE_MANAGER = "arcane_idle_manager";
 
         /**
+         * Whether long press on navbar gesture is enabled
+         * @hide
+         */
+        @Readable
+        public static final String NAVBAR_LONG_PRESS_GESTURE = "navbar_long_press_gesture";
+
+        /**
          * Keys we no longer back up under the current schema, but want to continue to
          * process when restoring historical backup datasets.
          *
