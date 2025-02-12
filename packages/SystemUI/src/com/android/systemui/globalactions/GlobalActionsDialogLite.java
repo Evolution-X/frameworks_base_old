@@ -173,6 +173,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.Executor;
+import java.util.stream.Stream;
 
 import javax.inject.Inject;
 
@@ -680,9 +681,12 @@ public class GlobalActionsDialogLite implements DialogInterface.OnDismissListene
                 if (mShowSilentToggle) {
                     addIfShouldShowAction(tempActions, mSilentModeAction);
                 }
-            } else if (GLOBAL_ACTION_KEY_USERS.equals(actionKey)) {
-                List<UserInfo> users = mUserManager.getUsers();
-                if (users.size() > 1) {
+            } else if (GLOBAL_ACTION_KEY_USERS.equals(actionKey)
+                    && mUserManager.isUserSwitcherEnabled()) {
+                Stream<UserInfo> users = mUserManager.getUsers()
+                        .stream()
+                        .filter(u -> u.supportsSwitchToByUser());
+                if (users.count() > 1) {
                     addUserActions(mUsersItems, currentUser.get());
                     addIfShouldShowAction(tempActions, new UsersAction());
                 }
