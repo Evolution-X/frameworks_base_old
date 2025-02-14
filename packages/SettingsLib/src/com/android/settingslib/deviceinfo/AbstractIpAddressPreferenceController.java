@@ -99,7 +99,7 @@ public abstract class AbstractIpAddressPreferenceController
 
     private static String formatIpAddresses(LinkProperties prop) {
         if (prop == null) return null;
-        Iterator<LinkAddress> iter = prop.getAllLinkAddresses().iterator();
+        Iterator<LinkAddress> iter = prop.getLinkAddresses().iterator();
         // If there are no entries, return null
         if (!iter.hasNext()) return null;
         // Concatenate all available addresses, newline separated
