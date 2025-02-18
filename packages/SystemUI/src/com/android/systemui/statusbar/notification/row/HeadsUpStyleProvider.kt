@@ -43,7 +43,5 @@ constructor(private val statusBarModeRepositoryStore: StatusBarModeRepositorySto
         statusBarModeRepositoryStore.defaultDisplay.isInFullscreenMode.value
 
     /** developer setting to always show Minimal HUN, even if the device is not in full screen */
-    private fun alwaysShow() =
-        Compile.IS_DEBUG &&
-            SystemProperties.getBoolean("persist.compact_heads_up_notification.always_show", false)
+    private fun alwaysShow() = SystemProperties.getBoolean("persist.compact_heads_up_notification.always_show", false)
 }
