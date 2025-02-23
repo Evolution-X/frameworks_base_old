@@ -29,6 +29,7 @@ import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.PowerManager; 
@@ -51,7 +52,6 @@ import com.android.internal.R;
 public class PocketModeService {
 
     private static final float PROXIMITY_THRESHOLD = 1.0f;
-    private static final float LIGHT_THRESHOLD = 2.0f;
     private static final float GRAVITY_THRESHOLD = -0.6f;
     private static final int MIN_INCLINATION = 75;
     private static final int MAX_INCLINATION = 100;
@@ -75,7 +75,6 @@ public class PocketModeService {
 
     private float[] gravityValues;
     private float proximitySensorValue;
-    private float lightSensorValue;
     private int inclinationAngle;
 
     private Context mContext;
@@ -99,7 +98,6 @@ public class PocketModeService {
     private SensorManager mSensorManager;
     private Sensor mAccelerometerSensor;
     private Sensor mProximitySensor;
-    private Sensor mLightSensor;
 
     boolean mIsInPocket;
     boolean mIsOverlayUserUnlocked;
@@ -132,8 +130,7 @@ public class PocketModeService {
         mTelecomManager = (TelecomManager) mContext.getSystemService(Context.TELECOM_SERVICE);
         if (mSensorManager != null) {
             mAccelerometerSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
-            mLightSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_LIGHT);
-            mProximitySensor = mSensorManager.getDefaultSensor(Sensor.TYPE_PROXIMITY);
+            mProximitySensor = !isExcludedDevice() ? mSensorManager.getDefaultSensor(Sensor.TYPE_PROXIMITY) : null;
         }
         mDoubleClickEffect = VibrationEffect.createPredefined(VibrationEffect.EFFECT_DOUBLE_CLICK);
         createOverlayView(mContext);
@@ -263,10 +260,6 @@ public class PocketModeService {
             if (mProximitySensor != null) {
                 mSensorManager.registerListener(mPocketModeListener, mProximitySensor, POCKET_MODE_SENSOR_DELAY, mHandler);
             }
-            if (mLightSensor != null) {
-                mSensorManager.registerListener(mPocketModeListener, mLightSensor, POCKET_MODE_SENSOR_DELAY, 
-                mHandler);
-            }
         }
     }
 
@@ -297,12 +290,8 @@ public class PocketModeService {
                 proximitySensorValue = sensorEvent.values[0];
             }
 
-            if (sensorEvent.sensor.getType() == Sensor.TYPE_LIGHT) {
-                lightSensorValue = sensorEvent.values[0];
-            }
-
-            if (proximitySensorValue != -1 && lightSensorValue != -1 && inclinationAngle != -1 && gravityValues != null) {
-                detect(proximitySensorValue, lightSensorValue, gravityValues, inclinationAngle);
+            if (proximitySensorValue != -1 && inclinationAngle != -1 && gravityValues != null) {
+                detect(proximitySensorValue, gravityValues, inclinationAngle);
             }
         }
 
@@ -314,20 +303,18 @@ public class PocketModeService {
         return Math.round(value * 100.0) / 100.0f;
     }
 
-    public void detect(Float prox, Float light, float[] g, Integer inc) {
+    public void detect(Float prox, float[] g, Integer inc) {
         if (isAlwaysOnPocketMode() || !mSystemReady) return;
         boolean isProxInPocket = mProximitySensor != null && prox != -1f && prox < PROXIMITY_THRESHOLD;
-        boolean isLightInPocket = mLightSensor != null && light != -1f && light < LIGHT_THRESHOLD;
         boolean isGravityInPocket = mAccelerometerSensor != null && g != null && g.length == 3 && g[1] < GRAVITY_THRESHOLD;
         boolean isInclinationInPocket= mAccelerometerSensor != null && inc != -1 && (inc > MIN_INCLINATION || inc < MAX_INCLINATION);
 
         mIsInPocket = isProxInPocket;
-        if (!mIsInPocket) {
-            mIsInPocket = isLightInPocket && isGravityInPocket && isInclinationInPocket;
-        }
+
         if (!mIsInPocket) {
             mIsInPocket = isGravityInPocket && isInclinationInPocket;
         }
+
         if (mIsInPocket && !mIsOverlayUserUnlocked) {
             showOverlay();
         } else {
@@ -436,5 +423,10 @@ public class PocketModeService {
     
     public void setSystemReady() {
         this.mSystemReady = true;
+    }
+    
+
+    private boolean isExcludedDevice() {
+        return Build.MODEL.startsWith("Pixel 6");
     }
 }
