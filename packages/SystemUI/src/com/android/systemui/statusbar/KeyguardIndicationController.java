@@ -1453,7 +1453,7 @@ public class KeyguardIndicationController {
             mBatteryLevel = status.level;
             mBatteryPresent = status.present;
             mTemperature = status.temperature;
-            mBatteryDefender = isBatteryDefender(status);
+            mBatteryDefender = isBatteryDefender(status) && mBatteryLevel >= 80;
             // when the battery is overheated, device doesn't charge so only guard on pluggedIn:
             mEnableBatteryDefender = mBatteryDefender && status.isPluggedIn();
             mIncompatibleCharger = status.incompatibleCharger.orElse(false);
