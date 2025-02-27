@@ -405,13 +405,11 @@ public abstract class QSPanelControllerBase<T extends QSPanel> extends ViewContr
         if ((FlashlightStrengthTile.TILE_SPEC.equals(tile.getTileSpec())
             || VolumeControlTile.TILE_SPEC.equals(tile.getTileSpec()))
             && !isA11Style) {
-            SlideableQSTile slideableTile = (SlideableQSTile) tile;
+            SlideableQSTile slideableQSTile = (SlideableQSTile) tile;
             tileView = new SliderQSTileViewImpl(
                     getContext(),
                     collapsedView,
-                    slideableTile.getTouchListener(),
-                    slideableTile.getSettingsSystemKey(),
-                    slideableTile.getSettingsDefaultValue());
+                    slideableQSTile);
         } else {
             tileView = new QSTileViewImpl(
                     getContext(), collapsedView, longPressEffect);
