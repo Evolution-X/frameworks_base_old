@@ -738,6 +738,36 @@
     <!-- UI debug setting: Select Bluetooth Audio LDAC Codec: LDAC Playback Quality -->
     <string name="bluetooth_select_a2dp_codec_ldac_playback_quality_dialog_title">Trigger Bluetooth Audio LDAC\u000ACodec Selection: Playback Quality</string>
 
+    <!-- Savitech LHDC - START -->
+    <!-- UI debug setting: Select Bluetooth Audio LHDC Playback Quality -->
+    <string name="bluetooth_select_a2dp_codec_lhdc_playback_quality">Bluetooth Audio LHDC Codec: Playback Quality</string>
+    <!-- UI debug setting: Select Bluetooth Audio LHDC Codec: LHDC Playback Quality -->
+    <string name="bluetooth_select_a2dp_codec_lhdc_playback_quality_dialog_title">Select Bluetooth Audio LHDC Codec:\u000APlayback Quality</string>
+    <!-- UI debug setting: Select Bluetooth Audio LHDC Codec: LHDC Low Latency Summary -->
+    <string name="bluetooth_enable_a2dp_codec_lhdc_playback_quality_summaries">LHDC Codec:\u000APlayback Quality</string>
+
+    <!-- UI debug setting: Select Bluetooth Audio LHDC Low Latency -->
+    <string name="bluetooth_enable_a2dp_codec_lhdc_latency">Bluetooth Audio LHDC Codec: Low Latency</string>
+    <!-- UI debug setting: Select Bluetooth Audio LHDC Codec: LHDC Low Latency -->
+    <string name="bluetooth_enable_a2dp_codec_lhdc_latency_dialog_titles">Select Bluetooth Audio LHDC Codec:\u000ALatency</string>
+    <!-- UI debug setting: Select Bluetooth Audio LHDC Codec: LHDC Low Latency Summary -->
+    <string name="bluetooth_enable_a2dp_codec_lhdc_latency_summaries">LHDC Codec:\u000ALow Latency</string>
+
+    <!-- UI debug setting: Select Bluetooth Audio LHDC Lossless -->
+    <string name="bluetooth_enable_a2dp_codec_lhdc_lossless">Enable LHDC-V Lossless</string>
+    <!-- UI debug setting: Select Bluetooth Audio LHDC Lossless: LHDC Lossless Audio -->
+    <string name="bluetooth_enable_a2dp_codec_lhdc_lossless_dialog_titles">Select Bluetooth Audio LHDC Codec:\u000ALossless Audio</string>
+    <!-- UI debug setting: Select Bluetooth Audio LHDC Codec: LHDC Lossless Summary -->
+    <string name="bluetooth_enable_a2dp_codec_lhdc_lossless_summaries">LHDC Codec:\u000ALossless</string>
+
+    <!-- UI debug setting: Select Bluetooth Audio LHDC Lossless Raw Mode -->
+    <string name="bluetooth_enable_a2dp_codec_lhdc_lossless_raw">Enable LHDC-V Lossless Raw Mode</string>
+    <!-- UI debug setting: Select Bluetooth Audio LHDC Lossless Raw Mode: LHDC Lossless Audio -->
+    <string name="bluetooth_enable_a2dp_codec_lhdc_lossless_raw_dialog_titles">Select Bluetooth Audio LHDC Codec:\u000ALossless Audio Raw Mode</string>
+    <!-- UI debug setting: Select Bluetooth Audio LHDC Codec: LHDC Lossless Raw Mode Summary -->
+    <string name="bluetooth_enable_a2dp_codec_lhdc_lossless_raw_summaries">LHDC Codec:\u000ALossless Raw Mode</string>
+    <!-- Savitech LHDC - END -->
+
     <!-- [CHAR LIMIT=NONE] Label for displaying Bluetooth Audio Codec Parameters while streaming -->
     <string name="bluetooth_select_a2dp_codec_streaming_label">Streaming: <xliff:g id="streaming_parameter">%1$s</xliff:g></string>
 
