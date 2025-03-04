@@ -409,6 +409,10 @@ public final class NotificationAttentionHelper {
                 updateLightsLocked();
             }
         }
+        mSoundVibScreenOn = Settings.System.getIntForUser(
+                mContext.getContentResolver(),
+                Settings.System.NOTIFICATION_SOUND_VIB_SCREEN_ON, 1,
+                UserHandle.USER_CURRENT) == 1;
 
         if (Flags.politeNotifications()) {
             try {
