@@ -22,7 +22,7 @@
     <group android:scaleX="0.5"
             android:scaleY="0.5"
             android:translateX="6.0"
-            android:translateY="6.0" >
+            android:translateY="8.0" >
         <path
             android:fillColor="@android:color/black"
             android:fillType="evenOdd"
