@@ -19,6 +19,7 @@ package com.android.systemui.keyguard.ui.view.layout.sections
 
 import android.content.Context
 import android.os.Handler
+import android.util.TypedValue
 import android.view.LayoutInflater
 import androidx.constraintlayout.widget.Barrier
 import androidx.constraintlayout.widget.ConstraintLayout
@@ -86,7 +87,8 @@ constructor(
                 ConstraintSet.PARENT_ID,
                 ConstraintSet.START,
                 context.resources.getDimensionPixelSize(customR.dimen.clock_padding_start) +
-                    context.resources.getDimensionPixelSize(customR.dimen.status_view_margin_horizontal),
+                    context.resources.getDimensionPixelSize(customR.dimen.status_view_margin_horizontal) +
+                    TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 4f, context.resources.displayMetrics).toInt(),
             )
             connect(
                 R.id.keyguard_slice_view,
