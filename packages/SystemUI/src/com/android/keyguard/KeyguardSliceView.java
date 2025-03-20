@@ -447,6 +447,7 @@ public class KeyguardSliceView extends LinearLayout {
         private void updatePadding() {
             boolean hasText = !TextUtils.isEmpty(getText());
             boolean isDate = Uri.parse(KeyguardSliceProvider.KEYGUARD_DATE_URI).equals(getTag());
+            // These calculations depend on layout orientation change in keyguard_slice_view.xml
             int padding = (int) getContext().getResources()
                     .getDimension(R.dimen.widget_horizontal_padding) / 2;
             int iconPadding = (int) mContext.getResources()
