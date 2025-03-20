@@ -3438,7 +3438,6 @@ public final class ProcessList {
         }
 
         if (!isolated && !isSdkSandbox
-                && userId == UserHandle.USER_SYSTEM
                 && (info.flags & PERSISTENT_MASK) == PERSISTENT_MASK
                 && (TextUtils.equals(proc, info.processName))) {
             // The system process is initialized to SCHED_GROUP_DEFAULT in init.rc.
