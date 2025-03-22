@@ -28,7 +28,7 @@ import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
 import androidx.viewpager.widget.ViewPager;
 
-import com.android.systemui.R;
+import com.android.systemui.res.R;
 
 public class QsControlsPageIndicator extends LinearLayout {
     private Context mContext;

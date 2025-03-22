@@ -1,5 +1,5 @@
 /*
-     Copyright (C) 2023-2025 the risingOS Android Project
+     Copyright (C) 2023-2025 the risingOS-Revived Android Project
      Licensed under the Apache License, Version 2.0 (the "License");
      you may not use this file except in compliance with the License.
      You may obtain a copy of the License at
@@ -16,23 +16,25 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.media.AppVolume
 import android.media.AudioManager
 import android.os.DeviceIdleManager
 import android.provider.AlarmClock
 import android.provider.MediaStore
 import android.speech.RecognizerIntent
+import android.util.Log
 import android.widget.Toast
 import androidx.annotation.StringRes
 import com.android.systemui.Dependency
 import com.android.systemui.plugins.ActivityStarter
 import com.android.systemui.res.R
+import java.lang.reflect.Method
 
 class ActivityLauncherUtils(private val context: Context) {
 
     companion object {
         private const val PERSONALIZATIONS_ACTIVITY = "com.android.settings.Settings\$personalizationSettingsLayoutActivity"
         private const val SERVICE_PACKAGE = "org.omnirom.omnijaws"
+        private const val TAG = "ActivityLauncherUtils"
     }
 
     private val activityStarter: ActivityStarter? = Dependency.get(ActivityStarter::class.java)
@@ -101,8 +103,10 @@ class ActivityLauncherUtils(private val context: Context) {
         val launchIntent = context.packageManager.getLaunchIntentForPackage("com.google.android.apps.walletnfcrel")?.apply {
             addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
         }
-        launchIntent?.let {
-            launchAppIfAvailable(it, R.string.google_wallet)
+        if (launchIntent != null) {
+            launchAppIfAvailable(launchIntent, R.string.google_wallet)
+        } else {
+            showNoDefaultAppFoundToast(R.string.google_wallet)
         }
     }
 
@@ -129,6 +133,13 @@ class ActivityLauncherUtils(private val context: Context) {
         return if (getActiveVolumeApp().isEmpty()) getInstalledMusicApp() else getActiveVolumeApp()
     }
 
+    fun launchCustomApp(packageName: String) {
+        val launchIntent = context.packageManager.getLaunchIntentForPackage(packageName)
+        launchIntent?.let {
+            activityStarter?.startActivity(it, true)
+        }
+    }
+
     fun startSettingsActivity() {
         val settingsIntent = Intent(android.provider.Settings.ACTION_SETTINGS)
         activityStarter?.startActivity(settingsIntent, true)
@@ -138,17 +149,62 @@ class ActivityLauncherUtils(private val context: Context) {
         activityStarter?.startActivity(intent, true)
     }
 
+    fun launchQrScanner() {
+        try {
+            val qrScannerComponent = context.resources.getString(
+                com.android.internal.R.string.config_defaultQrCodeComponent
+            )
+            val intent = if (qrScannerComponent.isNotEmpty()) {
+                Intent().apply {
+                    component = ComponentName.unflattenFromString(qrScannerComponent)
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                }
+            } else {
+                Intent().apply {
+                    component = ComponentName(
+                        "com.google.android.googlequicksearchbox",
+                        "com.google.android.apps.search.lens.LensActivity"
+                    )
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                }
+            }
+            startIntent(intent)
+        } catch (e: Exception) {
+            Toast.makeText(context, "Unable to launch QR Scanner", Toast.LENGTH_SHORT).show()
+        }
+    }
+
     private fun showNoDefaultAppFoundToast(@StringRes appTypeResId: Int) {
         Toast.makeText(context, context.getString(appTypeResId) + " not found", Toast.LENGTH_SHORT).show()
     }
 
     private fun getActiveVolumeApp(): String {
         val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
-        for (av in audioManager.listAppVolumes()) {
-            if (av.isActive()) {
-                return av.packageName
+        val appVolumes = getAppVolumes(audioManager)
+        for (av in appVolumes) {
+            try {
+                val isActiveMethod = av.javaClass.getMethod("isActive")
+                val isActive = isActiveMethod.invoke(av) as Boolean
+                if (isActive) {
+                    val packageNameField = av.javaClass.getField("packageName")
+                    return packageNameField.get(av) as String
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Error accessing AppVolume methods", e)
             }
         }
         return ""
+    }
+
+    private fun getAppVolumes(audioManager: AudioManager): List<Any> {
+        try {
+            val method = AudioManager::class.java.getDeclaredMethod("listAppVolumes")
+            method.isAccessible = true
+            @Suppress("UNCHECKED_CAST")
+            return method.invoke(audioManager) as List<Any>
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to get app volumes", e)
+            return emptyList()
+        }
     }
 }
