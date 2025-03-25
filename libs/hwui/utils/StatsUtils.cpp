@@ -90,7 +90,7 @@ void logBitmapDecode(const SkImageInfo& info, bool hasGainmap) {
             stats::stats_write(uirenderer::stats::IMAGE_DECODED, static_cast<int32_t>(getuid()),
                                uirenderer::toStatsColorSpaceTransfer(tfnType), hasGainmap,
                                uirenderer::toStatsBitmapFormat(info.colorType()));
-    ALOGW_IF(status != OK, "Image decoding logging dropped!");
+    //ALOGW_IF(status != OK, "Image decoding logging dropped!");
 #endif
 }
 
