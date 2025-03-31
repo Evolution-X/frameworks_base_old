@@ -1450,38 +1450,6 @@ public class CachedAppOptimizer {
             return false;
         }
 
-        // Unfreeze the binder interface first, to avoid transactions triggered by timers fired
-        // right after unfreezing the process to fail
-        boolean processKilled = false;
-
-        try {
-            int freezeInfo = mFreezer.getBinderFreezeInfo(pid);
-
-            if ((freezeInfo & SYNC_RECEIVED_WHILE_FROZEN) != 0) {
-                Slog.d(TAG_AM, "pid " + pid + " " + app.processName
-                        + " received sync transactions while frozen, killing");
-                app.killLocked("Sync transaction while in frozen state",
-                        ApplicationExitInfo.REASON_FREEZER,
-                        ApplicationExitInfo.SUBREASON_FREEZER_BINDER_TRANSACTION, true);
-                processKilled = true;
-            }
-
-            if ((freezeInfo & ASYNC_RECEIVED_WHILE_FROZEN) != 0 && DEBUG_FREEZER) {
-                Slog.d(TAG_AM, "pid " + pid + " " + app.processName
-                        + " received async transactions while frozen");
-            }
-        } catch (Exception e) {
-            Slog.d(TAG_AM, "Unable to query binder frozen info for pid " + pid + " "
-                    + app.processName + ". Killing it. Exception: " + e);
-            app.killLocked("Unable to query binder frozen stats",
-                    ApplicationExitInfo.REASON_FREEZER,
-                    ApplicationExitInfo.SUBREASON_FREEZER_BINDER_IOCTL, true);
-            processKilled = true;
-        }
-
-        if (processKilled) {
-            return false;
-        }
         if (!processFreezableChangeReported) {
             reportProcessFreezableChangedLocked(app);
         }
@@ -2624,9 +2592,12 @@ public class CachedAppOptimizer {
                 int freezeInfo = mFreezer.getBinderFreezeInfo(current);
 
                 if ((freezeInfo & SYNC_RECEIVED_WHILE_FROZEN) != 0) {
-                    killProcess(current, "Sync transaction while frozen",
-                            ApplicationExitInfo.REASON_FREEZER,
-                            ApplicationExitInfo.SUBREASON_FREEZER_BINDER_TRANSACTION);
+                    ProcessRecord app = mFrozenProcesses.get(current);
+                    if (app != null) {
+                        Slog.w(TAG_AM, "pid " + current
+                                + " has sync transaction while frozen, unfreezing temporarily");
+                        unfreezeTemporarily(app, UNFREEZE_REASON_PING);
+                    }
 
                     // No need to check async transactions in this case
                     continue;
