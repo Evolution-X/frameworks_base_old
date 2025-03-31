@@ -1499,30 +1499,7 @@ public class OomAdjuster {
                         break;
                 }
 
-                // TODO: b/319163103 - limit isolated/sandbox trimming to just the processes
-                //  evaluated in the current update.
-                if (app.isolated && psr.numberOfRunningServices() <= 0
-                        && app.getIsolatedEntryPoint() == null) {
-                    // If this is an isolated process, there are no services
-                    // running in it, and it's not a special process with a
-                    // custom entry point, then the process is no longer
-                    // needed.  We agressively kill these because we can by
-                    // definition not re-use the same process again, and it is
-                    // good to avoid having whatever code was running in them
-                    // left sitting around after no longer needed.
-                    app.killLocked("isolated not needed", ApplicationExitInfo.REASON_OTHER,
-                            ApplicationExitInfo.SUBREASON_ISOLATED_NOT_NEEDED, true);
-                } else if (app.isSdkSandbox && psr.numberOfRunningServices() <= 0
-                        && app.getActiveInstrumentation() == null) {
-                    // If this is an SDK sandbox process and there are no services running it, we
-                    // aggressively kill the sandbox as we usually don't want to re-use the same
-                    // sandbox again.
-                    app.killLocked("sandbox not needed", ApplicationExitInfo.REASON_OTHER,
-                            ApplicationExitInfo.SUBREASON_SDK_SANDBOX_NOT_NEEDED, true);
-                } else {
-                    // Keeping this process, update its uid.
-                    updateAppUidRecLSP(app);
-                }
+                updateAppUidRecLSP(app);
 
                 if (state.getCurProcState() >= ActivityManager.PROCESS_STATE_HOME
                         && !app.isKilledByAm()) {
