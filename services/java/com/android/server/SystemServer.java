@@ -883,8 +883,9 @@ public final class SystemServer implements Dumpable {
             BinderInternal.setMaxThreads(sMaxBinderThreads);
 
             // Prepare the main looper thread (this thread).
-            android.os.Process.setThreadPriority(
-                    android.os.Process.THREAD_PRIORITY_FOREGROUND);
+            Process.setThreadPriority(
+                    Process.THREAD_PRIORITY_FOREGROUND);
+            Process.setThreadGroupAndCpuset(myPid(), Process.THREAD_GROUP_TOP_APP);
             android.os.Process.setCanSelfBackground(false);
             Looper.prepareMainLooper();
             Looper.getMainLooper().setSlowLogThresholdMs(
