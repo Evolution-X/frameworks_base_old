@@ -1362,6 +1362,9 @@ public class CachedAppOptimizer {
     @GuardedBy({"mAm", "mProcLock"})
     private void freezeAppAsyncInternalLSP(ProcessRecord app, @UptimeMillisLong long delayMillis,
             boolean force) {
+        if (app.mState.hasForegroundActivities() || app.mState.hasOverlayUi()) {
+            return;
+        }
         final ProcessCachedOptimizerRecord opt = app.mOptRecord;
         if (opt.isPendingFreeze()) {
             if (delayMillis == 0) {

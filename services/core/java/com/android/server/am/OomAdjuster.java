@@ -1981,6 +1981,8 @@ public class OomAdjuster {
         final ProcessServiceRecord psr = app.mServices;
 
         if (state.getMaxAdj() <= FOREGROUND_APP_ADJ) {
+            app.mOptRecord.setShouldNotFreeze(true, 
+                ProcessCachedOptimizerRecord.SHOULD_NOT_FREEZE_REASON_UID_ALLOWLISTED, mAdjSeq);
             // The max adjustment doesn't allow this app to be anything
             // below foreground, so it is not worth doing work for it.
             if (DEBUG_OOM_ADJ_REASON || logUid == appUid) {
