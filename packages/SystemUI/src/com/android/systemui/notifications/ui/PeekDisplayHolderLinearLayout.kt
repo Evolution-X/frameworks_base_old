@@ -95,7 +95,7 @@ class PeekDisplayHolderLinearLayout @JvmOverloads constructor(
     private fun updatePeekDisplayVisibility() {
         val location = Settings.Secure.getIntForUser(
             context.contentResolver,
-            "peek_display_location", 1, android.os.UserHandle.USER_CURRENT
+            "peek_display_location", 0, android.os.UserHandle.USER_CURRENT
         )
         setContainerVisibility(location)
     }
