@@ -1786,11 +1786,13 @@ public final class NotificationPanelViewController implements ShadeSurface, Dump
             mContentResolver, "peek_display_notifications", 0, UserHandle.USER_CURRENT) != 0;
         boolean lockscreenWidgetsEnabled = Settings.System.getIntForUser(
             mContentResolver, "lockscreen_widgets_enabled", 0, UserHandle.USER_CURRENT) != 0;
+        boolean nowBarEnabled = Settings.System.getIntForUser(
+            mContentResolver, "keyguard_now_bar_enabled", 0, UserHandle.USER_CURRENT) != 0;
         return mFeatureFlags.isEnabled(Flags.LOCKSCREEN_ENABLE_LANDSCAPE)
                 && !isOnAod()
                 // True on small landscape screens
                 && mResources.getBoolean(R.bool.force_small_clock_on_lockscreen) ||
-                (customClockEnabled || lockscreenWidgetsEnabled || peekDisplayEnabled);
+                (customClockEnabled || lockscreenWidgetsEnabled || peekDisplayEnabled || nowBarEnabled);
     }
 
     private void updateKeyguardStatusViewAlignment(boolean animate) {
