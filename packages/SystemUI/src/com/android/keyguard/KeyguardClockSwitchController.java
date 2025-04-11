@@ -139,6 +139,7 @@ public class KeyguardClockSwitchController extends ViewController<KeyguardClockS
     
     private boolean mEnableCustomClock = false;
     private boolean mPeekDisplayEnabled = false;
+    private boolean mNowBarEnabled = false;
     private int mClockStyle = 0;
     private final ContentObserver mCustomClockObserver = new ContentObserver(null) {
         @Override
@@ -324,6 +325,12 @@ public class KeyguardClockSwitchController extends ViewController<KeyguardClockS
             );
             mSecureSettings.registerContentObserverForUserSync(
                     ClockStyle.CLOCK_STYLE_KEY,
+                    false, /* notifyForDescendants */
+                    mCustomClockObserver,
+                    UserHandle.USER_ALL
+            );
+            mSecureSettings.registerContentObserverForUserSync(
+                    "keyguard_now_bar_enabled",
                     false, /* notifyForDescendants */
                     mCustomClockObserver,
                     UserHandle.USER_ALL
@@ -667,6 +674,9 @@ public class KeyguardClockSwitchController extends ViewController<KeyguardClockS
 
         mEnableCustomClock = mClockStyle != 0;
 
+        mNowBarEnabled = mSecureSettings.getIntForUser(
+            "keyguard_now_bar_enabled", 0, UserHandle.USER_CURRENT) != 0;
+
         mPeekDisplayEnabled = mSecureSettings.getIntForUser(
             "peek_display_notifications", 0, UserHandle.USER_CURRENT) != 0;
 
@@ -678,7 +688,7 @@ public class KeyguardClockSwitchController extends ViewController<KeyguardClockS
                     .getInteger(com.android.internal.R.integer.config_doublelineClockDefault),
             UserHandle.USER_CURRENT) != 0;
 
-        if (mEnableCustomClock || mShowLockscreenWidgets || mPeekDisplayEnabled) {
+        if (mEnableCustomClock || mShowLockscreenWidgets || mPeekDisplayEnabled || mNowBarEnabled) {
             if (mCanShowDoubleLineClock) {
                 mSecureSettings.putIntForUser(
                         Settings.Secure.LOCKSCREEN_USE_DOUBLE_LINE_CLOCK,
