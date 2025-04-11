@@ -184,6 +184,11 @@ constructor(
                     "peek_display_notifications",
                     0, // Default value
                     UserHandle.USER_CURRENT
+                ) != 0 ||
+                systemSettings.getIntForUser(
+                    "keyguard_now_bar_enabled",
+                    0, // Default value
+                    UserHandle.USER_CURRENT
                 ) != 0
 
     private fun getClockSize(): ClockSizeSetting {
@@ -202,12 +207,17 @@ constructor(
             0, // Default value
             UserHandle.USER_CURRENT
         ) != 0
+        val nowBarEnabled = secureSettings.getIntForUser(
+            "keyguard_now_bar_enabled",
+            0, // Default value
+            UserHandle.USER_CURRENT
+        ) != 0
         val lockscreenWidgetsEnabled = systemSettings.getIntForUser(
             "lockscreen_widgets_enabled",
             0, // Default value
             UserHandle.USER_CURRENT
         ) != 0
-        val clockSettingValue = if (clockStyleEnabled || lockscreenWidgetsEnabled || peekDisplayEnabled) {
+        val clockSettingValue = if (clockStyleEnabled || lockscreenWidgetsEnabled || peekDisplayEnabled || nowBarEnabled) {
             0 
         } else {
             isDoubleLineClock
