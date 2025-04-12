@@ -661,7 +661,7 @@ public final class MediaRouter2 {
         }
 
         if (currentSystemRoutes == null || currentSystemRoutes.isEmpty()) {
-            throw new RuntimeException("Null or empty currentSystemRoutes. Something is wrong.");
+            return;
         }
 
         for (MediaRoute2Info route : currentSystemRoutes) {
