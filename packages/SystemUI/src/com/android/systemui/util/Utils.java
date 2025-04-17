@@ -158,6 +158,9 @@ public class Utils {
         final int waterfallInsetTop = cutout == null ? 0 : cutout.getWaterfallInsets().top;
         final int statusBarHeaderHeightKeyguard = context.getResources()
                 .getDimensionPixelSize(R.dimen.status_bar_header_height_keyguard);
-        return Math.max(statusBarHeight, statusBarHeaderHeightKeyguard + waterfallInsetTop);
+        final boolean ignoreLockscreenCutout = context.getResources()
+                 .getBoolean(R.bool.kg_ignore_lockscreen_cutout);
+        final int defaultHeight = Math.max(statusBarHeight, statusBarHeaderHeightKeyguard + waterfallInsetTop);
+        return ignoreLockscreenCutout ? statusBarHeaderHeightKeyguard : defaultHeight;
     }
 }
