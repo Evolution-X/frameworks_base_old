@@ -42,10 +42,12 @@ constructor(
     override fun getStatusBarHeight(): Int = SystemBarUtils.getStatusBarHeight(context)
     override fun getStatusBarHeaderHeightKeyguard(): Int {
         val cutout = context.display.cutout
+        val ignoreLockscreenCutout = context.resources.getBoolean(R.bool.kg_ignore_lockscreen_cutout)
         val waterfallInsetTop = if (cutout == null) 0 else cutout.waterfallInsets.top
         val statusBarHeaderHeightKeyguard =
             context.resources.getDimensionPixelSize(R.dimen.status_bar_header_height_keyguard)
-        return max(getStatusBarHeight(), statusBarHeaderHeightKeyguard + waterfallInsetTop)
+        val defaultHeight = max(getStatusBarHeight(), statusBarHeaderHeightKeyguard + waterfallInsetTop)
+        return if (ignoreLockscreenCutout) statusBarHeaderHeightKeyguard else defaultHeight
     }
 
     @dagger.Module
