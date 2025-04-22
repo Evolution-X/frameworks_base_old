@@ -39,6 +39,7 @@ import static android.view.WindowManager.LayoutParams.FLAG_ALLOW_LOCK_WHILE_SCRE
 import static android.view.WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS;
 import static android.view.WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE;
 import static android.view.WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS;
+import static android.view.WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES;
 import static android.view.WindowManager.LayoutParams.PRIVATE_FLAG_CONSUME_IME_INSETS;
 import static android.view.WindowManager.LayoutParams.PRIVATE_FLAG_FORCE_DRAW_BAR_BACKGROUNDS;
 import static android.view.WindowManager.LayoutParams.PRIVATE_FLAG_IMMERSIVE_CONFIRMATION_WINDOW;
@@ -1463,6 +1464,14 @@ public class DisplayPolicy {
         // This window might be in the simulated environment.
         // We invoke this to get the proper DisplayFrames.
         displayFrames = win.getDisplayFrames(displayFrames);
+
+        if (win.mActivityRecord != null 
+            && win.mActivityRecord.shouldForceLongScreen()) {
+            int forceFullCutoutMode = LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES;
+            if (win.mAttrs.layoutInDisplayCutoutMode != forceFullCutoutMode) {
+                win.mAttrs.layoutInDisplayCutoutMode = forceFullCutoutMode;
+            }
+        }
 
         final WindowManager.LayoutParams attrs = win.mAttrs.forRotation(displayFrames.mRotation);
         sTmpClientFrames.attachedFrame = attached != null ? attached.getFrame() : null;
