@@ -19704,4 +19704,93 @@ public class ActivityManagerService extends IActivityManager.Stub
     public boolean shouldForceLongScreen(String packageName) {
         return mActivityTaskManager.shouldForceLongScreen(packageName);
     }
+
+    @Override
+    public void loadProcessMemory(String packageName) {
+        synchronized (mProcLock) {
+            ProcessRecord proc = getProcessRecord(packageName);
+            if (proc != null) {
+                // MADV_POPULATE is only available on 5.14 +
+                if (SystemProperties.getBoolean("ro.sys.axion_is_modern_kernel", true)) {
+                    mOomAdjuster.mCachedAppOptimizer.populateAppMemory(proc.getPid(), false);
+                } else {
+                    mOomAdjuster.mCachedAppOptimizer.compactApp(
+                            proc,
+                            CachedAppOptimizer.CompactProfile.SOME,
+                            CachedAppOptimizer.CompactSource.SHELL,
+                            true);
+                }
+            }
+        }
+    }
+
+    public ProcessRecord getProcessRecord(String str) {
+        ProcessRecord processRecordLocked = null;
+        synchronized (mProcLock) {
+            try {
+                int currentUserId = getCurrentUserId();
+                int packageUid = getPackageManagerInternal().getPackageUid(str, 0, currentUserId);
+                processRecordLocked = getProcessRecordLocked(str, packageUid);
+            } catch (Exception e) {
+            }
+        }
+        return processRecordLocked;
+    }
+
+    @Override
+    public void releaseMemory(int minAdj, int maxKillCount, boolean includeUIProcesses, boolean skipCamera) {
+        if (minAdj == 0) return;
+
+        try {
+            ArrayList<ProcessRecord> processList = 
+                (ArrayList<ProcessRecord>) mProcessList.getLruProcessesLOSP().clone();
+
+            ArrayList<ProcessToKill> toKill = new ArrayList<>();
+            
+            for (ProcessRecord record : processList) {
+                if (record != null && record.getSetAdj() >= minAdj) {
+                    boolean hasUI = record.hasActivities();
+                    if (!hasUI || includeUIProcesses) {
+                        toKill.add(new ProcessToKill(
+                            record.getPid(),
+                            record.getSetAdj(),
+                            record.processName
+                        ));
+                    }
+                }
+            }
+
+            Collections.sort(toKill, new ProcessComparator());
+
+            int killedCount = 0;
+            for (ProcessToKill info : toKill) {
+                Process.killProcess(info.pid);
+                killedCount++;
+
+                if (killedCount >= maxKillCount) {
+                    return;
+                }
+            }
+
+        } catch (Exception e) {}
+    }
+
+    public class ProcessComparator implements Comparator<ProcessToKill> {
+        @Override
+        public int compare(ProcessToKill p1, ProcessToKill p2) {
+            return Integer.compare(p2.adj, p1.adj);
+        }
+    }
+
+    public static final class ProcessToKill {
+        public int adj;
+        public String name; 
+        public int pid;
+
+        public ProcessToKill(int pid, int adj, String name) {
+            this.pid = pid;
+            this.adj = adj;
+            this.name = name;
+        }
+    }
 }
