@@ -950,6 +950,8 @@ public class CachedAppOptimizer {
      *         constants
      */
     static private native void compactProcess(int pid, int compactionFlags);
+    
+    private static native void populateMemory(int pid, boolean write);
 
     static private native void cancelCompaction();
 
@@ -2656,4 +2658,9 @@ public class CachedAppOptimizer {
             FrozenProcessListener listener) {
         app.mOptRecord.addFrozenProcessListener(executor, listener);
     }
+    
+    public void populateAppMemory(int pid, boolean write) {
+        populateMemory(pid, write);
+    }
+
 }
