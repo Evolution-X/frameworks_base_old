@@ -28,6 +28,7 @@ import android.net.Uri;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.PowerManager;
+import android.os.SystemProperties;
 import android.os.UserHandle;
 import android.provider.Settings;
 import android.view.SurfaceControlHdrLayerInfoListener;
@@ -51,6 +52,8 @@ public class HdrBrightnessModifier implements BrightnessStateModifier,
 
     private final Uri mLowPowerModeSetting = Settings.Global.getUriFor(
             Settings.Global.LOW_POWER_MODE);
+    private final Uri mHdrDisplaySettings = Settings.Secure.getUriFor(
+            "hdr_display");
 
     private final ContentObserver mContentObserver;
 
@@ -86,6 +89,7 @@ public class HdrBrightnessModifier implements BrightnessStateModifier,
     private float mAmbientLux = INVALID_LUX;
 
     private boolean mLowPowerMode = false;
+    private boolean mHdrDisplayEnabled = true;
 
     private Mode mMode = Mode.NO_HDR;
     // The maximum brightness allowed for current lux
@@ -275,6 +279,10 @@ public class HdrBrightnessModifier implements BrightnessStateModifier,
         if (mHdrLayerSize == DEFAULT_HDR_LAYER_SIZE) {
             return Mode.NO_HDR;
         }
+        // hdr display is disabled by user
+        if (!mHdrDisplayEnabled) {
+            return Mode.NO_HDR;
+        }
         // low power mode and not allowed in low power mode
         if (!data.allowInLowPowerMode && mLowPowerMode) {
             return Mode.NO_HDR;
@@ -293,6 +301,7 @@ public class HdrBrightnessModifier implements BrightnessStateModifier,
 
     private void onLowPowerModeChange() {
         mLowPowerMode = mInjector.isLowPowerMode();
+        mHdrDisplayEnabled = mInjector.isHdrDisplayEnabled();
         Mode newMode = recalculateMode(mHdrBrightnessData);
         if (newMode != mMode) {
             mMode = newMode;
@@ -374,8 +383,10 @@ public class HdrBrightnessModifier implements BrightnessStateModifier,
     private void registerContentObserver() {
         if (!mContentObserverRegistered) {
             mInjector.registerContentObserver(mContentObserver, mLowPowerModeSetting);
+            mInjector.registerContentObserver(mContentObserver, mHdrDisplaySettings);
             mContentObserverRegistered = true;
             mLowPowerMode = mInjector.isLowPowerMode();
+            mHdrDisplayEnabled = mInjector.isHdrDisplayEnabled();
         }
     }
 
@@ -385,6 +396,7 @@ public class HdrBrightnessModifier implements BrightnessStateModifier,
             mInjector.unregisterContentObserver(mContentObserver);
             mContentObserverRegistered = false;
             mLowPowerMode = false;
+            mHdrDisplayEnabled = true;
         }
     }
 
@@ -420,6 +432,17 @@ public class HdrBrightnessModifier implements BrightnessStateModifier,
         boolean isLowPowerMode() {
             return Settings.Global.getInt(
                     mContext.getContentResolver(), Settings.Global.LOW_POWER_MODE, 0) != 0;
+        }
+        
+        boolean isHdrDisplayEnabled() {
+            boolean hasHdrDisplay = SystemProperties.getBoolean("ro.surface_flinger.has_HDR_display", false);
+            int defaultValue = hasHdrDisplay ? 1 : 0;
+            return Settings.Secure.getIntForUser(
+                    mContext.getContentResolver(), 
+                    "hdr_display", 
+                    defaultValue,
+                    UserHandle.USER_CURRENT
+            ) != 0;
         }
     }
 }
