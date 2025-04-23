@@ -325,6 +325,17 @@ static int64_t compactMemory(const std::vector<Vma>& vmas, int pid, int madviseT
     return totalBytesProcessed;
 }
 
+static int getPopulatePageAdvice(const Vma& vma) {
+    bool isFileBacked = (vma.inode > 0);
+    bool isShared = vma.is_shared;
+    bool isReadable = (vma.flags & PROT_READ) > 0;
+    bool isWritable = (vma.flags & PROT_WRITE) > 0;
+    bool isExecutable = (vma.flags & PROT_EXEC) > 0;
+    if (isFileBacked && !isShared && (isReadable || isWritable) && !isExecutable) {
+        return MADV_POPULATE_READ;
+    }
+    return -1;
+}
 static int getFilePageAdvice(const Vma& vma) {
     if (vma.inode > 0 && !vma.is_shared) {
         return MADV_COLD;
@@ -367,10 +378,11 @@ static int64_t compactProcess(int pid, VmaToAdviseFunc vmaToAdviseFunc) {
     static std::string mapsBuffer;
     ATRACE_BEGIN("CollectVmas");
     ProcMemInfo meminfo(pid);
-    static std::vector<Vma> pageoutVmas(2000), coldVmas(2000);
+    static std::vector<Vma> pageoutVmas(2000), coldVmas(2000), populateReadVmas(2000);
     int coldVmaIndex = 0;
     int pageoutVmaIndex = 0;
-    auto vmaCollectorCb = [&vmaToAdviseFunc, &pageoutVmaIndex, &coldVmaIndex](const Vma& vma) {
+    int populateReadVmaIndex = 0;
+    auto vmaCollectorCb = [&vmaToAdviseFunc, &pageoutVmaIndex, &coldVmaIndex, &populateReadVmaIndex](const Vma& vma) {
         int advice = vmaToAdviseFunc(vma);
         switch (advice) {
             case MADV_COLD:
@@ -392,6 +404,14 @@ static int64_t compactProcess(int pid, VmaToAdviseFunc vmaToAdviseFunc) {
                 }
                 ++pageoutVmaIndex;
                 break;
+            case MADV_POPULATE_READ:
+                if (populateReadVmaIndex < populateReadVmas.size()) {
+                    populateReadVmas[populateReadVmaIndex] = vma;
+                } else {
+                    populateReadVmas.push_back(vma);
+                }
+                ++populateReadVmaIndex;
+                break;
         }
         return true;
     };
@@ -401,6 +421,13 @@ static int64_t compactProcess(int pid, VmaToAdviseFunc vmaToAdviseFunc) {
     ALOGE("Total VMAs sent for compaction anon=%d file=%d", pageoutVmaIndex,
             coldVmaIndex);
 #endif
+
+    int64_t readBytes = compactMemory(populateReadVmas, pid, MADV_POPULATE_READ, populateReadVmaIndex);
+    if (readBytes < 0) {
+        // Error in populating memory
+        cancelRunningCompaction.store(false);
+        return readBytes;
+    }
 
     int64_t pageoutBytes = compactMemory(pageoutVmas, pid, MADV_PAGEOUT, pageoutVmaIndex);
     if (pageoutBytes < 0) {
@@ -416,7 +443,7 @@ static int64_t compactProcess(int pid, VmaToAdviseFunc vmaToAdviseFunc) {
         return coldBytes;
     }
 
-    return pageoutBytes + coldBytes;
+    return pageoutBytes + coldBytes + readBytes;
 }
 
 // Compact process using process_madvise syscall or fallback to procfs in
@@ -529,6 +556,15 @@ static void com_android_server_am_CachedAppOptimizer_compactProcess(JNIEnv*, job
     compactProcessOrFallback(pid, compactionFlags);
 }
 
+static void populateProcessMemory(int pid, bool write) {
+    VmaToAdviseFunc vmaToAdviseFunc = getPopulatePageAdvice;
+    compactProcess(pid, vmaToAdviseFunc);
+}
+
+static void com_android_server_am_CachedAppOptimizer_populateMemory(JNIEnv*, jobject, jint pid, jboolean write) {
+    populateProcessMemory(pid, write);
+}
+
 static const JNINativeMethod sMethods[] = {
         /* name, signature, funcPtr */
         {"cancelCompaction", "()V",
@@ -542,6 +578,7 @@ static const JNINativeMethod sMethods[] = {
          (void*)com_android_server_am_CachedAppOptimizer_getMemoryFreedCompaction},
         {"compactSystem", "()V", (void*)com_android_server_am_CachedAppOptimizer_compactSystem},
         {"compactProcess", "(II)V", (void*)com_android_server_am_CachedAppOptimizer_compactProcess},
+        {"populateMemory", "(IZ)V", (void*)com_android_server_am_CachedAppOptimizer_populateMemory},
 };
 
 int register_android_server_am_CachedAppOptimizer(JNIEnv* env)
