@@ -184,4 +184,7 @@
 
     <!-- Bootleg unneccesary gradient declaration | Just for our shishu bars -->
     <java-symbol type="color" name="bootleg_accent_gradient_end_color" />
+
+    <!-- Game Space -->
+    <java-symbol type="string" name="gamespace_new_game_added" />
 </resources>
