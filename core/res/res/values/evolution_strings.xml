@@ -39,4 +39,7 @@
     <!-- Launcher Restart -->
     <string name="launcher_restart_title">Launcher restart required</string>
     <string name="launcher_restart_message">For all changes to take effect, a Launcher restart is required. Restart Launcher now?</string>
+
+    <!-- Game Space -->
+    <string name="gamespace_new_game_added"><xliff:g id="name" example="MyApp">%s</xliff:g> added to Game Space</string>
 </resources>
