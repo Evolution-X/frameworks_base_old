@@ -2380,12 +2380,17 @@ public final class GameManagerService extends IGameManagerService.Stub {
                 int pid = entry.getValue();
                 String packageName = entry.getKey();
 
+                int priority = boosted 
+                    ? Process.SCHED_FIFO | Process.SCHED_RESET_ON_FORK 
+                    : Process.SCHED_OTHER;
+                Process.setThreadScheduler(pid, priority, boosted ? 99 : 0);
+                Slog.v(TAG, "Set thread scheduler for PID=" + pid + " (Package: " + packageName + 
+                        ", UID=" + uid + ") to " + (boosted ? "SCHED_FIFO (boosted)" : "SCHED_OTHER (normal)"));
                 Process.setThreadAffinity(pid, boosted ? 0 : 2);
                 Slog.v(TAG, "Set affinity for PID=" + pid + " (Package: " + packageName + 
                         ", UID=" + uid + ") to " + (boosted ? "big cores (boosted)" : "all cores (normal)"));
             }
         }
-
         private Map<String, Integer> getRunningGamePidsPerPackage(int targetUid) {
             Map<String, Integer> packagePidMap = new HashMap<>();
             ActivityManager am = (ActivityManager) mContext.getSystemService(Context.ACTIVITY_SERVICE);
