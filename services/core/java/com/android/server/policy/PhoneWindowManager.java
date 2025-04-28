@@ -448,6 +448,9 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     private static final long MEMORY_RELEASE_INTERVAL_MS = 5 * 60 * 1000L; // 5 minutes
     private long lastMemoryReleaseTime = 0L;
 
+    private static final long GC_INTERVAL_MS = 10 * 60 * 1000L; // 10 minutes
+    private long lastGcTime = 0L;
+
     /**
      * Keyguard stuff
      */
@@ -7049,6 +7052,9 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         }
         mPowerButtonLaunchGestureTriggeredDuringGoingToSleep = false;
         mPowerButtonLaunchGestureTriggered = false;
+
+        // make sure we do garbage collection at screen off but delay it to avoid black wallpaper
+        mHandler.postDelayed(mSystemServerGcOpt, 5000);
     }
 
     // Called on the PowerManager's Notifier thread.
@@ -7067,6 +7073,9 @@ public class PhoneWindowManager implements WindowManagerPolicy {
 
         mHandler.removeCallbacks(mMemoryOpt);
         mHandler.postDelayed(mMemoryOpt, 1250 /* allowance time */);
+
+        // remove pending system server gc for frequent screen state changes
+        mHandler.removeCallbacks(mSystemServerGcOpt);
 
         mIsGoingToSleepDefaultDisplay = false;
         mDefaultDisplayPolicy.setAwake(true);
@@ -7117,6 +7126,20 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         @Override
         public void run() {
             releaseMemoryAtScreenOn();
+        }
+    };
+
+    private final Runnable mSystemServerGcOpt = new Runnable() {
+        @Override
+        public void run() {
+            long currentTime = System.currentTimeMillis();
+            if (lastGcTime == 0L || currentTime - lastGcTime > GC_INTERVAL_MS) {
+                System.gc();
+                System.runFinalization();
+                System.gc();
+                lastGcTime = currentTime;
+                Log.v("GcOpt", "performing garbage collection for system_server");
+            }
         }
     };
 
