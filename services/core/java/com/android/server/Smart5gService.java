@@ -288,9 +288,6 @@ public class Smart5gService extends SystemService {
         } else if (mIsScreenOff) {
             dlog("shouldDisable5g: screen is off");
             return true;
-        } else if (isConservativeMode() && isLowSignal(subId)) {
-            dlog("shouldDisable5g: conservative mode with low signal");
-            return true;
         } else if (isConnectedToWifi()) { // if both wifi/data are enabled for e.g smart download feature on some apps
             dlog("shouldDisable5g: connected to wifi");
             return true;
@@ -305,11 +302,6 @@ public class Smart5gService extends SystemService {
                 || !mIsOnMobileData // we aren't on mobile data
                 // this isn't the default data sim
                 || (mDefaultDataSubId != INVALID_SUBSCRIPTION_ID && subId != mDefaultDataSubId);
-    }
-
-    private boolean isConservativeMode() {
-        String devicePowerMode = SystemProperties.get("persist.sys.device_power_mode", "");
-        return "conservative".equals(devicePowerMode);
     }
     
     private boolean isLowSignal(int subId) {
