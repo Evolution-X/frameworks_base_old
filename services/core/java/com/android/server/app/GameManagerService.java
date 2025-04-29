@@ -2386,7 +2386,7 @@ public final class GameManagerService extends IGameManagerService.Stub {
                 Process.setThreadScheduler(pid, priority, boosted ? 99 : 0);
                 Slog.v(TAG, "Set thread scheduler for PID=" + pid + " (Package: " + packageName + 
                         ", UID=" + uid + ") to " + (boosted ? "SCHED_FIFO (boosted)" : "SCHED_OTHER (normal)"));
-                Process.setThreadAffinity(pid, boosted ? 0 : 2);
+                Process.setThreadAffinity(pid, boosted ? 2 : 0);
                 Slog.v(TAG, "Set affinity for PID=" + pid + " (Package: " + packageName + 
                         ", UID=" + uid + ") to " + (boosted ? "big cores (boosted)" : "all cores (normal)"));
             }
