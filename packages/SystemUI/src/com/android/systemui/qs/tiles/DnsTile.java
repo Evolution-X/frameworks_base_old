@@ -45,13 +45,12 @@ import com.android.systemui.qs.QsEventLogger;
 import com.android.systemui.qs.SettingObserver;
 import com.android.systemui.qs.logging.QSLogger;
 import com.android.systemui.qs.tileimpl.QSTileImpl;
-import com.android.systemui.statusbar.policy.KeyguardStateController;
 import com.android.systemui.util.settings.GlobalSettings;
 
 import javax.inject.Inject;
 
 /** Quick settings tile: DNS Tile **/
-public class DnsTile extends SecureQSTile<BooleanState> {
+public class DnsTile extends QSTileImpl<BooleanState> {
 
     public static final String TILE_SPEC = "dns";
     private static final String KEY_PREV_MODE = "dns_tile_prev_mode";
@@ -70,11 +69,10 @@ public class DnsTile extends SecureQSTile<BooleanState> {
             StatusBarStateController statusBarStateController,
             ActivityStarter activityStarter,
             QSLogger qsLogger,
-            GlobalSettings globalSettings,
-            KeyguardStateController keyguardStateController
+            GlobalSettings globalSettings
     ) {
         super(host, uiEventLogger, backgroundLooper, mainHandler, falsingManager, metricsLogger,
-                statusBarStateController, activityStarter, qsLogger, keyguardStateController);
+                statusBarStateController, activityStarter, qsLogger);
         mSetting = new SettingObserver(globalSettings, mHandler, Settings.Global.PRIVATE_DNS_MODE) {
             @Override
             protected void handleValueChanged(int value, boolean observedChange) {
@@ -110,11 +108,7 @@ public class DnsTile extends SecureQSTile<BooleanState> {
     }
 
     @Override
-    protected void handleClick(@Nullable Expandable expandable, boolean keyguardShowing) {
-        if (checkKeyguard(expandable, keyguardShowing)) {
-            return;
-        }
-
+    protected void handleClick(@Nullable Expandable expandable) {
         // don't toggle if not needed, just refresh state instead
         final int mode = ConnectivitySettingsManager.getPrivateDnsMode(mContext);
         final boolean stateEnabled = mState.value;

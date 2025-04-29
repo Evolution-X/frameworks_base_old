@@ -6614,12 +6614,6 @@ public final class Settings {
         public static final String STATUS_BAR_BRIGHTNESS_CONTROL = "status_bar_brightness_control";
 
         /**
-         * Whether to disable qs on secure lockscreen.
-         * @hide
-         */
-        public static final String SECURE_LOCKSCREEN_QS_DISABLED = "secure_lockscreen_qs_disabled";
-
-        /**
          * @hide
          */
         public static final String SCREENSHOT_SHUTTER_SOUND = "screenshot_shutter_sound";
@@ -13912,13 +13906,6 @@ public final class Settings {
          * @hide
          */
         public static final String SHOW_CLIPBOARD_OVERLAY = "show_clipboard_overlay";
-
-        /**
-         * Whether to show QS auto brightness toggle button
-         * @hide
-         */
-        @Readable
-        public static final String QSTILE_REQUIRES_UNLOCKING = "qstile_requires_unlocking";
 
         /**
          * Whether to turn off Private DNS {@link #PRIVATE_DNS_MODE}
