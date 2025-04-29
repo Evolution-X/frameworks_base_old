@@ -62,7 +62,6 @@ import com.android.systemui.qs.logging.QSLogger;
 import com.android.systemui.qs.tileimpl.QSTileImpl;
 import com.android.systemui.res.R;
 import com.android.systemui.statusbar.policy.BluetoothController;
-import com.android.systemui.statusbar.policy.KeyguardStateController;
 
 import dagger.Lazy;
 
@@ -75,7 +74,7 @@ import java.util.function.Consumer;
 import javax.inject.Inject;
 
 /** Quick settings tile: Bluetooth **/
-public class BluetoothTile extends SecureQSTile<BooleanState> {
+public class BluetoothTile extends QSTileImpl<BooleanState> {
 
     public static final String TILE_SPEC = "bt";
 
@@ -109,11 +108,10 @@ public class BluetoothTile extends SecureQSTile<BooleanState> {
             QSLogger qsLogger,
             BluetoothController bluetoothController,
             FeatureFlags featureFlags,
-            Lazy<BluetoothDetailsContentViewModel> detailsContentViewModel,
-            KeyguardStateController keyguardStateController
+            Lazy<BluetoothDetailsContentViewModel> detailsContentViewModel
     ) {
         super(host, uiEventLogger, backgroundLooper, mainHandler, falsingManager, metricsLogger,
-                statusBarStateController, activityStarter, qsLogger, keyguardStateController);
+                statusBarStateController, activityStarter, qsLogger);
         mController = bluetoothController;
         mController.observe(getLifecycle(), mCallback);
         mExecutor = new HandlerExecutor(mainHandler);
@@ -131,10 +129,7 @@ public class BluetoothTile extends SecureQSTile<BooleanState> {
     }
 
     @Override
-    protected void handleClick(@Nullable Expandable expandable, boolean keyguardShowing) {
-        if (checkKeyguard(expandable, keyguardShowing)) {
-            return;
-        }
+    protected void handleClick(@Nullable Expandable expandable) {
         handleClickWithSatelliteCheck(() -> handleClickEvent(expandable));
     }
 
