@@ -111,7 +111,7 @@ public class AmbientDisplayConfiguration {
 
     /** {@hide} */
     private boolean pulseOnCustomDozeEventEnabled(int user) {
-        return (Settings.System.getInt(mContext.getContentResolver(), Settings.System.DOZE_TRIGGER_DOUBLETAP, 0) != 0)
+        return (Settings.System.getIntForUser(mContext.getContentResolver(), "doze_trigger_doubletap", 0, user) != 0)
                 && pulseOnNotificationAvailable();
     }
 
