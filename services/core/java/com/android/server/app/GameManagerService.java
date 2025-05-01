@@ -2339,6 +2339,7 @@ public final class GameManagerService extends IGameManagerService.Stub {
                         || mNonGameForegroundUids.isEmpty())) {
                     Slog.v(TAG, "Game power mode ON (first game in foreground)");
                     mPowerManagerInternal.setPowerMode(Mode.GAME, true);
+                    releaseMemory();
                 }
                 final boolean isGameDefaultFrameRateDisabled =
                         mSysProps.getBoolean(
@@ -2364,6 +2365,7 @@ public final class GameManagerService extends IGameManagerService.Stub {
                     if (mNonGameForegroundUids.isEmpty() && !mGameForegroundUids.isEmpty()) {
                         Slog.v(TAG, "Game power mode ON (only games in foreground)");
                         mPowerManagerInternal.setPowerMode(Mode.GAME, true);
+                        releaseMemory();
                     }
                 }
             }
@@ -2406,6 +2408,13 @@ public final class GameManagerService extends IGameManagerService.Stub {
                 }
             }
             return packagePidMap;
+        }
+        
+        private void releaseMemory() {
+            try {
+                ActivityManager.getService().releaseMemory(900, 40, false, false);
+            } catch (RemoteException e) {
+            }
         }
     }
 
