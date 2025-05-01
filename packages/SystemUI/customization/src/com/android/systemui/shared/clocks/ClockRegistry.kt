@@ -302,7 +302,13 @@ open class ClockRegistry(
                         )
                     }
 
-                ClockSettings.fromJson(JSONObject(json))
+                if (json.isNullOrBlank()) {
+                    logger.w("Clock settings string is null or blank")
+                    null
+                } else {
+                    ClockSettings.fromJson(JSONObject(json))
+                }
+
             } catch (ex: Exception) {
                 logger.e("Failed to parse clock settings", ex)
                 null
