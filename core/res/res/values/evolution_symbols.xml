@@ -190,4 +190,7 @@
     <java-symbol type="string" name="poweroff_alarm_title" />
     <java-symbol type="string" name="poweroff_alarm_body" />
     <java-symbol type="drawable" name="ic_alarm_on" />
+
+    <!-- Game Space -->
+    <java-symbol type="string" name="gamespace_new_game_added" />
 </resources>

@@ -1210,7 +1210,7 @@ public class KeyguardIndicationController {
             "keyguard_now_bar_enabled", 0, UserHandle.USER_CURRENT) == 1;
 
         if (nowBarEnabled) {
-            return ""; // Return empty string when now bar is enabled
+            return " "; // Return empty string when now bar is enabled
         }
 
         if (mPowerCharged) {

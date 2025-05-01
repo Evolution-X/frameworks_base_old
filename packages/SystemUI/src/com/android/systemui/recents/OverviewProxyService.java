@@ -72,6 +72,7 @@ import android.view.KeyCharacterMap;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.Surface;
+import android.view.ViewConfiguration;
 import android.view.accessibility.AccessibilityManager;
 import android.view.inputmethod.Flags;
 import android.view.inputmethod.InputMethodManager;
@@ -312,17 +313,17 @@ public class OverviewProxyService implements CallbackController<OverviewProxyLis
         @Override
         public void injectLongPress(int keyCode) throws RemoteException {
             verifyCallerAndClearCallingIdentityPostMain("longPressInjected", () -> {
-                sendEvent(KeyEvent.ACTION_DOWN, keyCode, 0, KeyEvent.FLAG_LONG_PRESS);
-                sendEvent(KeyEvent.ACTION_DOWN, keyCode, 1, KeyEvent.FLAG_LONG_PRESS);
-                sendEvent(KeyEvent.ACTION_UP, keyCode, 1, KeyEvent.FLAG_LONG_PRESS);
+                sendEvent(KeyEvent.ACTION_DOWN, keyCode, 0, 0);
+                mHandler.postDelayed(() -> {
+                    sendEvent(KeyEvent.ACTION_DOWN, keyCode, 1, KeyEvent.FLAG_LONG_PRESS);
+                    sendEvent(KeyEvent.ACTION_UP, keyCode, 0, KeyEvent.FLAG_CANCELED);
+                }, ViewConfiguration.getLongPressTimeout());
             });
         }
 
         @Override
-        public void injectDoublePress(int keyCode) throws RemoteException {
-            verifyCallerAndClearCallingIdentityPostMain("doublePressInjected", () -> {
-                sendEvent(KeyEvent.ACTION_DOWN, keyCode);
-                sendEvent(KeyEvent.ACTION_UP, keyCode);
+        public void injectPress(int keyCode) throws RemoteException {
+            verifyCallerAndClearCallingIdentityPostMain("pressInjected", () -> {
                 sendEvent(KeyEvent.ACTION_DOWN, keyCode);
                 sendEvent(KeyEvent.ACTION_UP, keyCode);
             });

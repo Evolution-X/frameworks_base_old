@@ -2700,10 +2700,10 @@ public class PhoneWindow extends Window implements MenuBuilder.Callback {
             params.layoutInDisplayCutoutMode = mode;
         }
 
-        if (CutoutUtils.hasCutout(context) && ActivityManager.isSystemReady()) {
+        if (ActivityManager.isSystemReady()) {
             try {
                 String packageName = context.getBasePackageName();
-                if (ActivityManager.getService().shouldForceCutoutFullscreen(packageName)){
+                if (ActivityManager.getService().shouldForceLongScreen(packageName)){
                     params.layoutInDisplayCutoutMode = LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES;
                 }
             } catch (RemoteException e) {

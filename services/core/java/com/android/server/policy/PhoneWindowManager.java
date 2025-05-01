@@ -430,6 +430,12 @@ public class PhoneWindowManager implements WindowManagerPolicy {
 
     private static final String ACTION_TORCH_OFF =
             "com.android.server.policy.PhoneWindowManager.ACTION_TORCH_OFF";
+            
+    private static final long MEMORY_RELEASE_INTERVAL_MS = 10 * 60 * 1000L; // 10 minutes
+    private long lastMemoryReleaseTime = 0L;
+    
+    private static final long GC_INTERVAL_MS = 10 * 60 * 1000L; // 10 minutes
+    private long lastGcTime = 0L;
 
     /**
      * Keyguard stuff
@@ -1136,7 +1142,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                     Settings.System.SWIPE_TO_SCREENSHOT), false, this,
                     UserHandle.USER_ALL);
             resolver.registerContentObserver(Settings.System.getUriFor(
-                    Settings.System.DOZE_TRIGGER_DOUBLETAP), false, this,
+                    "doze_trigger_doubletap"), false, this,
                     UserHandle.USER_ALL);
             updateSettings();
         }
@@ -2445,9 +2451,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                     mPendingHomeKeyEvent = null;
                     mHandler.removeCallbacks(mHomeDoubleTapTimeoutRunnable);
                     performKeyAction(mHomeDoubleTapAction, event);
-                    if (mHomeDoubleTapAction != Action.SLEEP) {
-                        mHomeConsumed = true;
-                    }
+                    mHomeConsumed = true;
                 } else if (mDisplayId == DEFAULT_DISPLAY
                         && (mHomeLongPressAction == Action.APP_SWITCH
                             || mHomeDoubleTapAction == Action.APP_SWITCH)) {
@@ -2465,9 +2469,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                     // it should pass this right invocation type.
                     performKeyAction(mHomeLongPressAction, event,
                             AssistUtils.INVOCATION_TYPE_HOME_BUTTON_LONG_PRESS);
-                    if (mHomeLongPressAction != Action.SLEEP) {
-                        mHomeConsumed = true;
-                    }
+                    mHomeConsumed = true;
                 }
             }
             return true;
@@ -2597,7 +2599,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                 res.getBoolean(com.android.internal.R.bool.config_wakeOnDpadKeyPress);
 
         // Double-tap-to-doze
-        mNativeDoubleTapToDozeAvailable = !TextUtils.isEmpty(
+        mNativeDoubleTapToDozeAvailable = !android.text.TextUtils.isEmpty(
                 mContext.getResources().getString(R.string.config_dozeDoubleTapSensorType));
 
         // Init display burn-in protection
@@ -3430,10 +3432,10 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                 org.lineageos.platform.internal.R.integer.config_deviceHardwareWakeKeys);
 
         // Double-tap-to-doze
-        mDoubleTapToWake = Settings.Secure.getInt(resolver,
-                Settings.Secure.DOUBLE_TAP_TO_WAKE, 0) == 1;
-        mDoubleTapToDoze = Settings.System.getInt(resolver,
-                Settings.System.DOZE_TRIGGER_DOUBLETAP, 0) == 1;
+        mDoubleTapToWake = Settings.Secure.getIntForUser(resolver,
+                Settings.Secure.DOUBLE_TAP_TO_WAKE, 0, UserHandle.USER_CURRENT) == 1;
+        mDoubleTapToDoze = Settings.System.getIntForUser(resolver,
+                "doze_trigger_doubletap", 0, UserHandle.USER_CURRENT) == 1;
 
         synchronized (mLock) {
             mEndcallBehavior = Settings.System.getIntForUser(resolver,
@@ -6355,7 +6357,9 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                 if (mDoubleTapToWake && mDoubleTapToDoze && !mNativeDoubleTapToDozeAvailable) {
                     isWakeKey = false;
                     if (!down) {
-                        mContext.sendBroadcast(new Intent("com.android.systemui.doze.pulse"));
+                        Intent intent = new Intent("com.android.systemui.doze.pulse");
+                        intent.setPackage("com.android.systemui");
+                        mContext.sendBroadcastAsUser(intent, new UserHandle(UserHandle.USER_CURRENT));
                     }
                 } else {
                     isWakeKey = true;
@@ -7012,6 +7016,11 @@ public class PhoneWindowManager implements WindowManagerPolicy {
             mKeyguardDelegate.onStartedGoingToSleep(pmSleepReason);
         }
         getPocketModeInstance().onInteractiveChanged(false);
+        
+        mHandler.removeCallbacks(mMemoryOpt);
+
+        // make sure we do garbage collection at screen off but delay it to avoid black wallpaper
+        mHandler.postDelayed(mSystemServerGcOpt, 1000);
     }
 
     // Called on the PowerManager's Notifier thread.
@@ -7066,6 +7075,12 @@ public class PhoneWindowManager implements WindowManagerPolicy {
             return;
         }
         EventLogTags.writeScreenToggled(1);
+        
+        mHandler.removeCallbacks(mMemoryOpt);
+        mHandler.postDelayed(mMemoryOpt, 1250 /* allowance time */);
+
+        // remove pending system server gc for frequent screen state changes
+        mHandler.removeCallbacks(mSystemServerGcOpt);
 
         mIsGoingToSleepDefaultDisplay = false;
         mDefaultDisplayPolicy.setAwake(true);
@@ -7090,6 +7105,27 @@ public class PhoneWindowManager implements WindowManagerPolicy {
 
         mCameraGestureTriggered = false;
     }
+
+    private final Runnable mMemoryOpt = new Runnable() {
+        @Override
+        public void run() {
+            releaseMemoryAtScreenOn();
+        }
+    };
+    
+    private final Runnable mSystemServerGcOpt = new Runnable() {
+        @Override
+        public void run() {
+            long currentTime = System.currentTimeMillis();
+            if (lastGcTime == 0L || currentTime - lastGcTime > GC_INTERVAL_MS) {
+                System.gc();
+                System.runFinalization();
+                System.gc();
+                lastGcTime = currentTime;
+                Log.v("GcOpt", "performing garbage collection for system_server");
+            }
+        }
+    };
 
     // Called on the PowerManager's Notifier thread.
     @Override
@@ -8719,6 +8755,19 @@ public class PhoneWindowManager implements WindowManagerPolicy {
             case AudioManager.RINGER_MODE_SILENT:
                 am.setRingerMode(AudioManager.RINGER_MODE_NORMAL);
                 break;
+        }
+    }
+    
+    private void releaseMemoryAtScreenOn() {
+        long currentTime = System.currentTimeMillis();
+        if (lastMemoryReleaseTime == 0L || currentTime - lastMemoryReleaseTime > MEMORY_RELEASE_INTERVAL_MS) {
+            try {
+                ActivityManager.getService().releaseMemory(900, 20, false, false);
+                ActivityManager.getService().loadProcessMemory("com.android.systemui");
+                ActivityManager.getService().loadProcessMemory("com.android.launcher3");
+                lastMemoryReleaseTime = currentTime;
+            } catch (RemoteException e) {
+            }
         }
     }
 }

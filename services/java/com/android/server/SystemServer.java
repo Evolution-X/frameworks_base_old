@@ -1781,6 +1781,7 @@ public final class SystemServer implements Dumpable {
                 mSystemServiceManager.startService(Smart5gService.class);
                 t.traceEnd();
             }
+
             t.traceBegin("StartPowerOffAlarmService");
             mSystemServiceManager.startService(PowerOffAlarmService.class);
             t.traceEnd();
@@ -2782,6 +2783,10 @@ public final class SystemServer implements Dumpable {
             // CustomDeviceConfigService
             t.traceBegin("StartCustomDeviceConfigService");
             mSystemServiceManager.startService(CustomDeviceConfigService.class);
+            t.traceEnd();
+
+            t.traceBegin("GameSpaceManagerService");
+            mSystemServiceManager.startService(GameSpaceManagerService.class);
             t.traceEnd();
 
             mSystemServiceManager.startService(HideAppListService.class);

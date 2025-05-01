@@ -549,9 +549,7 @@ public final class WindowManagerGlobal {
         ViewRootImpl root = mRoots.get(index);
         View view = root.getView();
 
-        if (root != null) {
-            root.getImeFocusController().onWindowDismissed();
-        }
+        root.getImeFocusController().onWindowDismissed();
         boolean deferred = root.die(immediate);
         if (view != null) {
             view.assignParent(null);
@@ -562,7 +560,7 @@ public final class WindowManagerGlobal {
     }
 
     void doRemoveView(ViewRootImpl root) {
-        boolean allViewsRemoved;
+        final boolean allViewsRemoved;
         synchronized (mLock) {
             final int index = mRoots.indexOf(root);
             if (index >= 0) {
@@ -572,6 +570,13 @@ public final class WindowManagerGlobal {
                 mDyingViews.remove(view);
             }
             allViewsRemoved = mRoots.isEmpty();
+
+            // If we don't have any views anymore in our process, stop watching
+            // for system property changes.
+            if (allViewsRemoved && mSystemPropertyUpdater != null) {
+                SystemProperties.removeChangeCallback(mSystemPropertyUpdater);
+                mSystemPropertyUpdater = null;
+            }
         }
 
         // If we don't have any views anymore in our process, we no longer need the

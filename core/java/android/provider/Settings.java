@@ -6677,12 +6677,6 @@ public final class Settings {
         public static final String WIFI_STANDARD_ICON = "wifi_standard_icon";
 
         /**
-         * Use doubletap as doze pulse triggers
-         * @hide
-         */
-        public static final String DOZE_TRIGGER_DOUBLETAP = "doze_trigger_doubletap";
-
-        /**
          * Haptic feedback on brightness slider
          * @hide
          */
@@ -6874,12 +6868,6 @@ public final class Settings {
         public static final String BLOCK_WALLPAPER_DIMMING = "block_wallpaper_dimming";
 
         /**
-         * Force full screen for devices with cutout
-         * @hide
-         */
-        public static final String FORCE_FULLSCREEN_CUTOUT_APPS = "force_full_screen_cutout_apps";
-
-        /**
          * Whether the phone vibrates on call connect
          * @hide
          */
@@ -6956,13 +6944,6 @@ public final class Settings {
          */
         @Readable
         public static final String DEFAULT_MAX_ALARM_VOLUME = "default_max_alarm_volume";
-
-        /**
-         * Whether to show rotation suggestion
-         * @hide
-         */
-        @Readable
-        public static final String ENABLE_ROTATION_BUTTON = "enable_rotation_button";
 
         /**
          * @hide
