@@ -131,6 +131,12 @@
     <java-symbol type="string" name="config_batterymeterLandBoltPathOrigami" />
     <java-symbol type="string" name="config_batterymeterLandPowersavePathOrigami" />
     <java-symbol type="string" name="config_batterymeterLandErrorPerimeterPathOrigami" />
+    <java-symbol type="string" name="config_batterymeterLandPerimeterPathOneUI7" />
+    <java-symbol type="string" name="config_batterymeterLandFillMaskOneUI7" />
+    <java-symbol type="string" name="config_batterymeterLandBoltPathOneUI7" />
+    <java-symbol type="string" name="config_batterymeterLandPowersavePathOneUI7" />
+    <java-symbol type="string" name="config_batterymeterLandErrorPerimeterPathOneUI7" />
+    <java-symbol type="string" name="config_batterymeterLandLeafPathOneUI7" />
 
     <!-- Lock gesture -->
     <java-symbol type="string" name="gesture_locked_warning" />
