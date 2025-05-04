@@ -142,9 +142,17 @@ public class SystemUIBoostFramework {
             IBoostFramework service = getService();
             if (service != null) {
                 service.animationBoost(tid, boost);
+                releaseMemory();
             }
         } catch (RemoteException e) {
             Log.e(TAG, "Failed to call animationBoost", e);
+        }
+    }
+    
+    private static void releaseMemory() {
+        try {
+            android.app.ActivityManager.getService().releaseMemory(900, 20, false, false);
+        } catch (RemoteException e) {
         }
     }
 }
