@@ -1873,6 +1873,12 @@ public final class ProcessList {
         try {
             final int userId = UserHandle.getUserId(app.uid);
             try {
+                boolean isSystemApp = (app.info.flags & ApplicationInfo.FLAG_SYSTEM) != 0;
+
+                if (isSystemApp && (app.mOptRecord.isFrozen() || app.mOptRecord.isPendingFreeze())) {
+                    mService.mOomAdjuster.mCachedAppOptimizer.unfreezeAppLSP(app, 0, true);
+                }
+
                 AppGlobals.getPackageManager().checkPackageStartable(app.info.packageName, userId);
             } catch (RemoteException e) {
                 throw e.rethrowAsRuntimeException();
