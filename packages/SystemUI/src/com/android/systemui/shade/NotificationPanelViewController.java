@@ -3870,6 +3870,10 @@ public final class NotificationPanelViewController implements ShadeSurface, Dump
      *                         gesture), we always play haptic.
      */
     private void maybeVibrateOnOpening(boolean openingWithTouch) {
+        if (openingWithTouch) {
+            SystemUIBoostFramework.getInstance().animationBoostOn(
+                SystemUIBoostFramework.REQUEST_ANIMATION_BOOST_TYPE_FLING_NOTIFICATION_PANEL_VIEW);
+        }
         if (mVibrateOnOpening && mBarState != KEYGUARD && mBarState != SHADE_LOCKED) {
             if (!openingWithTouch || !mHasVibratedOnOpen) {
                 com.android.internal.util.android.VibrationUtils.triggerVibration(mView.getContext(), mQsHapticsIntensity);
