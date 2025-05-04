@@ -44,6 +44,15 @@ import android.window.WindowContainerTransaction;
 import java.io.PrintWriter;
 import java.util.Optional;
 
+import android.graphics.Rect;
+import android.content.res.Resources;
+import android.util.DisplayMetrics;
+import android.app.WindowConfiguration;
+import android.content.res.Resources;
+import android.util.DisplayMetrics;
+import android.util.Log;
+import android.window.WindowContainerTransaction;
+
 /**
  * {@link ShellTaskOrganizer.TaskListener} for {@link
  * ShellTaskOrganizer#TASK_LISTENER_TYPE_FREEFORM}.
@@ -61,6 +70,7 @@ public class FreeformTaskListener implements ShellTaskOrganizer.TaskListener,
     private final LaunchAdjacentController mLaunchAdjacentController;
     private final Optional<TaskChangeListener> mTaskChangeListener;
     private final Handler mMainHandler;
+    private static final String LOG_TAG = "FreeformTaskListener";
 
     private final SparseArray<State> mTasks = new SparseArray<>();
 
@@ -119,10 +129,38 @@ public class FreeformTaskListener implements ShellTaskOrganizer.TaskListener,
         onTaskEnteredFreeform(taskInfo);
     }
 
+    private void resetDpiToSystemDefault(RunningTaskInfo taskInfo) {
+        try {
+            // Get the system default density
+            DisplayMetrics displayMetrics = Resources.getSystem().getDisplayMetrics();
+            int systemDpi = displayMetrics.densityDpi;
+
+            Log.d(TAG, "Resetting DPI for task #" + taskInfo.taskId + " to system default: " + systemDpi);
+
+            // Apply the density change via WindowContainerTransaction
+            WindowContainerTransaction wct = new WindowContainerTransaction();
+            wct.setDensityDpi(taskInfo.token, systemDpi);
+
+            // Use the shell task organizer reference
+            mShellTaskOrganizer.applyTransaction(wct);
+        } catch (Exception e) {
+            Log.e(TAG, "Failed to reset DPI: " + e.getMessage(), e);
+        }
+     }
+
     @Override
     public void onTaskVanished(RunningTaskInfo taskInfo) {
+        Log.d(LOG_TAG, "onTaskVanished called");
         ProtoLog.v(ShellProtoLogGroup.WM_SHELL_TASK_ORG, "Freeform Task Vanished: #%d",
                 taskInfo.taskId);
+
+        // Check if it's maximizing to fullscreen
+        if (taskInfo.getWindowingMode() == WindowConfiguration.WINDOWING_MODE_FULLSCREEN) {
+            Log.d(TAG, "Window maximized to fullscreen! Resetting DPI to system default for task #" +
+                    taskInfo.taskId);
+            resetDpiToSystemDefault(taskInfo);
+        }
+
         mTasks.remove(taskInfo.taskId);
 
         if (!DesktopModeFlags.ENABLE_WINDOWING_TRANSITION_HANDLERS_OBSERVERS.isTrue() &&
@@ -190,14 +228,54 @@ public class FreeformTaskListener implements ShellTaskOrganizer.TaskListener,
     }
 
     void onTaskEnteredFreeform(RunningTaskInfo taskInfo) {
-        if (taskInfo == null || taskInfo.getWindowingMode() != WINDOWING_MODE_FREEFORM) {
+        if (taskInfo == null) {
+            Log.d(LOG_TAG, "Task entered freeform: taskInfo is null");
             return;
         }
-        mMainHandler.postDelayed(() -> {
-            final WindowContainerTransaction wct = new WindowContainerTransaction();
-            wct.setDensityDpi(taskInfo.token, 284);
-            mShellTaskOrganizer.applyTransaction(wct);
-        }, 500);
+
+        int windowingMode = taskInfo.getWindowingMode();
+        Log.d(LOG_TAG, String.format("Task #%d windowingMode: %d (FREEFORM=%d)",
+                taskInfo.taskId, windowingMode, WINDOWING_MODE_FREEFORM));
+
+        if (windowingMode == WINDOWING_MODE_FREEFORM) {
+            // Calculate DPI based on window size relative to screen size
+            mMainHandler.postDelayed(() -> {
+                // Get the bounds of the task
+                Rect bounds = taskInfo.configuration.windowConfiguration.getBounds();
+                int windowWidth = bounds.width();
+                int windowHeight = bounds.height();
+
+                // Get display metrics to determine screen size
+                DisplayMetrics displayMetrics = Resources.getSystem().getDisplayMetrics();
+                int screenWidth = displayMetrics.widthPixels;
+                int screenHeight = displayMetrics.heightPixels;
+                int systemDpi = displayMetrics.densityDpi;
+
+                // Calculate the area ratio
+                float widthRatio = (float)windowWidth / screenWidth;
+                float heightRatio = (float)windowHeight / screenHeight;
+
+                // Calculate area ratio and then take the square root for better scaling
+                float areaRatio = widthRatio * heightRatio;
+                float scaleFactor = (float)Math.sqrt(areaRatio);
+                int calculatedDpi = Math.round(systemDpi * scaleFactor);
+
+                // Log all values for debugging
+                Log.d(LOG_TAG, String.format(
+                    "Window: %dx%d, Screen: %dx%d, System DPI: %d, Width ratio: %.2f, Height ratio: %.2f",
+                    windowWidth, windowHeight, screenWidth, screenHeight, systemDpi, widthRatio, heightRatio));
+                Log.d(LOG_TAG, String.format(
+                    "Area ratio: %.4f, Square root (scale factor): %.4f, Calculated DPI: %d",
+                    areaRatio, scaleFactor, calculatedDpi));
+
+                final WindowContainerTransaction wct = new WindowContainerTransaction();
+                wct.setDensityDpi(taskInfo.token, calculatedDpi);
+                mShellTaskOrganizer.applyTransaction(wct);
+            }, 16);
+        } else {
+            Log.d(LOG_TAG, String.format("Task #%d is not in freeform mode: %d, not changing DPI",
+                    taskInfo.taskId, windowingMode));
+        }
     }
 
     @Override
