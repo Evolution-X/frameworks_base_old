@@ -21,9 +21,11 @@ import static android.app.StatusBarManager.WINDOW_STATE_SHOWING;
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_STANDARD;
 import static android.app.WindowConfiguration.WINDOWING_MODE_MULTI_WINDOW;
 import static android.app.WindowConfiguration.WINDOWING_MODE_PINNED;
+import static android.view.InsetsSource.createId;
 import static android.view.InsetsSource.ID_IME;
 import static android.view.WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE;
 import static android.view.WindowManager.LayoutParams.TYPE_INPUT_METHOD;
+import static android.view.WindowInsets.Type.displayCutout;
 
 import android.annotation.NonNull;
 import android.annotation.Nullable;
@@ -38,6 +40,7 @@ import android.os.SystemClock;
 import android.os.UserHandle;
 import android.provider.Settings;
 import android.util.SparseArray;
+import android.view.DisplayCutout;
 import android.view.InsetsController;
 import android.view.InsetsFrameProvider;
 import android.view.InsetsSource;
@@ -66,6 +69,11 @@ import java.util.List;
  * Policy that implements who gets control over the windows generating insets.
  */
 class InsetsPolicy {
+
+    private static final int ID_DISPLAY_CUTOUT_LEFT = createId(null, 0, displayCutout());
+    private static final int ID_DISPLAY_CUTOUT_TOP = createId(null, 1, displayCutout());
+    private static final int ID_DISPLAY_CUTOUT_RIGHT = createId(null, 2, displayCutout());
+    private static final int ID_DISPLAY_CUTOUT_BOTTOM = createId(null, 3, displayCutout());
 
     public static final int CONTROLLABLE_TYPES = WindowInsets.Type.statusBars()
             | WindowInsets.Type.navigationBars()
@@ -251,6 +259,22 @@ class InsetsPolicy {
             state = originalState;
         }
         state = adjustVisibilityForIme(target, state, state == originalState);
+        if (target != null 
+            && target.mActivityRecord != null 
+            && target.mActivityRecord.shouldForceLongScreen()) {
+            InsetsState fullscreenState = new InsetsState(state);
+            int[] cutoutSources = {
+                ID_DISPLAY_CUTOUT_LEFT, 
+                ID_DISPLAY_CUTOUT_TOP, 
+                ID_DISPLAY_CUTOUT_RIGHT, 
+                ID_DISPLAY_CUTOUT_BOTTOM
+            };
+            for (int sourceId : cutoutSources) {
+                fullscreenState.removeSource(sourceId);
+            }
+            fullscreenState.setDisplayCutout(DisplayCutout.NO_CUTOUT);
+            state = fullscreenState;
+        }
         return adjustInsetsForRoundedCorners(target.mToken, state, state == originalState);
     }
 
