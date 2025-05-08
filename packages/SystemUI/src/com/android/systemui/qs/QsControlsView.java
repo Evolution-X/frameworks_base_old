@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2024 the risingOS Android Project
+ * Copyright (C) 2025 the RisingOS Revived Android Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +18,7 @@ package com.android.systemui.qs;
 
 import android.content.Intent;
 import android.provider.Settings;
+import android.bluetooth.BluetoothAdapter;
 import android.content.Context;
 import android.content.res.Configuration;
 import android.content.res.ColorStateList;
@@ -55,7 +57,9 @@ import com.android.settingslib.Utils;
 
 import com.android.systemui.Dependency;
 import com.android.systemui.res.R;
+import com.android.systemui.animation.Expandable;
 import com.android.systemui.animation.view.LaunchableImageView;
+import com.android.systemui.animation.view.LaunchableLinearLayout;
 import com.android.systemui.lockscreen.ActivityLauncherUtils;
 import com.android.systemui.media.dialog.MediaOutputDialog;
 import com.android.systemui.plugins.ActivityStarter;
@@ -63,7 +67,19 @@ import com.android.systemui.plugins.FalsingManager;
 import com.android.systemui.qs.VerticalSlider;
 import com.android.systemui.statusbar.policy.FlashlightController;
 import com.android.systemui.statusbar.NotificationMediaManager;
+import com.android.systemui.statusbar.connectivity.AccessPointController;
+import com.android.systemui.statusbar.connectivity.IconState;
+import com.android.systemui.statusbar.connectivity.NetworkController;
+import com.android.systemui.statusbar.connectivity.SignalCallback;
+import com.android.systemui.statusbar.connectivity.MobileDataIndicators;
+import com.android.systemui.statusbar.connectivity.WifiIndicators;
+import com.android.systemui.statusbar.policy.BluetoothController;
+import com.android.systemui.statusbar.policy.BluetoothController.Callback;
+import com.android.systemui.statusbar.policy.ConfigurationController;
+import com.android.systemui.bluetooth.qsdialog.BluetoothTileDialogViewModel;
+import com.android.systemui.qs.tiles.dialog.InternetDialogManager;
 
+import androidx.annotation.Nullable;
 import androidx.annotation.NonNull;
 import androidx.annotation.StringRes;
 import androidx.viewpager.widget.PagerAdapter;
@@ -74,6 +90,8 @@ import java.util.List;
 
 import android.os.SystemClock;
 import android.view.KeyEvent;
+import android.text.TextUtils;
+import com.android.internal.util.android.VibrationUtils;
 
 public class QsControlsView extends FrameLayout {
 
@@ -81,11 +99,25 @@ public class QsControlsView extends FrameLayout {
 
     private List<View> mControlTiles = new ArrayList<>();
     private List<View> mMediaPlayerViews = new ArrayList<>();
+    private List<View> mConnectivityTiles = new ArrayList<>();
     private List<View> mWidgetViews = new ArrayList<>();
     private List<Runnable> metadataCheckRunnables = new ArrayList<>();
 
-    private View mSettingsButton, mVoiceAssist, mRunningServiceButton, mInterfaceButton, mMediaCard, mAccessBg, mWidgetsBg;
-    private View mClockTimer, mCalculator, mCamera, mPagerLayout, mMediaLayout, mAccessLayout, mWidgetsLayout;
+    public static final int BT_ACTIVE = R.drawable.qs_bluetooth_icon_on;
+    public static final int BT_INACTIVE = R.drawable.qs_bluetooth_icon_off;
+    public static final int DATA_ACTIVE = R.drawable.ic_signal_cellular_alt_24;
+    public static final int DATA_INACTIVE = R.drawable.ic_mobiledata_off_24;
+    public static final int WIFI_ACTIVE = R.drawable.ic_wifi_24;
+    public static final int WIFI_INACTIVE = R.drawable.ic_wifi_off_24;
+
+    public static final int BT_LABEL_INACTIVE = R.string.quick_settings_bluetooth_label;
+    public static final int DATA_LABEL_INACTIVE = R.string.quick_settings_data_label;
+    public static final int INTERNET_LABEL_INACTIVE = R.string.quick_settings_internet_label;
+    public static final int WIFI_LABEL_INACTIVE = R.string.quick_settings_wifi_label;
+
+    private View mSettingsButton, mVoiceAssist, mRunningServiceButton, mInterfaceButton, mMediaCard, mAccessBg, mWidgetsBg, mConnectivityBg;
+    private View mClockTimer, mCalculator, mCamera, mPagerLayout, mMediaLayout, mAccessLayout, mWidgetsLayout, mConnectivityLayout;
+    private LaunchableLinearLayout mInternetButton, mBtButton;
     private ImageView mTorch;
     
     private QsControlsPageIndicator mAccessPageIndicator, mMediaPageIndicator, mWidgetsPageIndicator;
@@ -95,6 +127,12 @@ public class QsControlsView extends FrameLayout {
     private final FalsingManager mFalsingManager;
     private final FlashlightController mFlashlightController;
     private final NotificationMediaManager mNotifManager;
+    private final AccessPointController mAccessPointController;
+    private final NetworkController mNetworkController;
+    private final BluetoothController mBluetoothController;
+    private final BluetoothTileDialogViewModel mBluetoothTileDialogViewModel;
+    private final InternetDialogManager mInternetDialogManager;
+
     private final ActivityLauncherUtils mActivityLauncherUtils;
 
     private ViewPager mViewPager;
@@ -121,6 +159,9 @@ public class QsControlsView extends FrameLayout {
     private Handler mHandler;
     private Runnable mMediaUpdater;
 
+    protected final CellSignalCallback mCellSignalCallback = new CellSignalCallback();
+    protected final WifiSignalCallback mWifiSignalCallback = new WifiSignalCallback();
+
     public QsControlsView(Context context, AttributeSet attrs) {
         super(context, attrs);
         mContext = context;
@@ -134,6 +175,12 @@ public class QsControlsView extends FrameLayout {
         mNotifManager = Dependency.get(NotificationMediaManager.class);
         mFlashlightController = Dependency.get(FlashlightController.class);
         mActivityLauncherUtils = new ActivityLauncherUtils(context);
+        mAccessPointController = Dependency.get(AccessPointController.class);
+        mBluetoothController = Dependency.get(BluetoothController.class);
+        mBluetoothTileDialogViewModel = Dependency.get(BluetoothTileDialogViewModel.class);
+        mInternetDialogManager = Dependency.get(InternetDialogManager.class);
+        mNetworkController = Dependency.get(NetworkController.class);
+
     }
 
     private final MediaController.Callback mMediaCallback = new MediaController.Callback() {
@@ -182,20 +229,33 @@ public class QsControlsView extends FrameLayout {
     protected void onFinishInflate() {
         super.onFinishInflate();
         mInflated = true;
-		mViewPager = findViewById(R.id.qs_controls_pager);
+        mViewPager = findViewById(R.id.qs_controls_pager);
         mBrightnessSlider = findViewById(R.id.qs_controls_brightness_slider);
         mVolumeSlider = findViewById(R.id.qs_controls_volume_slider);
-        mMediaLayout = mPagerLayout.findViewById(R.id.qs_controls_media);
-        mAccessLayout = mPagerLayout.findViewById(R.id.qs_controls_tile_access);
-        mWidgetsLayout = mPagerLayout.findViewById(R.id.qs_controls_tile_widgets);
+        
+        // Initialize all the layout views
+        mConnectivityLayout = findViewById(R.id.qs_controls_tile_connectivity);
+        mMediaLayout = findViewById(R.id.qs_controls_media);
+        mAccessLayout = findViewById(R.id.qs_controls_tile_access);
+        mWidgetsLayout = findViewById(R.id.qs_controls_tile_widgets);
+        
+        // Initialize components in the access layout
         mVoiceAssist = mAccessLayout.findViewById(R.id.qs_voice_assist);
         mSettingsButton = mAccessLayout.findViewById(R.id.settings_button);
         mRunningServiceButton = mAccessLayout.findViewById(R.id.running_services_button);
         mInterfaceButton = mAccessLayout.findViewById(R.id.interface_button);
+        
+        // Initialize components in the connectivity layout
+        mInternetButton = mConnectivityLayout.findViewById(R.id.internet_btn);
+        mBtButton = mConnectivityLayout.findViewById(R.id.bt_btn);
+        
+        // Initialize components in the widgets layout
         mTorch = mWidgetsLayout.findViewById(R.id.qs_flashlight);
         mClockTimer = mWidgetsLayout.findViewById(R.id.qs_clock_timer);
         mCalculator = mWidgetsLayout.findViewById(R.id.qs_calculator);
         mCamera = mWidgetsLayout.findViewById(R.id.qs_camera);
+        
+        // Initialize media player components
         mMediaAlbumArtBg = mMediaLayout.findViewById(R.id.media_art_bg);
         mMediaAlbumArtBg.setLayerType(View.LAYER_TYPE_HARDWARE, null);
         mMediaTitle = mMediaLayout.findViewById(R.id.media_title);
@@ -205,18 +265,36 @@ public class QsControlsView extends FrameLayout {
         mMediaNextBtn = mMediaLayout.findViewById(R.id.next_button);
         mPlayerIcon = mMediaLayout.findViewById(R.id.player_icon);
         mMediaCard = mMediaLayout.findViewById(R.id.media_cardview);
+        
+        // Initialize background/container views
         mAccessBg = mAccessLayout.findViewById(R.id.qs_controls_access_layout);
+        mConnectivityBg = mConnectivityLayout.findViewById(R.id.qs_controls_connectivity_layout);
         mWidgetsBg = mWidgetsLayout.findViewById(R.id.qs_controls_widgets_layout);
+        
+        // Initialize page indicators
         mAccessPageIndicator = mAccessLayout.findViewById(R.id.access_page_indicator);
         mMediaPageIndicator = mMediaLayout.findViewById(R.id.media_page_indicator);
         mWidgetsPageIndicator = mWidgetsLayout.findViewById(R.id.widgets_page_indicator);
+        
+        // Clear the widget views list to avoid duplicates
+        mWidgetViews.clear();
+        
+        // Add the main pages to the widget views list in proper order
+        // This order determines the page sequence in the ViewPager
+        collectViews(mWidgetViews, mMediaLayout, mConnectivityLayout, mAccessLayout, mWidgetsLayout);
+        
+        // Collect control tiles
+        collectViews(mConnectivityTiles, mInternetButton, mBtButton);
         collectViews(mControlTiles, mVoiceAssist, mSettingsButton, mRunningServiceButton, 
             mInterfaceButton, (View) mTorch, mClockTimer, mCalculator, mCamera);
         collectViews(mMediaPlayerViews, mMediaPrevBtn, mMediaPlayBtn, mMediaNextBtn, 
                 mMediaAlbumArtBg, mPlayerIcon, mMediaTitle, mMediaArtist);
-        collectViews(mWidgetViews, mMediaLayout, mAccessLayout, mWidgetsLayout);
+        
+        // Setup the ViewPager with the collected views
         setupViewPager();
-	mHandler = new Handler();
+        
+        // Initialize handler for media updates
+        mHandler = new Handler();
         mMediaUpdater = new Runnable() {
             @Override
             public void run() {
@@ -225,7 +303,7 @@ public class QsControlsView extends FrameLayout {
             }
         };
         updateMediaController();
-	}
+    }
 
     @Override
     protected void onAttachedToWindow() {
@@ -236,6 +314,9 @@ public class QsControlsView extends FrameLayout {
         setClickListeners();
         updateResources();
         mFlashlightController.addCallback(mFlashlightCallback);
+        mBluetoothController.addCallback(mBtCallback);
+        mNetworkController.addCallback(mWifiSignalCallback);
+        mNetworkController.addCallback(mCellSignalCallback);
     }
     
     @Override
@@ -243,6 +324,18 @@ public class QsControlsView extends FrameLayout {
         super.onDetachedFromWindow();
         mFlashlightController.removeCallback(mFlashlightCallback);
     }
+
+    private final BluetoothController.Callback mBtCallback = new BluetoothController.Callback() {
+        @Override
+        public void onBluetoothStateChange(boolean enabled) {
+            updateBtState();
+        }
+
+        @Override
+        public void onBluetoothDevicesChanged() {
+            updateBtState();
+        }
+    };
 
     private void launchActivitySafely(Runnable action) {
         try {
@@ -272,6 +365,9 @@ public class QsControlsView extends FrameLayout {
             mActivityLauncherUtils.launchVoiceAssistant()));
         mCamera.setOnClickListener(view -> launchActivitySafely(() -> 
             mActivityLauncherUtils.launchCamera()));
+        mBtButton.setOnClickListener(view -> toggleBluetoothState());
+        mBtButton.setOnLongClickListener(v -> { showBluetoothDialog(v); return true; });
+        mInternetButton.setOnClickListener(view -> showInternetDialog(view));
         mSettingsButton.setOnClickListener(mSettingsOnClickListener);
         mRunningServiceButton.setOnClickListener(mSettingsOnClickListener);
         mInterfaceButton.setOnClickListener(mSettingsOnClickListener);
@@ -440,7 +536,7 @@ public class QsControlsView extends FrameLayout {
     }
 
     private void setupViewPager() {
-        if (mViewPager == null || mWidgetViews == null) return;
+        if (mViewPager == null || mWidgetViews == null || mWidgetViews.isEmpty()) return;
 
         pagerAdapter = new PagerAdapter() {
             @Override
@@ -458,40 +554,109 @@ public class QsControlsView extends FrameLayout {
             public Object instantiateItem(@NonNull ViewGroup container, int position) {
                 View view = mWidgetViews.get(position);
 
-                // Ensure the view is removed from its previous parent before adding it
-                if (view.getParent() != null) {
-                    ((ViewGroup) view.getParent()).removeView(view);
+                // Make sure the view isn't already attached to another parent
+                ViewGroup parent = (ViewGroup) view.getParent();
+                if (parent != null && parent != container) {
+                    parent.removeView(view);
                 }
 
-                container.addView(view);
+                // Only add the view if it's not already in the container
+                if (view.getParent() == null) {
+                    container.addView(view);
+                }
+
                 return view;
             }
 
             @Override
             public void destroyItem(@NonNull ViewGroup container, int position, @NonNull Object object) {
-                container.removeView((View) object);
+                // We don't actually want to remove these Views since we're reusing them
+                // Just leave them in the view hierarchy but make them GONE
+                View view = (View) object;
+                if (view.getParent() == container) {
+                    view.setVisibility(View.GONE);
+                }
             }
         };
 
         mViewPager.setAdapter(pagerAdapter);
-        mAccessPageIndicator.setupWithViewPager(mViewPager);
-        mMediaPageIndicator.setupWithViewPager(mViewPager);
-        mWidgetsPageIndicator.setupWithViewPager(mViewPager);
+
+        // Configure all page indicators with the correct count
+        int pageCount = mWidgetViews.size();
+        if (mAccessPageIndicator != null) {
+            mAccessPageIndicator.setupWithViewPager(mViewPager);
+            mAccessPageIndicator.setPageCount(pageCount);
+        }
+
+        if (mMediaPageIndicator != null) {
+            mMediaPageIndicator.setupWithViewPager(mViewPager);
+            mMediaPageIndicator.setPageCount(pageCount);
+        }
+
+        if (mWidgetsPageIndicator != null) {
+            mWidgetsPageIndicator.setupWithViewPager(mViewPager);
+            mWidgetsPageIndicator.setPageCount(pageCount);
+        }
 
         mViewPager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
             @Override
-            public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {}
+            public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
+                // Update page indicators during scrolling
+                if (mAccessPageIndicator != null) {
+                    mAccessPageIndicator.onPageScrolled(position, positionOffset);
+                }
+                if (mMediaPageIndicator != null) {
+                    mMediaPageIndicator.onPageScrolled(position, positionOffset);
+                }
+                if (mWidgetsPageIndicator != null) {
+                    mWidgetsPageIndicator.onPageScrolled(position, positionOffset);
+                }
+            }
 
             @Override
             public void onPageSelected(int position) {
-                mMediaLayout.setVisibility(position == 0 ? View.VISIBLE : View.GONE);
-                mAccessLayout.setVisibility(position == 1 ? View.VISIBLE : View.GONE);
-                mWidgetsLayout.setVisibility(position == 2 ? View.VISIBLE : View.GONE);
+                // Update visibility of each page based on selection
+                updatePageVisibility(position);
+
+                // Update page indicators
+                if (mAccessPageIndicator != null) {
+                    mAccessPageIndicator.setCurrentItem(position);
+                }
+                if (mMediaPageIndicator != null) {
+                    mMediaPageIndicator.setCurrentItem(position);
+                }
+                if (mWidgetsPageIndicator != null) {
+                    mWidgetsPageIndicator.setCurrentItem(position);
+                }
             }
 
             @Override
             public void onPageScrollStateChanged(int state) {}
         });
+
+        // Set initial page and update visibility
+        int initialPage = 0;
+        mViewPager.setCurrentItem(initialPage);
+        updatePageVisibility(initialPage);
+    }
+
+    // Helper method to update page visibility based on selected position
+    private void updatePageVisibility(int selectedPosition) {
+        if (mWidgetViews == null) return;
+
+        // Make all pages visible initially (important for the pager to measure them)
+        for (View view : mWidgetViews) {
+            view.setVisibility(View.VISIBLE);
+        }
+
+        // Debugging log - print the number of widget views
+        android.util.Log.d("QsControlsView", "Page count: " + mWidgetViews.size() + ", Selected: " + selectedPosition);
+
+        // Update corresponding layouts based on position
+        mMediaLayout.setVisibility(selectedPosition == 0 ? View.VISIBLE : View.GONE);
+        mConnectivityLayout.setVisibility(selectedPosition == 1 ? View.VISIBLE : View.GONE);
+        mAccessLayout.setVisibility(selectedPosition == 2 ? View.VISIBLE : View.GONE);
+        mWidgetsLayout.setVisibility(selectedPosition == 3 ? View.VISIBLE : View.GONE);
     }
 
     public void updateColors() {
@@ -499,8 +664,9 @@ public class QsControlsView extends FrameLayout {
         mBgColor = mContext.getResources().getColor(isNightMode() ? R.color.qs_controls_bg_color_dark : R.color.qs_controls_bg_color_light);
         mTintColor = mContext.getResources().getColor(isNightMode() ? R.color.qs_controls_bg_color_light : R.color.qs_controls_bg_color_dark);
         mContainerColor = mContext.getResources().getColor(isNightMode() ? R.color.qs_controls_container_bg_color_dark : R.color.qs_controls_container_bg_color_light);
-        updateTiles();
-        if (mAccessBg != null && mMediaCard != null && mWidgetsBg != null) {
+        updateConnectivityTiles();
+	updateTiles();
+        if (mAccessBg != null && mMediaCard != null && mWidgetsBg != null && mConnectivityBg != null) {
             mMediaCard.getBackground().setTint(mContainerColor);
             mAccessBg.setBackgroundTintList(ColorStateList.valueOf(mContainerColor));
             mWidgetsBg.setBackgroundTintList(ColorStateList.valueOf(mContainerColor));
@@ -510,6 +676,7 @@ public class QsControlsView extends FrameLayout {
             mMediaPageIndicator.updateColors(isNightMode());
             mWidgetsPageIndicator.updateColors(isNightMode());
         }
+        updateInternetButtonState();
         updateMediaPlaybackState();
     }
     
@@ -575,11 +742,35 @@ public class QsControlsView extends FrameLayout {
         updateColors();
     }
 
+    /**
+     * Collects views into the provided list.
+     * If collecting main page views (mMediaLayout, mConnectivityLayout, etc.), 
+     * the list is cleared first to prevent duplicates.
+     * 
+     * @param viewList The list to add views to
+     * @param views The views to add to the list
+     */
     private void collectViews(List<View> viewList, View... views) {
+        // Determine if we're collecting main page views
+        boolean isCollectingMainViews = views.length > 0 && 
+            (views[0] == mMediaLayout || views[0] == mConnectivityLayout || 
+             views[0] == mAccessLayout || views[0] == mWidgetsLayout);
+             
+        // Clear the list if we're collecting main page views to avoid duplicates
+        if (isCollectingMainViews) {
+            viewList.clear();
+        }
+
+        // Add all the views if they're not already in the list
         for (View view : views) {
-            if (!viewList.contains(view)) {
+            if (view != null && !viewList.contains(view)) {
                 viewList.add(view);
             }
+        }
+
+        // Log for debugging
+        if (isCollectingMainViews) {
+            android.util.Log.d("QsControlsView", "Collected " + viewList.size() + " main views");
         }
     }
 
@@ -666,6 +857,212 @@ public class QsControlsView extends FrameLayout {
             } else {
                 throw new RuntimeException(e);
             }
+
+        }
+    }
+
+    // Bluetooth and Internet connectivity methods
+    private void toggleBluetoothState() {
+        mBluetoothController.setBluetoothEnabled(!isBluetoothEnabled());
+        updateBtState();
+        post(() -> {
+            updateBtState();
+        });
+    }
+    
+    private void updateConnectivityTiles() {
+        updateBtState();
+        updateInternetButtonState();
+    }
+    
+    private void showBluetoothDialog(View view) {
+        post(() -> 
+            mBluetoothTileDialogViewModel.showDialog(Expandable.fromView(view)));
+        VibrationUtils.triggerVibration(mContext, 2);
+    }
+    
+    private void showInternetDialog(View view) {
+        post(() -> mInternetDialogManager.create(true,
+                mAccessPointController.canConfigMobileData(),
+                mAccessPointController.canConfigWifi(), Expandable.fromView(view)));
+        VibrationUtils.triggerVibration(mContext, 2);
+    }
+    
+    private void updateTileButtonState(LaunchableLinearLayout tile, boolean active,
+                    int activeResource, int inactiveResource, 
+                    String activeString, String inactiveString) {
+        post(new Runnable() {
+            @Override
+            public void run() {
+                if (tile != null) {
+                    ImageView tileIcon = null;
+                    TextView tileLabel = null;
+                    if (tile.getId() == R.id.internet_btn) {
+                        tileIcon = tile.findViewById(R.id.internet_btn_icon);
+                        tileLabel = tile.findViewById(R.id.internet_btn_text);
+                    } else if (tile.getId() == R.id.bt_btn) {
+                        tileIcon = tile.findViewById(R.id.bt_btn_icon);
+                        tileLabel = tile.findViewById(R.id.bt_btn_text);
+                    }
+                    if (tileIcon != null && tileLabel != null) {
+                        tileIcon.setImageDrawable(mContext.getDrawable(active ? activeResource : inactiveResource));
+                        tileLabel.setText(active ? activeString : inactiveString);
+                        setButtonActiveState(tile, active);
+                    }
+                }
+            }
+        });
+    }
+    
+    private void setButtonActiveState(LaunchableLinearLayout tile, boolean active) {
+        int bgTint = active ? mAccentColor : mBgColor;
+        int tintColor = active ? mBgColor : mTintColor;
+        
+        if (tile != null) {
+            ImageView tileIcon = null;
+            ImageView chevron = null;
+            TextView tileLabel = null;
+            if (tile.getId() == R.id.internet_btn) {
+                tileIcon = tile.findViewById(R.id.internet_btn_icon);
+                tileLabel = tile.findViewById(R.id.internet_btn_text);
+                chevron = tile.findViewById(R.id.internet_btn_arrow);
+            } else if (tile.getId() == R.id.bt_btn) {
+                tileIcon = tile.findViewById(R.id.bt_btn_icon);
+                tileLabel = tile.findViewById(R.id.bt_btn_text);
+                chevron = tile.findViewById(R.id.bt_btn_arrow);
+            }
+            
+            if (chevron != null) {
+                chevron.setImageTintList(ColorStateList.valueOf(tintColor));
+            }
+            if (tileIcon != null) {
+                tileIcon.setImageTintList(ColorStateList.valueOf(tintColor));
+            }
+            if (tileLabel != null) {
+                tileLabel.setTextColor(ColorStateList.valueOf(tintColor));
+            }
+            if (tile instanceof View) {
+                ((View) tile).setBackgroundTintList(ColorStateList.valueOf(bgTint));
+            }
+        }
+    }
+    
+    private void updateInternetButtonState() {
+        if (mWifiSignalCallback == null || mCellSignalCallback == null) return;
+        
+        boolean wifiEnabled = mWifiSignalCallback.mInfo.enabled;
+        boolean dataEnabled = mCellSignalCallback.mInfo.enabled;
+        
+        if (wifiEnabled) {
+            updateWiFiButtonState();
+        } else if (dataEnabled) {
+            updateMobileDataState();
+        } else {
+            String inactiveString = mContext.getResources().getString(INTERNET_LABEL_INACTIVE);
+            updateTileButtonState(mInternetButton, false, DATA_INACTIVE, DATA_INACTIVE, inactiveString, inactiveString);
+        }
+    }
+
+    private void updateWiFiButtonState() {
+        if (mWifiSignalCallback == null) return;
+        final WifiCallbackInfo cbi = mWifiSignalCallback.mInfo;
+        String inactiveString = mContext.getResources().getString(WIFI_LABEL_INACTIVE);
+        updateTileButtonState(mInternetButton, true, 
+            WIFI_ACTIVE, WIFI_INACTIVE, cbi.ssid != null ? removeDoubleQuotes(cbi.ssid) : inactiveString, inactiveString);
+    }
+
+    private void updateMobileDataState() {
+        if (mNetworkController == null) return;
+        String networkName = mNetworkController.getMobileDataNetworkName();
+        boolean hasNetwork = !TextUtils.isEmpty(networkName) && mNetworkController.hasMobileDataFeature();
+        String inactiveString = mContext.getResources().getString(DATA_LABEL_INACTIVE);
+        updateTileButtonState(mInternetButton, true, 
+            DATA_ACTIVE, DATA_INACTIVE, hasNetwork ? networkName : inactiveString, inactiveString);
+    }
+    
+    private void updateBtState() {
+        if (mBluetoothController == null) return;
+        String deviceName = isBluetoothEnabled() ? mBluetoothController.getConnectedDeviceName() : "";
+        boolean isConnected = !TextUtils.isEmpty(deviceName);
+        String inactiveString = mContext.getResources().getString(BT_LABEL_INACTIVE);
+        updateTileButtonState(mBtButton, isBluetoothEnabled(), 
+            BT_ACTIVE, BT_INACTIVE, isConnected ? deviceName : inactiveString, inactiveString);
+    }
+    
+    private boolean isBluetoothEnabled() {
+        final BluetoothAdapter mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+        return mBluetoothAdapter != null && mBluetoothAdapter.isEnabled();
+    }
+
+    private boolean isMobileDataEnabled() {
+        try {
+            return Settings.Global.getInt(mContext.getContentResolver(), 
+                Settings.Global.MOBILE_DATA, 0) == 1;
+        } catch (Exception e) {
+            return false;
+        }
+    }    
+
+    @Nullable
+    private static String removeDoubleQuotes(String string) {
+        if (string == null) return null;
+        final int length = string.length();
+        if ((length > 1) && (string.charAt(0) == '"') && (string.charAt(length - 1) == '"')) {
+            return string.substring(1, length - 1);
+        }
+        return string;
+    }
+
+    protected static final class CellCallbackInfo {
+        boolean enabled;
+    }
+
+    protected static final class WifiCallbackInfo {
+        boolean enabled;
+        @Nullable
+        String ssid;
+    }
+
+    protected final class WifiSignalCallback implements SignalCallback {
+        final WifiCallbackInfo mInfo = new WifiCallbackInfo();
+        
+        public WifiSignalCallback() {
+            mInfo.enabled = false;
+            mInfo.ssid = null;
+        }
+        
+        @Override
+        public void setWifiIndicators(@NonNull WifiIndicators indicators) {
+            if (indicators.qsIcon == null) {
+                mInfo.enabled = false;
+                return;
+            }
+            mInfo.enabled = indicators.enabled;
+            mInfo.ssid = indicators.description;
+            updateInternetButtonState();
+         }
+     }
+    
+    private final class CellSignalCallback implements SignalCallback {
+        final CellCallbackInfo mInfo = new CellCallbackInfo();
+        @Override
+        public void setMobileDataIndicators(@NonNull MobileDataIndicators indicators) {
+            if (indicators.qsIcon == null) {
+                mInfo.enabled = false;
+                return;
+            }
+            mInfo.enabled = isMobileDataEnabled();
+            updateInternetButtonState();
+        }
+        @Override
+        public void setNoSims(boolean show, boolean simDetected) {
+            mInfo.enabled = simDetected && isMobileDataEnabled();
+            updateInternetButtonState();
+        }
+        @Override
+        public void setIsAirplaneMode(@NonNull IconState icon) {
+            mInfo.enabled = !icon.visible && isMobileDataEnabled();
+            updateInternetButtonState();
         }
     }
     
