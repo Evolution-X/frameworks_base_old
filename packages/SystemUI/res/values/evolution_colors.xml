@@ -27,4 +27,9 @@
     <color name="peek_title_text_color_dark">#ffffffff</color>
     <color name="peek_summary_text_color_light">#66000000</color>
     <color name="peek_summary_text_color_dark">#89ffffff</color>
+
+    <!-- QS Widgets (dummy)-->
+    <color name="qs_controls_inactive_color_dark">#555555</color>
+    <color name="qs_controls_inactive_color_light">#CCCCCC</color>
+    <color name="lockscreen_widget_active_color_light">#000000</color>
 </resources>

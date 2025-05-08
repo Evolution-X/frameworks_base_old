@@ -148,6 +148,7 @@
     <dimen name="qs_controls_corner_radius_full">100dp</dimen>
     <dimen name="qs_controls_tile_icon_padding">18dp</dimen>
     <dimen name="qs_controls_tile_top_margin">12dp</dimen>
+    <dimen name="qs_controls_tile_top_margin_secondary">6dp</dimen>
     <dimen name="qs_controls_tile_bottom_margin">12dp</dimen>
     <dimen name="qs_controls_tile_icon_margin_start">18dp</dimen>
     <dimen name="qs_controls_tile_icon_margin_end">18dp</dimen>
@@ -164,4 +165,15 @@
     <dimen name="qs_controls_page_indicator_margin">2dp</dimen>
     <dimen name="qs_controls_translucent_alpha">0.275</dimen>
     <dimen name="qs_slider_swipe_threshold_dp">40dp</dimen>
+    <dimen name="qs_control_tile_padding_vertical">12dp</dimen>
+    <dimen name="qs_control_tile_padding_start">16dp</dimen>
+    <dimen name="qs_control_tile_padding_end">22dp</dimen>
+    <dimen name="qs_control_tile_text_size">14sp</dimen>
+    <dimen name="qs_controls_tiles_height">66dp</dimen>
+    <dimen name="qs_controls_tile_icon_side_padding">10dp</dimen>
+    <dimen name="qs_controls_widgets_container_margin_start">8dp</dimen>
+    <dimen name="qs_controls_widgets_container_margin_end">0dp</dimen>
+    <dimen name="qs_controls_tile_corner_radius">100dp</dimen>
+    <dimen name="qs_controls_connectivity_margin_zero">0dp</dimen>
+    <dimen name="qs_controls_connectivity_margin_end">12dp</dimen>
 </resources>

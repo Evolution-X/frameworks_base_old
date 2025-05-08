@@ -1,5 +1,6 @@
 <!--
   ~ Copyright (C) 2024 the RisingOS Android Project
+  ~ Copyright (C) 2025 the RisingOS Revived Android Project
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
   ~ you may not use this file except in compliance with the License.
@@ -14,6 +15,10 @@
 
     <!-- media player layout -->
     <include layout="@layout/qs_controls_media_widgets" />
+
+    <!-- connectivity layout  -->
+    <include layout="@layout/qs_controls_tile_connectivity"
+        android:visibility="gone" />
 
     <!-- accessibility -->
     <include layout="@layout/qs_controls_tile_access"
