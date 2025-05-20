@@ -110,6 +110,7 @@
 
     <!-- Weather -->  
     <dimen name="weather_image_max_size">24dp</dimen>
+    <dimen name="weather_text_margin_start">0dp</dimen>
 
     <!-- Lockscreen Clock/AOD -->  
     <dimen name="custom_aod_image_size">180dp</dimen>

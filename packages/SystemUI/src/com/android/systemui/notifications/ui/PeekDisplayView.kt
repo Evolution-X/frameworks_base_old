@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2023-2024 the risingOS Android Project
+ * Copyright (C) 2025 the RisingOS Revived Android Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +30,7 @@ import android.provider.Settings
 import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
 import android.util.AttributeSet
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
@@ -48,12 +50,17 @@ import com.android.systemui.res.R
 import com.android.systemui.plugins.ActivityStarter
 import com.android.systemui.util.ColorUtils
 import com.android.systemui.util.NotificationUtils
+import com.android.systemui.statusbar.NotificationListener
 
 class PeekDisplayView @JvmOverloads constructor(
     context: Context,
     attrs: AttributeSet? = null,
     defStyleAttr: Int = 0
 ) : ConstraintLayout(context, attrs, defStyleAttr) {
+
+    companion object {
+        private const val TAG = "PeekDisplayView"
+    }
 
     private var PEEK_DISPLAY_LOCATION_TOP = 0
     private var PEEK_DISPLAY_LOCATION_BOTTOM = 1
@@ -78,6 +85,7 @@ class PeekDisplayView @JvmOverloads constructor(
 
     private val activityStarter: ActivityStarter = Dependency.get(ActivityStarter::class.java)
     private val mController: PeekDisplayViewController = PeekDisplayViewController.getInstance()
+    private val notificationListener: NotificationListener? = Dependency.get(NotificationListener::class.java)
 
     private var allowPrivateNotifications = true
     private var isMinimalStyleEnabled = false
@@ -89,6 +97,11 @@ class PeekDisplayView @JvmOverloads constructor(
         val layout = if (id == R.id.peek_display_top) R.layout.peek_display_top 
             else R.layout.peek_display_bottom 
         LayoutInflater.from(context).inflate(layout, this, true)
+        initializeViews()
+        setupListeners()
+    }
+
+    private fun initializeViews() {
         notificationShelf = findViewById(R.id.notificationShelf)
         notificationCard = findViewById(R.id.notificationCard)
         notificationIcon = findViewById(R.id.notificationIcon)
@@ -99,8 +112,12 @@ class PeekDisplayView @JvmOverloads constructor(
         dismissButton = findViewById(R.id.dismissButton)
         overflowText = findViewById(R.id.overflowText)
         clearAllButton = findViewById(R.id.clearAllButton)
+        
         notificationShelf?.layoutManager = LinearLayoutManager(context, RecyclerView.HORIZONTAL, false)
         notificationShelf?.adapter = notificationAdapter
+    }
+
+    private fun setupListeners() {
         notificationShelf?.setOnClickListener {
             if (notificationCard?.visibility == View.VISIBLE) {
                 hideNotificationCard()
@@ -186,6 +203,8 @@ class PeekDisplayView @JvmOverloads constructor(
         showOverflow = (filteredNotifications.size > 4)
         overflowText?.visibility = if (showOverflow) View.VISIBLE else View.GONE
         clearAllButton?.visibility = View.GONE
+
+        Log.d(TAG, "Updated notification shelf with ${filteredNotifications.size} notifications")
     }
     
     private fun getIconSize(ctx: Context): Int {
@@ -289,15 +308,59 @@ class PeekDisplayView @JvmOverloads constructor(
 
     override fun onAttachedToWindow() {
         super.onAttachedToWindow()
+        Log.d(TAG, "onAttachedToWindow called")
         mController.addPeekDisplayView(this)
+        
+        // Initialize with current state and existing notifications
+        updatePeekDisplayState()
+        loadExistingNotifications()
     }
 
     override fun onDetachedFromWindow() {
         super.onDetachedFromWindow()
+        Log.d(TAG, "onDetachedFromWindow called")
         mController.removePeekDisplayView(this)
     }
 
+    /**
+     * Load existing notifications when the view is first attached
+     */
+    fun loadExistingNotifications() {
+        Log.d(TAG, "Loading existing notifications...")
+        try {
+            // Get current notifications directly from NotificationListener
+            notificationListener?.let { listener ->
+                val activeNotifications = listener.getActiveNotifications()
+                if (activeNotifications.isNotEmpty()) {
+                    Log.d(TAG, "Found ${activeNotifications.size} existing active notifications")
+                    // Get current ranking map
+                    currentRankingMap = listener.getCurrentRanking()
+                    // Update the shelf with existing notifications
+                    updateNotificationShelf(activeNotifications.toList())
+                } else {
+                    Log.d(TAG, "No existing active notifications found")
+                }
+            } ?: run {
+                Log.w(TAG, "NotificationListener is null, cannot load existing notifications")
+                // Fallback: try to get from controller if it has these methods
+                tryLoadFromController()
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error loading existing notifications", e)
+            tryLoadFromController()
+        }
+    }
+
+    /**
+     * Fallback method when NotificationListener is not available
+     */
+    private fun tryLoadFromController() {
+        Log.d(TAG, "NotificationListener not available, peek display will populate when new notifications arrive")
+        // The controller will call updateNotificationShelf when notifications are available
+    }
+
     fun updatePeekDisplayState() {
+        Log.d(TAG, "updatePeekDisplayState called")
         allowPrivateNotifications = Settings.Secure.getIntForUser(
                     context.contentResolver,
                     Settings.Secure.LOCK_SCREEN_ALLOW_PRIVATE_NOTIFICATIONS,
@@ -310,8 +373,18 @@ class PeekDisplayView @JvmOverloads constructor(
             "peek_display_notifications", 0, UserHandle.USER_CURRENT) == 1
         peekDisplayLocation = Settings.Secure.getIntForUser(context.contentResolver,
             "peek_display_location", PEEK_DISPLAY_LOCATION_BOTTOM, UserHandle.USER_CURRENT)
+        
+        Log.d(TAG, "Settings updated - enabled: $isPeekDisplayEnabled, location: $peekDisplayLocation, minimal: $isMinimalStyleEnabled")
+        
         if (isPeekDisplayEnabled) {
             updateViewColors()
+            // Refresh notifications with updated settings
+            if (lastFilteredNotifications.isNotEmpty()) {
+                updateNotificationShelf(lastFilteredNotifications)
+            } else {
+                // If no cached notifications, try to reload
+                loadExistingNotifications()
+            }
         }
     }
 

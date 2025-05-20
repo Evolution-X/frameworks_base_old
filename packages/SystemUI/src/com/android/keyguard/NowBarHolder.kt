@@ -20,29 +20,35 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
-
 import android.os.BatteryManager
 import android.os.Handler
 import android.os.Looper
+import android.provider.Settings
+import android.os.UserHandle
 import android.util.AttributeSet
 import android.util.Log
 import android.view.View
-import android.widget.RelativeLayout
+import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.viewpager.widget.PagerAdapter
 import androidx.viewpager.widget.ViewPager
 import com.android.systemui.res.R
 import com.android.systemui.util.MediaSessionManagerHelper
+import com.android.systemui.util.settings.SystemSettings
+import javax.inject.Inject
 
 class NowBarHolder @JvmOverloads constructor(
-    context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0
-) : RelativeLayout(context, attrs, defStyleAttr), MediaSessionManagerHelper.MediaMetadataListener {
+    context: Context, 
+    attrs: AttributeSet? = null, 
+    defStyleAttr: Int = 0,
+    private val systemSettings: SystemSettings? = null
+) : ConstraintLayout(context, attrs, defStyleAttr), MediaSessionManagerHelper.MediaMetadataListener {
 
     private val TAG = "NowBarHolder"
     private var mViewPager: ViewPager? = null
-    private var mController: NowBarController
     private var mMediaSessionManagerHelper: MediaSessionManagerHelper = MediaSessionManagerHelper.getInstance(context)
     
     private var isChargingStatusHandled = false
+    private var isEnabled = false
     private var wasPlayingBefore = false
     private var lastMediaUpdateTime = 0L
     private val mediaCheckHandler = Handler(Looper.getMainLooper())
@@ -69,6 +75,8 @@ class NowBarHolder @JvmOverloads constructor(
 
     private val batteryReceiver: BroadcastReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
+            if (!isEnabled) return
+            
             when (intent.action) {
                 Intent.ACTION_BATTERY_CHANGED -> {
                     if (isCharging(intent) && isPluggedIn(intent) && !isChargingStatusHandled) {
@@ -90,6 +98,8 @@ class NowBarHolder @JvmOverloads constructor(
     // Broadcast receiver for music player app states
     private val musicPlayerReceiver: BroadcastReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
+            if (!isEnabled) return
+            
             when (intent.action) {
                 "com.android.music.playerstatechanged", 
                 "com.android.music.playstatechanged",
@@ -117,7 +127,6 @@ class NowBarHolder @JvmOverloads constructor(
 
     init {
         inflate(context, R.layout.now_bar_holder, this)
-        mController = NowBarController.getInstance(context)
         mViewPager = findViewById(R.id.nowBarViewPager)
         mViewPager?.adapter = NowBarAdapter(context)
         mViewPager?.setPageTransformer(false, PageTransitionTransformer())
@@ -129,6 +138,23 @@ class NowBarHolder @JvmOverloads constructor(
         }
         context.registerReceiver(batteryReceiver, batteryFilter, Context.RECEIVER_EXPORTED)
         
+        updateVisibility()
+    }
+
+    private fun updateVisibility() {
+        val resolver = context.contentResolver
+        isEnabled = Settings.System.getIntForUser(
+            resolver,
+            "keyguard_now_bar_enabled",
+            0,
+            UserHandle.USER_CURRENT
+        ) != 0
+        
+        visibility = if (isEnabled) View.VISIBLE else View.GONE
+    }
+
+    override fun onAttachedToWindow() {
+        super.onAttachedToWindow()
         // Music player state receiver
         val musicFilter = IntentFilter().apply {
             addAction("com.android.music.playerstatechanged")
@@ -140,21 +166,15 @@ class NowBarHolder @JvmOverloads constructor(
             addAction("com.google.android.music.playstatechanged")
             addAction("com.google.android.music.metachanged")
             addAction("com.pandora.android.playbackstatuschanged")
-            // Add custom action for Telegram player close
             addAction("com.telegram.player.closeplayback")
         }
         context.registerReceiver(musicPlayerReceiver, musicFilter, Context.RECEIVER_EXPORTED)
-    }
-
-    override fun onAttachedToWindow() {
-        super.onAttachedToWindow()
-        mController.addNowBarHolder(this)
         mMediaSessionManagerHelper.addMediaMetadataListener(this)
+        updateVisibility()
     }
 
     override fun onDetachedFromWindow() {
         super.onDetachedFromWindow()
-        mController.removeNowBarHolder(this)
         try {
             context.unregisterReceiver(batteryReceiver)
             context.unregisterReceiver(musicPlayerReceiver)
@@ -176,6 +196,8 @@ class NowBarHolder @JvmOverloads constructor(
     }
 
     private fun handleMediaStateChange(forceCheck: Boolean) {
+        if (!isEnabled) return
+        
         val isPlaying = mMediaSessionManagerHelper.isMediaPlaying()
         
         Log.d(TAG, "Media state change: isPlaying=$isPlaying")
