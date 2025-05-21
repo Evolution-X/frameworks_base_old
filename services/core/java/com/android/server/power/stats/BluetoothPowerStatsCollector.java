@@ -192,7 +192,7 @@ public class BluetoothPowerStatsCollector extends PowerStatsCollector {
             activityInfo = immediateFuture.get(BLUETOOTH_ACTIVITY_REQUEST_TIMEOUT,
                     TimeUnit.MILLISECONDS);
         } catch (Exception e) {
-            Slog.w(TAG, "BluetoothActivityEnergyInfo unavailable, skipping stats collection", e);
+            //Slog.e(TAG, "Cannot acquire BluetoothActivityEnergyInfo", e);
             activityInfo = null;
         }
 
