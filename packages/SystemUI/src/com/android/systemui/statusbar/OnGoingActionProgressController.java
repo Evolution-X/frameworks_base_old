@@ -57,6 +57,7 @@ import com.android.internal.util.evolution.VibrationUtils;
 import java.util.HashMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ExecutorService;
 
 public class OnGoingActionProgressController implements NotificationListener.NotificationHandler, KeyguardStateController.Callback {
     private static final String TAG = "OngoingActionProgressController";
@@ -70,6 +71,7 @@ public class OnGoingActionProgressController implements NotificationListener.Not
     private static final int DEFAULT_OPACITY_PERCENTAGE = 100;
     private static final int MEDIA_UPDATE_INTERVAL_MS = 1000;
     private static final int DEBOUNCE_DELAY_MS = 150;
+    private static final int MAX_ICON_CACHE_SIZE = 20;
 
     private final Context mContext;
     private final ContentResolver mContentResolver;
@@ -80,6 +82,17 @@ public class OnGoingActionProgressController implements NotificationListener.Not
     private final IconFetcher mIconFetcher;
     private final MediaSessionManagerHelper mMediaSessionHelper;
     private final Executor mBackgroundExecutor;
+    private final Object mLock = new Object();
+    private final Runnable mUiUpdateRunnable = new Runnable() {
+        @Override
+        public void run() {
+            synchronized (mLock) {
+                mUpdatePending = false;
+                mLastUpdateTime = System.currentTimeMillis();
+                updateViews();
+            }
+        }
+    };
 
     private final ProgressBar mProgressBar;
     private final ProgressBar mCircularProgressBar;
@@ -262,17 +275,15 @@ public class OnGoingActionProgressController implements NotificationListener.Not
 
     private void requestUiUpdate() {
         long currentTime = System.currentTimeMillis();
-        if (!mUpdatePending && (currentTime - mLastUpdateTime > DEBOUNCE_DELAY_MS)) {
-            mUpdatePending = false;
-            mLastUpdateTime = currentTime;
-            updateViews();
-        } else if (!mUpdatePending) {
-            mUpdatePending = true;
-            mHandler.postDelayed(() -> {
+        synchronized (mLock) {
+            if (!mUpdatePending && (currentTime - mLastUpdateTime > DEBOUNCE_DELAY_MS)) {
                 mUpdatePending = false;
-                mLastUpdateTime = System.currentTimeMillis();
+                mLastUpdateTime = currentTime;
                 updateViews();
-            }, DEBOUNCE_DELAY_MS);
+            } else if (!mUpdatePending) {
+                mUpdatePending = true;
+                mHandler.postDelayed(mUiUpdateRunnable, DEBOUNCE_DELAY_MS);
+            }
         }
     }
 
@@ -490,23 +501,43 @@ private void updateMediaProgressCompact() {
     private void loadIconInBackground(String packageName, IconCallback callback) {
         if (packageName == null) return;
         
-        if (mIconCache.containsKey(packageName)) {
-            IconFetcher.AdaptiveDrawableResult cachedResult = mIconCache.get(packageName);
-            if (cachedResult != null && cachedResult.drawable != null) {
-                callback.onIconLoaded(cachedResult.drawable);
-                return;
+        synchronized (mLock) {
+            if (mIconCache.containsKey(packageName)) {
+                IconFetcher.AdaptiveDrawableResult cachedResult = mIconCache.get(packageName);
+                if (cachedResult != null && cachedResult.drawable != null) {
+                    callback.onIconLoaded(cachedResult.drawable);
+                    return;
+                }
             }
         }
         
         mBackgroundExecutor.execute(() -> {
-            final IconFetcher.AdaptiveDrawableResult iconResult = 
-                    mIconFetcher.getMonotonicPackageIcon(packageName);
-            
-            if (iconResult != null && iconResult.drawable != null) {
-                mIconCache.put(packageName, iconResult);
+            try {
+                final IconFetcher.AdaptiveDrawableResult iconResult = 
+                        mIconFetcher.getMonotonicPackageIcon(packageName);
                 
+                if (iconResult != null && iconResult.drawable != null) {
+                    synchronized (mLock) {
+                        // Limit cache size
+                        if (mIconCache.size() >= MAX_ICON_CACHE_SIZE) {
+                            mIconCache.clear();
+                        }
+                        mIconCache.put(packageName, iconResult);
+                    }
+                    
+                    mHandler.post(() -> {
+                        callback.onIconLoaded(iconResult.drawable);
+                    });
+                } else {
+                    Log.w(TAG, "Failed to load icon for package: " + packageName);
+                    mHandler.post(() -> {
+                        callback.onIconLoaded(mContext.getResources().getDrawable(R.drawable.ic_default_music_icon));
+                    });
+                }
+            } catch (Exception e) {
+                Log.e(TAG, "Error loading icon for package: " + packageName, e);
                 mHandler.post(() -> {
-                    callback.onIconLoaded(iconResult.drawable);
+                    callback.onIconLoaded(mContext.getResources().getDrawable(R.drawable.ic_default_music_icon));
                 });
             }
         });
@@ -805,11 +836,12 @@ private void updateMediaProgressCompact() {
             mMediaPopup.dismiss();
         }
         
-        mIsTrackingProgress = false;
-        mTrackedNotificationKey = null;
-        mTrackedPackageName = null;
-        
-        mIconCache.clear();
+        synchronized (mLock) {
+            mIsTrackingProgress = false;
+            mTrackedNotificationKey = null;
+            mTrackedPackageName = null;
+            mIconCache.clear();
+        }
         
         if (mIconView != null) {
             mIconView.setImageDrawable(null);
@@ -817,6 +849,11 @@ private void updateMediaProgressCompact() {
         
         if (mCompactIconView != null) {
             mCompactIconView.setImageDrawable(null);
+        }
+
+        // Shutdown the background executor
+        if (mBackgroundExecutor instanceof ExecutorService) {
+            ((ExecutorService) mBackgroundExecutor).shutdown();
         }
     }
 
