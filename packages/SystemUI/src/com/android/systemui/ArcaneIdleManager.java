@@ -112,18 +112,19 @@ public class ArcaneIdleManager {
         RunningServices = localActivityManager.getRunningAppProcesses();
         for (int i=0; i < RunningServices.size(); i++) {
           if (!RunningServices.get(i).pkgList[0].toString().contains(".android") &&
-          	!RunningServices.get(i).pkgList[0].toString().equals("android") &&
+          	    !RunningServices.get(i).pkgList[0].toString().equals("android") &&
                 !RunningServices.get(i).pkgList[0].toString().contains(".google") &&
                 !RunningServices.get(i).pkgList[0].toString().contains(".mgoogle") &&
-                !RunningServices.get(i).pkgList[0].toString().contains(".facebook") &&
                 !RunningServices.get(i).pkgList[0].toString().contains(".zhihu") &&
                 !RunningServices.get(i).pkgList[0].toString().contains(".ugc") &&
                 !RunningServices.get(i).pkgList[0].toString().contains("gms") &&
                 !RunningServices.get(i).pkgList[0].toString().contains(".settings") &&
                 !RunningServices.get(i).pkgList[0].toString().contains(".GoogleCamera") &&
-		!RunningServices.get(i).pkgList[0].toString().contains(".gamespace") &&
-		!RunningServices.get(i).pkgList[0].toString().contains(".lawnicons") &&
-		!RunningServices.get(i).pkgList[0].toString().contains(".instagram") &&
+		        !RunningServices.get(i).pkgList[0].toString().contains(".gamespace") &&
+                !RunningServices.get(i).pkgList[0].toString().contains(".dolby.xiaomi") &&
+                !RunningServices.get(i).pkgList[0].toString().contains(".whatsapp") &&
+                !RunningServices.get(i).pkgList[0].toString().contains(".dialer") &&
+                !RunningServices.get(i).pkgList[0].toString().contains(".glyph") &&
                 !RunningServices.get(i).pkgList[0].toString().contains(".ims")) {
                     localActivityManager.killBackgroundProcesses(RunningServices.get(i).pkgList[0].toString());
             }
