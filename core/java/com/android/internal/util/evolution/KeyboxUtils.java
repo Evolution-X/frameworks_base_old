@@ -7,6 +7,8 @@ package com.android.internal.util.evolution;
 import android.security.keystore.KeyProperties;
 import android.system.keystore2.KeyEntryResponse;
 import android.system.keystore2.KeyMetadata;
+import android.os.SystemProperties;
+import android.util.Log;
 
 import com.android.internal.org.bouncycastle.asn1.ASN1Sequence;
 import com.android.internal.org.bouncycastle.asn1.pkcs.PrivateKeyInfo;
@@ -34,39 +36,60 @@ import java.util.Map;
  */
 public class KeyboxUtils {
 
+    private static final String TAG = "KeyboxUtils";
     private static final Map<Key, KeyEntryResponse> response = new HashMap<>();
     public static record Key(int uid, String alias) {}
 
-    public static byte[] decodePemOrBase64(String input) {
-        String base64 = input
-                .replaceAll("-----BEGIN [^-]+-----", "")
-                .replaceAll("-----END [^-]+-----", "")
-                .replaceAll("\\s+", "");
-        return Base64.getDecoder().decode(base64);
+    private static void dlog(String msg) {
+        if (SystemProperties.getBoolean("persist.sys.keybox_debug", false)) {
+            Log.d(TAG, msg);
+        }
     }
 
     public static PrivateKey parsePrivateKey(String encodedKey, String algorithm) throws Exception {
-        byte[] keyBytes = decodePemOrBase64(encodedKey);
-        if ("EC".equalsIgnoreCase(algorithm)) {
-            ASN1Sequence seq = ASN1Sequence.getInstance(keyBytes);
-            ECPrivateKey ecPrivateKey = ECPrivateKey.getInstance(seq);
-            AlgorithmIdentifier algId = new AlgorithmIdentifier(X9ObjectIdentifiers.id_ecPublicKey, ecPrivateKey.getParameters());
-            PrivateKeyInfo privInfo = new PrivateKeyInfo(algId, ecPrivateKey);
-            PKCS8EncodedKeySpec pkcs8Spec = new PKCS8EncodedKeySpec(privInfo.getEncoded());
-            return KeyFactory.getInstance("EC").generatePrivate(pkcs8Spec);
-        } else if ("RSA".equalsIgnoreCase(algorithm)) {
+        // TODO: bug: InvalidKeySpecException - convert priv keys to pkcs8 here. we're using a script in playintegrity fix repo to convert keybox priv keys to pksc8
+        byte[] keyBytes = null;
+        try {
+            keyBytes = Base64.getDecoder().decode(encodedKey);
             PKCS8EncodedKeySpec pkcs8Spec = new PKCS8EncodedKeySpec(keyBytes);
-            return KeyFactory.getInstance("RSA").generatePrivate(pkcs8Spec);
-        } else {
-            throw new IllegalArgumentException("Unsupported algorithm: " + algorithm);
+            PrivateKey privateKey = KeyFactory.getInstance(algorithm).generatePrivate(pkcs8Spec);
+            dlog("Private key parsed successfully.");
+            dlog("Algorithm: " + privateKey.getAlgorithm());
+            dlog("Format: " + privateKey.getFormat());
+            dlog("Key class: " + privateKey.getClass().getName());
+            return privateKey;
+        } catch (Exception e) {
+            dlog("Failed to parse private key.");
+            dlog("Algorithm: " + algorithm);
+            if (encodedKey != null) {
+                dlog("Encoded key (first 100 chars): " +
+                        encodedKey.substring(0, Math.min(encodedKey.length(), 100)));
+            }
+            if (keyBytes != null) {
+                String keySnippet = Base64.getEncoder().encodeToString(keyBytes);
+                dlog("Decoded key bytes (first 64 base64 chars): " +
+                        keySnippet.substring(0, Math.min(keySnippet.length(), 64)));
+            }
+            throw e;
         }
     }
 
     public static X509Certificate parseCertificate(String encodedCert) throws Exception {
-        byte[] certBytes = decodePemOrBase64(encodedCert);
-        return (X509Certificate) CertificateFactory
-                .getInstance("X.509")
-                .generateCertificate(new java.io.ByteArrayInputStream(certBytes));
+        byte[] certBytes = null;
+        try {
+            certBytes = Base64.getDecoder().decode(encodedCert);
+            return (X509Certificate) CertificateFactory
+                    .getInstance("X.509")
+                    .generateCertificate(new ByteArrayInputStream(certBytes));
+        } catch (Exception e) {
+            dlog("Failed to parse certificate. Encoded input (first 100 chars): "
+                    + encodedCert.substring(0, Math.min(encodedCert.length(), 100)));
+            if (certBytes != null) {
+                dlog("Base64-decoded cert (first 64 bytes): "
+                        + Base64.getEncoder().encodeToString(certBytes).substring(0, 64));
+            }
+            throw e;
+        }
     }
 
     public static List<Certificate> getCertificateChain(String algorithm) throws Exception {
