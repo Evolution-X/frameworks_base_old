@@ -346,10 +346,6 @@ public final class PixelPropsUtils {
         if (Arrays.asList(packagesToChangeRecentPixel).contains(packageName)) {
             if (isMainlineDevice || !SystemProperties.getBoolean(SPOOF_PIXEL_PROPS, true)) {
                 return;
-            } else if (packageName.equals(PACKAGE_QSB)) {
-                if (!SystemProperties.getBoolean(SPOOF_QSB, false)) {
-                    return;
-                }
             } else if (SystemProperties.getBoolean(SPOOF_PIXEL_PROPS, true)) {
                 if (sIsTablet) {
                     propsToChange.putAll(propsToChangePixelTablet);
