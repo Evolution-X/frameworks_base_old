@@ -265,8 +265,13 @@ sk_sp<SkImage> DeferredLayerUpdater::ImageSlot::createIfNeeded(AHardwareBuffer* 
         if (!mTextureRelease) {
             mTextureRelease = new AutoBackendTextureRelease(context, buffer);
         } else {
-            mTextureRelease->newBufferContent(context);
-        }
+	    if(dataspace != mDataspace) {
+		    mTextureRelease->unref(true);
+		    mTextureRelease = new AutoBackendTextureRelease(context, buffer);
+	    } else {
+		    mTextureRelease->newBufferContent(context);
+	    }
+    }
 
         mDataspace = dataspace;
         mBuffer = buffer;
