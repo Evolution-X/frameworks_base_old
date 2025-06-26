@@ -6639,32 +6639,6 @@ public final class Settings {
         public static final String NOTIFICATION_SOUND_VIB_SCREEN_ON = "notification_sound_vib_screen_on";
 
         /**
-         * If On-The-Go should be displayed at the power menu.
-         * @hide
-         */
-        public static final String GLOBAL_ACTIONS_ONTHEGO = "global_actions_onthego";
-
-        /**
-         * The alpha value of the On-The-Go overlay.
-         * @hide
-         */
-        public static final String ON_THE_GO_ALPHA = "on_the_go_alpha";
-
-        /**
-         * Whether the service should restart itself or not.
-         * @hide
-         */
-        public static final String ON_THE_GO_SERVICE_RESTART = "on_the_go_service_restart";
-
-        /**
-         * The camera instance to use.
-         * 0 = Rear Camera
-         * 1 = Front Camera
-         * @hide
-         */
-        public static final String ON_THE_GO_CAMERA = "on_the_go_camera";
-
-        /**
          * Whether to display cross sign for a data disabled connection
          * @hide
          */
