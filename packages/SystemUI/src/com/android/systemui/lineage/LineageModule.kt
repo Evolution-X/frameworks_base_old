@@ -33,7 +33,6 @@ import com.android.systemui.qs.tiles.FPSInfoTile
 import com.android.systemui.qs.tiles.HeadsUpTile
 import com.android.systemui.qs.tiles.LocaleTile
 import com.android.systemui.qs.tiles.NfcTile
-import com.android.systemui.qs.tiles.OnTheGoTile
 import com.android.systemui.qs.tiles.PowerShareTile
 import com.android.systemui.qs.tiles.PreferredNetworkTile
 import com.android.systemui.qs.tiles.ProfilesTile
@@ -118,12 +117,6 @@ interface LineageModule {
     @IntoMap
     @StringKey(LocaleTile.TILE_SPEC)
     fun bindLocaleTile(localeTile: LocaleTile): QSTileImpl<*>
-
-    /** Inject OnTheGoTile into tileMap in QSModule */
-    @Binds
-    @IntoMap
-    @StringKey(OnTheGoTile.TILE_SPEC)
-    fun bindOnTheGoTile(onTheGoTile: OnTheGoTile): QSTileImpl<*>
 
     /** Inject PowerShareTile into tileMap in QSModule */
     @Binds
