@@ -27,6 +27,7 @@ import com.android.systemui.qs.tiles.AODTile
 import com.android.systemui.qs.tiles.CaffeineTile
 import com.android.systemui.qs.tiles.CellularTile
 import com.android.systemui.qs.tiles.HeadsUpTile
+import com.android.systemui.qs.tiles.NfcTile
 import com.android.systemui.qs.tiles.OnTheGoTile
 import com.android.systemui.qs.tiles.PowerShareTile
 import com.android.systemui.qs.tiles.ProfilesTile
@@ -157,6 +158,21 @@ interface LineageModule {
                 instanceId = uiEventLogger.getNewInstanceId(),
                 category = TileCategory.CONNECTIVITY
             )                       
+        }
+
+        @Provides
+        @IntoMap
+        @StringKey(NfcTile.TILE_SPEC)
+        fun provideNfcConfig(uiEventLogger: QsEventLogger): QSTileConfig {
+            return QSTileConfig(
+                tileSpec = TileSpec.create(NfcTile.TILE_SPEC),
+                uiConfig = QSTileUIConfig.Resource(
+                    iconRes = R.drawable.ic_qs_nfc,
+                    labelRes = R.string.quick_settings_nfc_label
+                ),
+                instanceId = uiEventLogger.getNewInstanceId(),
+                category = TileCategory.CONNECTIVITY
+            )
         }
     }
 }
