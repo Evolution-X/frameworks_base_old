@@ -34,16 +34,18 @@ abstract class SettingsBasePreferenceFragment : PreferenceFragmentCompat() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        return super.onCreateView(inflater, container, savedInstanceState)
+        val view = super.onCreateView(inflater, container, savedInstanceState)
+
+        if (SettingsThemeHelper.isExpressiveTheme(requireContext())) {
+            // Don't allow any divider in between the preferences in expressive design.
+            setDivider(null)
+        }
+        return view
     }
 
     @CallSuper
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        if (SettingsThemeHelper.isExpressiveTheme(requireContext())) {
-            // Don't allow any divider in between the preferences in expressive design.
-            setDivider(null)
-        }
     }
 
     override fun onCreateAdapter(preferenceScreen: PreferenceScreen): RecyclerView.Adapter<*> {
