@@ -202,8 +202,8 @@ public class NotificationHistoryManager {
             // TODO: it shouldn't be possible to delete a notification entry while the user is
             // locked but we should handle it
             if (userHistory == null) {
-                Slog.w(TAG, "Attempted to remove conversation for locked/gone/disabled user "
-                        + userId);
+                //Slog.w(TAG, "Attempted to remove conversation for locked/gone/disabled user "
+                //        + userId);
                 return;
             }
             userHistory.deleteConversations(pkg, conversationIds);
