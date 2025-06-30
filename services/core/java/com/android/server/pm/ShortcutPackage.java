@@ -300,8 +300,8 @@ class ShortcutPackage extends ShortcutPackageItem {
             }
 
             // TODO: Throw IllegalArgumentException instead.
-            Slog.e(TAG, "Invalid icon type in shortcut " + si.getId() + ". Bitmaps are not allowed"
-                    + " in long-lived shortcuts. Use Resource icons, or Uri-based icons instead.");
+            //Slog.e(TAG, "Invalid icon type in shortcut " + si.getId() + ". Bitmaps are not allowed"
+            //        + " in long-lived shortcuts. Use Resource icons, or Uri-based icons instead.");
             return;  // Do not spam and return early.
         }
     }
