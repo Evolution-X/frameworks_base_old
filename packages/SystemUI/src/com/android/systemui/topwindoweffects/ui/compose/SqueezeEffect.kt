@@ -51,8 +51,9 @@ fun SqueezeEffect(
     val down = viewModel.isPowerButtonPressed
     val longPressed = viewModel.isPowerButtonLongPressed
     // TODO: Choose the correct resource based on primary / secondary display
-    val top = rememberVectorPainter(ImageVector.vectorResource(R.drawable.rounded_corner_top))
-    val bottom = rememberVectorPainter(ImageVector.vectorResource(R.drawable.rounded_corner_bottom))
+    val corner = rememberVectorPainter(ImageVector.vectorResource(R.drawable.rounded))
+    val top = corner
+    val bottom = corner
 
     val squeezeProgress by animateFloatAsState(
         targetValue =
