@@ -318,8 +318,8 @@ public class PackageConfigPersister {
         synchronized (mLock) {
             PackageConfigRecord packageConfigRecord = findRecord(mModified, packageName, userId);
             if (packageConfigRecord == null) {
-                Slog.w(TAG, "App-specific configuration not found for packageName: " + packageName
-                        + " and userId: " + userId);
+                //Slog.w(TAG, "App-specific configuration not found for packageName: " + packageName
+                //        + " and userId: " + userId);
                 return null;
             }
             return new ActivityTaskManagerInternal.PackageConfig(
