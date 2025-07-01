@@ -3981,6 +3981,19 @@ public class DevicePolicyManagerService extends IDevicePolicyManager.Stub {
 
     void handleOnUserSwitching(int fromUserId, int toUserId) {
         showNewUserDisclaimerIfNecessary(toUserId);
+
+        synchronized (getLockObject()) {
+            ActiveAdmin owner = getDeviceOrProfileOwnerAdminLocked(toUserId);
+            if (owner == null) {
+                Slog.d(LOG_TAG, "setting logout user id in absence of device / profile admin");
+                if (toUserId == UserHandle.USER_SYSTEM) {
+                    // don't show end session for owner user
+                    setLogoutUserIdLocked(UserHandle.USER_NULL);
+                } else {
+                    setLogoutUserIdLocked(UserHandle.USER_SYSTEM);
+                }
+            }
+        }
     }
 
     void handleStopUser(int userId) {
