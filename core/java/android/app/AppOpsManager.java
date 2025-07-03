@@ -8369,7 +8369,7 @@ public class AppOpsManager {
         }
         final List<AppOpsManager.PackageOps> result;
         try {
-            result = mService.getPackagesForOpsForDevice(opCodes, persistentDeviceId);
+            result = mService.getPackagesForOpsForDevice(opCodes, persistentDeviceId).getList();
         } catch (RemoteException e) {
             throw e.rethrowFromSystemServer();
         }
@@ -8393,7 +8393,7 @@ public class AppOpsManager {
     public List<AppOpsManager.PackageOps> getPackagesForOps(int[] ops) {
         try {
             return mService.getPackagesForOpsForDevice(ops,
-                    VirtualDeviceManager.PERSISTENT_DEVICE_ID_DEFAULT);
+                    VirtualDeviceManager.PERSISTENT_DEVICE_ID_DEFAULT).getList();
         } catch (RemoteException e) {
             throw e.rethrowFromSystemServer();
         }
