@@ -1842,7 +1842,7 @@ public class AppOpsService extends IAppOpsService.Stub {
     public ParceledListSlice<AppOpsManager.PackageOps> getPackagesForOpsForDevice(int[] ops,
             @NonNull String persistentDeviceId) {
         List<AppOpsManager.PackageOps> res = getPackagesForOpsForDeviceInner(ops, persistentDeviceId);
-        return new ParceledListSlice<>(res);
+        return res != null ? new ParceledListSlice<>(res) : null;
     }
 
     private List<AppOpsManager.PackageOps> getPackagesForOpsForDeviceInner(int[] ops,
