@@ -1332,6 +1332,7 @@ public class QuickSettingsControllerImpl implements QuickSettingsController, Dum
             int clipTop = (int) (top - currentTranslation - mQsFrame.getTop());
             int clipBottom = (int) (bottom - currentTranslation - mQsFrame.getTop());
             mVisible = qsVisible;
+            com.android.systemui.util.ScrimUtils.get().setQsVisible(mVisible);
             mQs.setQsVisible(qsVisible);
             if (mEnableClipping) {
                 mQs.setFancyClipping(

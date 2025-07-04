@@ -846,6 +846,11 @@ public class MediaControlPanel {
             Drawable artwork;
             boolean isArtworkBound;
             Icon artworkIcon = data.getArtwork();
+            Rect bounds = mContext.getSystemService(android.view.WindowManager.class).getCurrentWindowMetrics().getBounds();
+            int screenWidth = bounds.width();
+            int screenHeight = bounds.height();
+            Drawable albumArt = getScaledBackground(artworkIcon, screenWidth, screenHeight);
+            com.android.systemui.media.MediaSessionManager.Companion.get().onAlbumArtChanged(albumArt);
             WallpaperColors wallpaperColors = getWallpaperColor(artworkIcon);
             boolean darkTheme = !Flags.mediaControlsA11yColors();
             if (wallpaperColors != null) {
