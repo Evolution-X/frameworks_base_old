@@ -20,7 +20,8 @@ import android.animation.AnimatorListenerAdapter
 import android.content.Context
 import android.content.res.Configuration
 import android.database.ContentObserver
-import android.graphics.Color
+import android.graphics.*
+import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.ColorDrawable
 import android.graphics.drawable.Drawable
 import android.graphics.drawable.LayerDrawable
@@ -30,15 +31,19 @@ import android.os.Looper
 import android.os.UserHandle
 import android.provider.Settings
 import android.util.Log
+import android.util.TypedValue
 import android.view.View
 import android.view.ViewGroup
+import android.view.WindowManager
 import android.widget.ImageView
 import com.android.internal.graphics.ColorUtils
 import com.android.systemui.media.MediaScrimState.STATE_SCRIM_HIDDEN
 import com.android.systemui.media.MediaScrimState.STATE_SCRIM_VISIBLE
 import com.android.systemui.util.ScrimUtils
+
 import kotlinx.coroutines.*
 import kotlin.math.*
+import java.util.concurrent.Executors
 
 enum class MediaScrimState {
     STATE_SCRIM_VISIBLE,
@@ -50,6 +55,7 @@ class MediaViewController private constructor(
 ) : MediaSessionManager.MediaDataListener, ScrimUtils.ScrimEventListener {
 
     private val coroutineScope = CoroutineScope(Dispatchers.Main + Job())
+    private val executor = Executors.newSingleThreadExecutor()
     
     private var scrimState = STATE_SCRIM_HIDDEN
     
@@ -58,6 +64,12 @@ class MediaViewController private constructor(
     private var artworkDrawable: Drawable? = null
     private var isMediaPlaying = false
     private var bouncerShowingOrKeyguardDismissing = false
+
+    private var mediaFilter = 0
+    private var mediaFadeLevel = 40
+    private var mediaBlurLevel = 200
+    private var previousMediaFadeLevel = 40
+    private var previousMediaMetadata: android.media.MediaMetadata? = null
 
     private val settingsObserver = object : ContentObserver(Handler(Looper.getMainLooper())) {
         override fun onChange(selfChange: Boolean) {
@@ -75,12 +87,27 @@ class MediaViewController private constructor(
 
     private var mediaArtJob: Job? = null
     private var isAlbumArtVisible = false
-    private val mediaFadeLevel = 40
     private var dismissingKeyguard = false
+    private var currLayeredDrawable: LayerDrawable? = null
 
     init {        
         context.contentResolver.registerContentObserver(
             Settings.System.getUriFor(LS_MEDIA_ART_ENABLED),
+            false,
+            settingsObserver
+        )
+        context.contentResolver.registerContentObserver(
+            Settings.System.getUriFor(LS_MEDIA_ART_FILTER),
+            false,
+            settingsObserver
+        )
+        context.contentResolver.registerContentObserver(
+            Settings.System.getUriFor(LS_MEDIA_ART_FADE_LEVEL),
+            false,
+            settingsObserver
+        )
+        context.contentResolver.registerContentObserver(
+            Settings.System.getUriFor(LS_MEDIA_ART_BLUR_LEVEL),
             false,
             settingsObserver
         )
@@ -96,6 +123,29 @@ class MediaViewController private constructor(
             UserHandle.USER_CURRENT
         ) == 1
 
+        mediaFilter = Settings.System.getIntForUser(
+            context.contentResolver,
+            LS_MEDIA_ART_FILTER,
+            0,
+            UserHandle.USER_CURRENT
+        )
+
+        mediaFadeLevel = Settings.System.getIntForUser(
+            context.contentResolver,
+            LS_MEDIA_ART_FADE_LEVEL,
+            40,
+            UserHandle.USER_CURRENT
+        )
+
+        mediaBlurLevel = Settings.System.getIntForUser(
+            context.contentResolver,
+            LS_MEDIA_ART_BLUR_LEVEL,
+            200,
+            UserHandle.USER_CURRENT
+        ).coerceIn(0, 600)
+
+        setupMediaFilter()
+
         if (featureEnabled && !listening) {
             MediaSessionManager.get().addMediaDataListener(this)
             ScrimUtils.get().addListener(this)
@@ -105,6 +155,58 @@ class MediaViewController private constructor(
             ScrimUtils.get().removeListener(this)
             listening = false
         }
+
+        coroutineScope.launch {
+            onMediaStateChanged()
+        }
+    }
+
+    private fun setupMediaFilter() {
+        val effect = when (mediaFilter) {
+            1 -> RenderEffect.createBlurEffect(
+                mediaBlurLevel.toFloat(), 
+                mediaBlurLevel.toFloat(), 
+                Shader.TileMode.MIRROR
+            )
+            2 -> {
+                val grayMatrix = ColorMatrix().apply { setSaturation(0f) }
+                RenderEffect.createColorFilterEffect(ColorMatrixColorFilter(grayMatrix))
+            }
+            3 -> {
+                val sepiaMatrix = ColorMatrix().apply { setSaturation(0f) }
+                val sepia = floatArrayOf(
+                    1f, 0f, 0f, 0f, 30f,
+                    0f, 1f, 0f, 0f, 20f,
+                    0f, 0f, 1f, 0f, -10f,
+                    0f, 0f, 0f, 1f, 0f
+                )
+                sepiaMatrix.postConcat(ColorMatrix(sepia))
+                RenderEffect.createColorFilterEffect(ColorMatrixColorFilter(sepiaMatrix))
+            }
+            4 -> null
+            5 -> {
+                val invertMatrix = floatArrayOf(
+                    -1f, 0f, 0f, 0f, 255f,
+                    0f, -1f, 0f, 0f, 255f,
+                    0f, 0f, -1f, 0f, 255f,
+                    0f, 0f, 0f, 1f, 0f
+                )
+                RenderEffect.createColorFilterEffect(ColorMatrixColorFilter(ColorMatrix(invertMatrix)))
+            }
+            6 -> {
+                val grayMatrix = ColorMatrix().apply { setSaturation(0f) }
+                val grayscaleEffect = RenderEffect.createColorFilterEffect(ColorMatrixColorFilter(grayMatrix))
+                val blurEffect = RenderEffect.createBlurEffect(
+                    mediaBlurLevel.toFloat(),
+                    mediaBlurLevel.toFloat(),
+                    Shader.TileMode.MIRROR
+                )
+                RenderEffect.createChainEffect(blurEffect, grayscaleEffect)
+            }
+            else -> null
+        }
+
+        mediaScrim.post { mediaScrim.setRenderEffect(effect) }
     }
 
     private suspend fun shouldShowMediaArt(): Boolean {
@@ -125,6 +227,7 @@ class MediaViewController private constructor(
         if (dismissingKeyguard) {
             return
         }
+        
         updateMediaArt()
         mediaScrim.apply {
             alpha = 0f
@@ -136,40 +239,124 @@ class MediaViewController private constructor(
                 .setListener(null)
                 .start()
         }
+        isAlbumArtVisible = true
     }
 
     private fun updateMediaArt() {
         mediaArtJob?.cancel()
         mediaArtJob = coroutineScope.launch {
-            processArtwork().let { drawable ->
-                mediaScrim.setImageDrawable(drawable)
-            }
+            val drawable = processArtwork()
+            mediaScrim.setImageDrawable(drawable)
+            currLayeredDrawable = drawable
         }
     }
 
-    private suspend fun processArtwork(): LayerDrawable {
-        val drawable = artworkDrawable ?: return LayerDrawable(arrayOf())
+    private suspend fun processArtwork(): LayerDrawable = withContext(Dispatchers.Default) {
+        val drawable = artworkDrawable ?: return@withContext LayerDrawable(arrayOf())
 
-        val drawableWidth = drawable.intrinsicWidth
-        val drawableHeight = drawable.intrinsicHeight
+        val bitmap = drawableToBitmap(drawable)
+        val resizedBitmap = getResizedBitmap(bitmap)
+        
+        val processedBitmap = if (mediaFilter == 4) {
+            applyCustomTint(resizedBitmap)
+        } else {
+            resizedBitmap
+        }
+
+        val bitmapDrawable = BitmapDrawable(context.resources, processedBitmap).apply {
+            alpha = 255
+        }
 
         val fadeColor = ColorUtils.blendARGB(
             Color.TRANSPARENT,
             Color.BLACK,
             mediaFadeLevel / 100f
         )
-        val fadeOverlay = ColorDrawable(fadeColor)
-        fadeOverlay.setBounds(0, 0, drawableWidth, drawableHeight)
+        
+        val overlayBitmap = Bitmap.createBitmap(
+            processedBitmap.width,
+            processedBitmap.height,
+            Bitmap.Config.ARGB_8888
+        )
+        val canvas = Canvas(overlayBitmap)
+        canvas.drawColor(fadeColor)
+        val overlay = BitmapDrawable(context.resources, overlayBitmap)
 
-        return LayerDrawable(arrayOf(drawable, fadeOverlay)).apply {
-            setBounds(0, 0, drawableWidth, drawableHeight)
+        val layers = arrayOf(bitmapDrawable, overlay)
+        return@withContext LayerDrawable(layers).apply {
+            setBounds(0, 0, processedBitmap.width, processedBitmap.height)
         }
+    }
+
+    private fun drawableToBitmap(drawable: Drawable): Bitmap {
+        if (drawable is BitmapDrawable) {
+            return drawable.bitmap
+        }
+
+        val bitmap = Bitmap.createBitmap(
+            drawable.intrinsicWidth,
+            drawable.intrinsicHeight,
+            Bitmap.Config.ARGB_8888
+        )
+        val canvas = Canvas(bitmap)
+        drawable.setBounds(0, 0, canvas.width, canvas.height)
+        drawable.draw(canvas)
+        return bitmap
+    }
+
+    private fun getResizedBitmap(bitmap: Bitmap): Bitmap {
+        val displayBounds = context.getSystemService(WindowManager::class.java)
+            .currentWindowMetrics.bounds
+        
+        val ratioW = displayBounds.width() / bitmap.width.toFloat()
+        val ratioH = displayBounds.height() / bitmap.height.toFloat()
+        val ratio = max(ratioH, ratioW)
+        
+        val desiredHeight = (ratio * bitmap.height).roundToInt().coerceAtLeast(0)
+        val desiredWidth = (ratio * bitmap.width).roundToInt().coerceAtLeast(0)
+        
+        val scaledBitmap = Bitmap.createScaledBitmap(bitmap, desiredWidth, desiredHeight, true)
+        
+        val xPixelShift = max((desiredWidth - displayBounds.width()) / 2, 0)
+        val yPixelShift = max((desiredHeight - displayBounds.height()) / 2, 0)
+        val cropWidth = min(displayBounds.width(), scaledBitmap.width - xPixelShift)
+        val cropHeight = min(displayBounds.height(), scaledBitmap.height - yPixelShift)
+        
+        return Bitmap.createBitmap(
+            scaledBitmap,
+            max(xPixelShift, 0),
+            max(yPixelShift, 0),
+            cropWidth,
+            cropHeight
+        )
+    }
+
+    private fun applyCustomTint(bitmap: Bitmap): Bitmap {
+        val tintedBitmap = bitmap.copy(Bitmap.Config.ARGB_8888, true)
+        val canvas = Canvas(tintedBitmap)
+        val tintPaint = Paint()
+        
+        val typedValue = TypedValue()
+        context.theme.resolveAttribute(android.R.attr.colorAccent, typedValue, true)
+        val accentColor = typedValue.data
+        
+        val tintColor = Color.argb(
+            150,
+            Color.red(accentColor),
+            Color.green(accentColor),
+            Color.blue(accentColor)
+        )
+        tintPaint.color = tintColor
+        
+        canvas.drawRect(0f, 0f, tintedBitmap.width.toFloat(), tintedBitmap.height.toFloat(), tintPaint)
+        return tintedBitmap
     }
 
     fun cleanupResources() {
         if (dismissingKeyguard) return
         dismissingKeyguard = true
         mediaArtJob?.cancel()
+        
         mediaScrim.animate()
             .alpha(0f)
             .setDuration(100)
@@ -177,7 +364,9 @@ class MediaViewController private constructor(
                 override fun onAnimationEnd(animation: Animator) {
                     mediaScrim.setImageDrawable(null)
                     mediaScrim.visibility = View.GONE
+                    mediaScrim.background = null
                     scrimState = STATE_SCRIM_HIDDEN
+                    isAlbumArtVisible = false
                     dismissingKeyguard = false
                 }
             })
@@ -275,15 +464,36 @@ class MediaViewController private constructor(
         val show = shouldShowMediaArt()
         if (show && scrimState == STATE_SCRIM_HIDDEN) {
             showMediaArt()
-        } else if (!show && scrimState == STATE_SCRIM_VISIBLE){
+        } else if (!show && scrimState == STATE_SCRIM_VISIBLE) {
             cleanupResources()
         }
     }
 
     fun getMediaArtScrim() = mediaScrim
+    
+    fun albumArtVisible() = isAlbumArtVisible
+    
+    fun setSubjectAlpha(alpha: Float) {
+        mediaScrim.post { mediaScrim.alpha = alpha }
+    }
+
+    fun onDetachedFromWindow() {
+        context.contentResolver.unregisterContentObserver(settingsObserver)
+        currLayeredDrawable = null
+        previousMediaMetadata = null
+        executor.shutdown()
+        if (listening) {
+            MediaSessionManager.get().removeMediaDataListener(this)
+            ScrimUtils.get().removeListener(this)
+        }
+        mediaArtJob?.cancel()
+    }
 
     companion object {
         private const val LS_MEDIA_ART_ENABLED = "ls_media_art_enabled"
+        private const val LS_MEDIA_ART_FILTER = "ls_media_art_filter"
+        private const val LS_MEDIA_ART_FADE_LEVEL = "ls_media_art_fade_level"
+        private const val LS_MEDIA_ART_BLUR_LEVEL = "ls_media_art_blur_level"
         private const val TAG = "MediaViewController"
 
         @Volatile private var INSTANCE: MediaViewController? = null
