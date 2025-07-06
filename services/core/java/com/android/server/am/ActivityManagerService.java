@@ -2030,6 +2030,7 @@ public class ActivityManagerService extends IActivityManager.Stub
             mWindowManager = wm;
             mWmInternal = LocalServices.getService(WindowManagerInternal.class);
             mActivityTaskManager.setWindowManager(wm);
+            com.android.server.NtServiceInjector.get(mContext).setWindowManagerService(wm);
         }
     }
 
