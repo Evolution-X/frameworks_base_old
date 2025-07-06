@@ -147,11 +147,11 @@ class MediaViewController private constructor(
         setupMediaFilter()
 
         if (featureEnabled && !listening) {
-            MediaSessionManager.get().addMediaDataListener(this)
+            MediaSessionManager.get().addListener(this)
             ScrimUtils.get().addListener(this)
             listening = true
         } else if (!featureEnabled && listening) {
-            MediaSessionManager.get().removeMediaDataListener(this)
+            MediaSessionManager.get().removeListener(this)
             ScrimUtils.get().removeListener(this)
             listening = false
         }
@@ -483,7 +483,7 @@ class MediaViewController private constructor(
         previousMediaMetadata = null
         executor.shutdown()
         if (listening) {
-            MediaSessionManager.get().removeMediaDataListener(this)
+            MediaSessionManager.get().removeListener(this)
             ScrimUtils.get().removeListener(this)
         }
         mediaArtJob?.cancel()

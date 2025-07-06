@@ -22,9 +22,6 @@ import com.android.systemui.Dependency;
 import com.android.systemui.plugins.statusbar.StatusBarStateController;
 import com.android.systemui.statusbar.policy.KeyguardStateController;
 
-import java.lang.ref.WeakReference;
-import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
 
 public class ScrimUtils {
@@ -45,7 +42,7 @@ public class ScrimUtils {
     private StatusBarStateController mStatusBarStateController;
     private KeyguardStateController mKeyguardStateController;
 
-    private final List<WeakReference<ScrimEventListener>> listeners = new CopyOnWriteArrayList<>();
+    private final WeakListenerManager<ScrimEventListener> listeners = new WeakListenerManager<>();
 
     private boolean mIsDozing = false;
     private boolean mQsVisible = false;
@@ -109,31 +106,15 @@ public class ScrimUtils {
     }
 
     public void addListener(ScrimEventListener listener) {
-        for (WeakReference<ScrimEventListener> ref : listeners) {
-            ScrimEventListener existing = ref.get();
-            if (existing == listener) return;
-        }
-        listeners.add(new WeakReference<>(listener));
+        listeners.addListener(listener);
     }
 
     public void removeListener(ScrimEventListener listener) {
-        for (WeakReference<ScrimEventListener> ref : listeners) {
-            ScrimEventListener existing = ref.get();
-            if (existing == null || existing == listener) {
-                listeners.remove(ref);
-            }
-        }
+        listeners.removeListener(listener);
     }
 
     private void notifyListeners(Consumer<ScrimEventListener> callback) {
-        for (WeakReference<ScrimEventListener> ref : listeners) {
-            ScrimEventListener listener = ref.get();
-            if (listener != null) {
-                callback.accept(listener);
-            } else {
-                listeners.remove(ref);
-            }
-        }
+        listeners.notifyConsumer(callback);
     }
 
     private void notifyKeyguardShowingChanged(boolean showing) {

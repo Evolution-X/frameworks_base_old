@@ -16,9 +16,9 @@
 package com.android.systemui.media
 
 import android.graphics.drawable.Drawable
-import android.media.session.PlaybackState
 import java.lang.ref.WeakReference
-import java.util.concurrent.CopyOnWriteArrayList
+
+import com.android.systemui.util.WeakListenerManager
 
 class MediaSessionManager private constructor() {
 
@@ -26,38 +26,18 @@ class MediaSessionManager private constructor() {
         fun onPlaybackStateChanged(state: Int) {}
         fun onAlbumArtChanged(drawable: Drawable) {}
     }
+    
+    private val listenerManager = WeakListenerManager<MediaDataListener>()
 
-    private val listeners = CopyOnWriteArrayList<WeakReference<MediaDataListener>>()
-
-    fun addMediaDataListener(listener: MediaDataListener) {
-        if (listeners.none { it.get() === listener }) {
-            listeners.add(WeakReference(listener))
-        }
-    }
-
-    fun removeMediaDataListener(listener: MediaDataListener) {
-        listeners.removeAll { it.get() == null || it.get() === listener }
-    }
+    fun addListener(listener: MediaDataListener) = listenerManager.addListener(listener)
+    fun removeListener(listener: MediaDataListener) = listenerManager.removeListener(listener)
 
     fun onPlaybackStateChanged(state: Int) {
-        notifyListeners { it.onPlaybackStateChanged(state) }
+        listenerManager.notify { it.onPlaybackStateChanged(state) }
     }
 
     fun onAlbumArtChanged(drawable: Drawable) {
-        notifyListeners { it.onAlbumArtChanged(drawable) }
-    }   
-
-    private inline fun notifyListeners(action: (MediaDataListener) -> Unit) {
-        val iterator = listeners.iterator()
-        while (iterator.hasNext()) {
-            val ref = iterator.next()
-            val listener = ref.get()
-            if (listener != null) {
-                action(listener)
-            } else {
-                iterator.remove()
-            }
-        }
+        listenerManager.notify { it.onAlbumArtChanged(drawable) }
     }
 
     companion object {
