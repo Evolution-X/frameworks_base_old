@@ -73,6 +73,7 @@ import com.android.systemui.statusbar.notification.row.NotificationGutsManager;
 import com.android.systemui.statusbar.notification.row.NotificationGutsManager.OnSettingsClickListener;
 import com.android.systemui.statusbar.notification.stack.NotificationListContainer;
 import com.android.systemui.statusbar.notification.stack.NotificationStackScrollLayoutController;
+import com.android.systemui.statusbar.NTForbiddenSwipeDownQSController;
 import com.android.systemui.statusbar.policy.KeyguardStateController;
 
 import java.util.Set;
@@ -251,7 +252,12 @@ class StatusBarNotificationPresenter implements NotificationPresenter, CommandQu
         mHeadsUpManager.setExpanded(clickedEntry, nowExpanded);
         mPowerInteractor.wakeUpIfDozing("NOTIFICATION_CLICK", PowerManager.WAKE_REASON_GESTURE);
         if (nowExpanded) {
-            if (mStatusBarStateController.getState() == StatusBarState.KEYGUARD) {
+            if (NTForbiddenSwipeDownQSController.Companion.get().getForbiddenSwipeDownQS()) {
+                mStatusBarStateController.setLeaveOpenOnKeyguardHide(true);
+                // launch the bouncer if the device is locked
+                mActivityStarter.dismissKeyguardThenExecute(() -> false /* dismissAction */
+                        , null /* cancelRunnable */, false /* afterKeyguardGone */);
+            } else if (mStatusBarStateController.getState() == StatusBarState.KEYGUARD) {
                 mShadeTransitionController.goToLockedShade(
                         clickedEntry.getRow(), /* needsQSAnimation = */ true);
             } else if (clickedEntry.isSensitive().getValue() && isInLockedDownShade()) {
@@ -269,7 +275,12 @@ class StatusBarNotificationPresenter implements NotificationPresenter, CommandQu
         mHeadsUpManager.setExpanded(clickedEntry.getKey(), row, nowExpanded);
         mPowerInteractor.wakeUpIfDozing("NOTIFICATION_CLICK", PowerManager.WAKE_REASON_GESTURE);
         if (nowExpanded) {
-            if (mStatusBarStateController.getState() == StatusBarState.KEYGUARD) {
+            if (NTForbiddenSwipeDownQSController.Companion.get().getForbiddenSwipeDownQS()) {
+                mStatusBarStateController.setLeaveOpenOnKeyguardHide(true);
+                // launch the bouncer if the device is locked
+                mActivityStarter.dismissKeyguardThenExecute(() -> false /* dismissAction */
+                        , null /* cancelRunnable */, false /* afterKeyguardGone */);
+            } else if (mStatusBarStateController.getState() == StatusBarState.KEYGUARD) {
                 mShadeTransitionController.goToLockedShade(row, /* needsQSAnimation = */ true);
             } else if (clickedEntry.isSensitive().getValue() && isInLockedDownShade()) {
                 mStatusBarStateController.setLeaveOpenOnKeyguardHide(true);
