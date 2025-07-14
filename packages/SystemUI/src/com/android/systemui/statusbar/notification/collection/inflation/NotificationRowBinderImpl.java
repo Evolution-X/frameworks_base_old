@@ -259,8 +259,9 @@ public class NotificationRowBinderImpl implements NotificationRowBinder {
             redactionType = 1;
         }
 
-        params.setRedactionType(redactionType);
-        if (redactionType != REDACTION_TYPE_NONE) {
+        final int finalRedactionType = redactionType;
+        params.setRedactionType(finalRedactionType);
+        if (finalRedactionType != REDACTION_TYPE_NONE) {
             params.requireContentViews(FLAG_CONTENT_VIEW_PUBLIC);
         } else {
             params.markContentViewsFreeable(FLAG_CONTENT_VIEW_PUBLIC);
@@ -278,7 +279,7 @@ public class NotificationRowBinderImpl implements NotificationRowBinder {
 
         if (LockscreenOtpRedaction.isSingleLineViewEnabled()) {
             if (inflaterParams.isChildInGroup()
-                    && redactionType != REDACTION_TYPE_NONE) {
+                    && finalRedactionType != REDACTION_TYPE_NONE) {
                 params.requireContentViews(FLAG_CONTENT_VIEW_PUBLIC_SINGLE_LINE);
             } else {
                 params.markContentViewsFreeable(FLAG_CONTENT_VIEW_PUBLIC_SINGLE_LINE);
@@ -301,7 +302,7 @@ public class NotificationRowBinderImpl implements NotificationRowBinder {
         mRowContentBindStage.requestRebind(entry, en -> {
             mLogger.logRebindComplete(entry);
             row.setIsMinimized(isMinimized);
-            row.setRedactionType(redactionType);
+            row.setRedactionType(finalRedactionType);
             if (inflationCallback != null) {
                 inflationCallback.onAsyncInflationFinished(en);
             }
