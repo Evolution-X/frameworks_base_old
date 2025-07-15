@@ -20,6 +20,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.graphics.drawable.Drawable;
 import android.os.Handler;
 import android.os.UserHandle;
 import android.provider.Settings;
@@ -28,10 +29,13 @@ import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewStub;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextClock;
+import android.widget.TextView;
 
+import com.android.systemui.clocks.UserProfileUtils;
 import com.android.systemui.res.R;
 import com.android.systemui.Dependency;
 import com.android.systemui.plugins.statusbar.StatusBarStateController;
@@ -46,20 +50,37 @@ public class ClockStyle extends RelativeLayout implements TunerService.Tunable {
             R.layout.keyguard_clock_simple,
             R.layout.keyguard_clock_miui,
             R.layout.keyguard_clock_ide,
-            R.layout.keyguard_clock_moto
+            R.layout.keyguard_clock_moto,
+            R.layout.keyguard_clock_stylish,
+            R.layout.keyguard_clock_stylish2,
+            R.layout.keyguard_clock_stylish3,
+            R.layout.keyguard_clock_stylish4,
+            R.layout.keyguard_clock_stylish5,
+            R.layout.keyguard_clock_stylish6,
+            R.layout.keyguard_clock_stylish7,
+            R.layout.keyguard_clock_stylish8,
+            R.layout.keyguard_clock_stylish9,
+            R.layout.keyguard_clock_stylish10
     };
 
-    private final static int[] mCenterClocks = {2, 3, 5, 6};
+    private final static int[] mCenterClocks = {2, 3, 5, 6, 7, 9, 10, 11, 12, 13, 14, 15, 16};
+    private final static int[] mExcludedClocks = {1, 5, 7, 8, 11, 12, 13};
 
     private static final int DEFAULT_STYLE = 0; // Disabled
     public static final String CLOCK_STYLE_KEY = "clock_style";
+    public static final String CLOCK_TEXT_COLOR_KEY = "clock_text_accent_color";
+    public static final String CLOCK_TEXT_OPACITY_KEY = "clock_text_opacity";
+    
+    private static final int DEFAULT_OPACITY = 100;
 
     private final Context mContext;
     private final KeyguardManager mKeyguardManager;
     private final TunerService mTunerService;
 
     private View currentClockView;
-    private int mClockStyle;    
+    private int mClockStyle;  
+    private boolean mUseAccentColor = false;
+    private int mClockOpacity = DEFAULT_OPACITY;
 
     private static final long UPDATE_INTERVAL_MILLIS = 15 * 1000;
     private long lastUpdateTimeMillis = 0;
@@ -125,7 +146,7 @@ public class ClockStyle extends RelativeLayout implements TunerService.Tunable {
         mContext = context;
         mKeyguardManager = (KeyguardManager) context.getSystemService(Context.KEYGUARD_SERVICE);
         mTunerService = Dependency.get(TunerService.class);
-        mTunerService.addTunable(this, CLOCK_STYLE_KEY);
+        mTunerService.addTunable(this, CLOCK_STYLE_KEY, CLOCK_TEXT_COLOR_KEY, CLOCK_TEXT_OPACITY_KEY);
         mStatusBarStateController = Dependency.get(StatusBarStateController.class);
         mStatusBarStateController.addCallback(mStatusBarStateListener);
         mStatusBarStateListener.onDozingChanged(mStatusBarStateController.isDozing());
@@ -189,6 +210,37 @@ public class ClockStyle extends RelativeLayout implements TunerService.Tunable {
         }
     }
 
+    private void updateClockTextColor() {
+        if (currentClockView != null && !isExcludedClock(mClockStyle)) {
+            updateTextClockColor(currentClockView);
+        }
+    }
+
+    private void updateTextClockColor(View view) {
+        if (view instanceof ViewGroup) {
+            ViewGroup viewGroup = (ViewGroup) view;
+            for (int i = 0; i < viewGroup.getChildCount(); i++) {
+                View childView = viewGroup.getChildAt(i);
+                updateTextClockColor(childView);
+            }
+        }
+        
+        if (view instanceof TextClock && !isExcludedClock(mClockStyle)) {
+            TextClock textClock = (TextClock) view;
+            int color;
+            if (mUseAccentColor) {
+                color = mContext.getColor(
+                    mContext.getResources().getIdentifier(
+                        "system_accent1_100", "color", "android"));
+            } else {
+                color = mContext.getColor(android.R.color.white);
+            }
+            int alpha = Math.round((mClockOpacity / 100f) * 255);
+            color = (color & 0x00FFFFFF) | (alpha << 24);
+            textClock.setTextColor(color);
+        }
+    }
+
     private void updateClockView() {
         if (currentClockView != null) {
             ((ViewGroup) currentClockView.getParent()).removeView(currentClockView);
@@ -199,9 +251,31 @@ public class ClockStyle extends RelativeLayout implements TunerService.Tunable {
             if (stub != null) {
                 stub.setLayoutResource(CLOCK_LAYOUTS[mClockStyle]);
                 currentClockView = stub.inflate();
+                
+                ImageView userProfileIcon = currentClockView.findViewById(R.id.user_profile_icon);
+                if (userProfileIcon != null) {
+                    Drawable profileDrawable = UserProfileUtils.getUserProfileIcon(mContext);
+                    userProfileIcon.setImageDrawable(profileDrawable);
+                }
+                
+                TextView userNameView = currentClockView.findViewById(R.id.user_name);
+                if (userNameView != null) {
+                    String username = UserProfileUtils.getUsername(mContext);
+                    userNameView.setText(username);
+                }
+                
+                TextView deviceNameView = currentClockView.findViewById(R.id.device_name);
+                if (deviceNameView != null) {
+                    String deviceName = UserProfileUtils.getDeviceName();
+                    deviceNameView.setText(deviceName);
+                }
+            
                 int gravity = isCenterClock(mClockStyle) ? Gravity.CENTER : Gravity.START;
                 if (currentClockView instanceof LinearLayout) {
                     ((LinearLayout) currentClockView).setGravity(gravity);
+                }
+                if (!isExcludedClock(mClockStyle)) {
+                    updateClockTextColor();
                 }
             }
         }
@@ -220,12 +294,31 @@ public class ClockStyle extends RelativeLayout implements TunerService.Tunable {
                 }
                 updateClockView();
                 break;
+            case CLOCK_TEXT_COLOR_KEY:
+                mUseAccentColor = TunerService.parseIntegerSwitch(newValue, false);
+                updateClockTextColor();
+                break;
+            case CLOCK_TEXT_OPACITY_KEY:
+                mClockOpacity = TunerService.parseInteger(newValue, DEFAULT_OPACITY);
+                // Keep opacity within valid range (0-100)
+                mClockOpacity = Math.max(0, Math.min(100, mClockOpacity));
+                updateClockTextColor();
+                break;
         }
     }
 
     private boolean isCenterClock(int clockStyle) {
         for (int centerClock : mCenterClocks) {
             if (centerClock == clockStyle) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean isExcludedClock(int clockStyle) {
+        for (int excludedClock : mExcludedClocks) {
+            if (excludedClock == clockStyle) {
                 return true;
             }
         }
