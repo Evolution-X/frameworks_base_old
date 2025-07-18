@@ -381,53 +381,46 @@ public class FooterView extends StackScrollerDecorView {
         Resources.Theme theme = mContext.getTheme();
         final @ColorInt int onSurface = mContext.getColor(
                 com.android.internal.R.color.materialColorOnSurface);
-        // Same resource, separate drawables to prevent touch effects from showing on the wrong
-        // button.
-        final Drawable clearAllBg = theme.getDrawable(R.drawable.notif_footer_btn_background);
-        final Drawable settingsBg = theme.getDrawable(R.drawable.notif_footer_btn_background);
+        // Use mutate() to get a new instance of the drawable for each button, 
+        // so we don't modify the shared cached drawable state.
+        final Drawable clearAllBg = theme.getDrawable(R.drawable.notif_footer_btn_background).mutate();
+        final Drawable settingsBg = theme.getDrawable(R.drawable.notif_footer_btn_background).mutate();
         final Drawable historyBg = NotifRedesignFooter.isEnabled()
-                ? theme.getDrawable(R.drawable.notif_footer_btn_background) : null;
-        final @ColorInt int scHigh;
+                ? theme.getDrawable(R.drawable.notif_footer_btn_background).mutate() : null;
 
-        if (!notificationFooterBackgroundTintOptimization()) {
-            if (notificationShadeBlur()) {
-                if (mIsBlurSupported) {
-                    Color backgroundColor = Color.valueOf(
-                            SurfaceEffectColors.surfaceEffect1(getContext()));
-                    scHigh = ColorUtils.setAlphaComponent(backgroundColor.toArgb(), 0xFF);
-                    // Apply alpha on background drawables.
-                    int backgroundAlpha = (int) (backgroundColor.alpha() * 0xFF);
-                    clearAllBg.setAlpha(backgroundAlpha);
-                    settingsBg.setAlpha(backgroundAlpha);
-                    if (historyBg != null) {
-                        historyBg.setAlpha(backgroundAlpha);
-                    }
-                } else {
-                    scHigh = mContext.getColor(
-                            com.android.internal.R.color.materialColorSurfaceContainer);
-                }
-            } else {
-                scHigh = mContext.getColor(
-                        com.android.internal.R.color.materialColorSurfaceContainerHigh);
-            }
-            if (scHigh != 0) {
-                final ColorFilter bgColorFilter = new PorterDuffColorFilter(scHigh, SRC_ATOP);
-                clearAllBg.setColorFilter(bgColorFilter);
-                settingsBg.setColorFilter(bgColorFilter);
-                if (NotifRedesignFooter.isEnabled()) {
-                    historyBg.setColorFilter(bgColorFilter);
-                }
+        if (notificationShadeBlur() && mIsBlurSupported) {
+            clearAllBg.setAlpha(0);
+            settingsBg.setAlpha(0);
+            if (historyBg != null) {
+                historyBg.setAlpha(0);
             }
         } else {
-            scHigh = 0;
+            final @ColorInt int scHigh;
+            if (!notificationFooterBackgroundTintOptimization()) {
+                if (notificationShadeBlur()) {
+                    scHigh = mContext.getColor(
+                            com.android.internal.R.color.materialColorSurfaceContainer);
+                } else {
+                    scHigh = mContext.getColor(
+                            com.android.internal.R.color.materialColorSurfaceContainerHigh);
+                }
+                if (scHigh != 0) {
+                    final ColorFilter bgColorFilter = new PorterDuffColorFilter(scHigh, SRC_ATOP);
+                    clearAllBg.setColorFilter(bgColorFilter);
+                    settingsBg.setColorFilter(bgColorFilter);
+                    if (NotifRedesignFooter.isEnabled() && historyBg != null) {
+                        historyBg.setColorFilter(bgColorFilter);
+                    }
+                }
+            }
         }
+
         mClearAllButton.setBackground(clearAllBg);
         mClearAllButton.setTextColor(onSurface);
         if (NotifRedesignFooter.isEnabled()) {
             mSettingsButton.setBackground(settingsBg);
-            mSettingsButton.setCompoundDrawableTintList(ColorStateList.valueOf(onSurface));
-
             mHistoryButton.setBackground(historyBg);
+            mSettingsButton.setCompoundDrawableTintList(ColorStateList.valueOf(onSurface));
             mHistoryButton.setCompoundDrawableTintList(ColorStateList.valueOf(onSurface));
         } else {
             mManageOrHistoryButton.setBackground(settingsBg);
@@ -439,7 +432,6 @@ public class FooterView extends StackScrollerDecorView {
         if (colorUpdateLogger != null) {
             colorUpdateLogger.logEvent("Footer.updateColors()",
                     "textColor(onSurface)=" + hexColorString(onSurface)
-                            + " backgroundTint(surfaceContainerHigh)=" + hexColorString(scHigh)
                             + " background=" + DrawableDumpKt.dumpToString(settingsBg));
         }
     }
