@@ -851,14 +851,11 @@ final class DefaultPermissionGrantPolicy {
             }
         }
 
-        if (ActivityManager.isLowRamDeviceStatic()) {
-            // Allow voice search on low-ram devices
-            grantPermissionsToSystemPackage(pm,
-                    getDefaultSystemHandlerActivityPackage(pm,
-                            SearchManager.INTENT_ACTION_GLOBAL_SEARCH, userId),
-                    userId, MICROPHONE_PERMISSIONS, ALWAYS_LOCATION_PERMISSIONS,
-                    NOTIFICATION_PERMISSIONS);
-        }
+        grantPermissionsToSystemPackage(pm,
+                getDefaultSystemHandlerActivityPackage(pm,
+                        SearchManager.INTENT_ACTION_GLOBAL_SEARCH, userId),
+                userId, MICROPHONE_PERMISSIONS, ALWAYS_LOCATION_PERMISSIONS,
+                NOTIFICATION_PERMISSIONS);
 
         // Voice recognition
         Intent voiceRecoIntent = new Intent(RecognitionService.SERVICE_INTERFACE)
