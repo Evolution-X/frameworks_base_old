@@ -949,7 +949,10 @@ public class GlobalActionsDialogLite implements DialogInterface.OnDismissListene
     }
 
     private boolean rebootAction(boolean safeMode, String reason) {
-        if (mKeyguardStateController.isMethodSecure() && mKeyguardStateController.isShowing()) {
+        final int userId = Binder.getCallingUserHandle().getIdentifier();
+        final boolean powerOffVerify = mSecureSettings.getIntForUser("power_off_verify", 0,
+                userId) != 0;
+        if (mKeyguardStateController.isMethodSecure() && mKeyguardStateController.isShowing() && powerOffVerify) {
             mActivityStarter.postQSRunnableDismissingKeyguard(() -> {
                 mWindowManagerFuncs.reboot(safeMode, reason);
             });
