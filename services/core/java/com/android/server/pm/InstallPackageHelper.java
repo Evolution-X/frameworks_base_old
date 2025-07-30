@@ -1043,13 +1043,13 @@ final class InstallPackageHelper {
 
             if (shouldProceed) {
                 for (InstallRequest request : requests) {
-                    // getName() returns the package name. It should never be null after
-                    // prepareInstallPackages() returns true.
-                    Objects.requireNonNull(request.getName());
+                    // getManifestPackageName() should never be null after prepareInstallPackages()
+                    // returns true.
+                    Objects.requireNonNull(request.getManifestPackageName());
                 }
                 synchronized (mBusyPackages) {
                     for (InstallRequest request : requests) {
-                        String pkgName = request.getName();
+                        String pkgName = request.getManifestPackageName();
                         if (mBusyPackages.contains(pkgName)) {
                             Slogf.d(TAG_BUSY_PACKAGES, "%s is already being installed, calling InstallRequest.setError(INSTALL_FAILED_INTERNAL_ERROR)", pkgName);
                             request.setError(PackageManager.INSTALL_FAILED_INTERNAL_ERROR, pkgName + " is already being installed");
@@ -1059,7 +1059,7 @@ final class InstallPackageHelper {
                     }
                     if (shouldProceed) {
                         for (InstallRequest request : requests) {
-                            String pkgName = request.getName();
+                            String pkgName = request.getManifestPackageName();
                             Slogf.d(TAG_BUSY_PACKAGES, "adding %s to mBusyPackages", pkgName);
                             if (!mBusyPackages.add(pkgName)) {
                                 throw new IllegalStateException(pkgName + " is already present in mBusyPackages");
@@ -1119,7 +1119,7 @@ final class InstallPackageHelper {
     private void removeFromBusyPackages(List<InstallRequest> requests) {
         synchronized (mBusyPackages) {
             for (InstallRequest request : requests) {
-                String pkgName = Objects.requireNonNull(request.getName());
+                String pkgName = Objects.requireNonNull(request.getManifestPackageName());
                 Slogf.d(TAG_BUSY_PACKAGES, "removing %s from mBusyPackages", pkgName);
                 if (!mBusyPackages.remove(pkgName)) {
                     throw new IllegalStateException(pkgName + " is missing from mBusyPackages");
@@ -1643,6 +1643,7 @@ final class InstallPackageHelper {
 
         String pkgName = parsedPackage.getPackageName();
         request.setName(pkgName);
+        request.setManifestPackageName(parsedPackage.getManifestPackageName());
         if (parsedPackage.isTestOnly()) {
             if ((installFlags & PackageManager.INSTALL_ALLOW_TEST) == 0) {
                 throw new PrepareFailure(INSTALL_FAILED_TEST_ONLY,
