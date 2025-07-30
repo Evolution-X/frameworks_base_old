@@ -2024,6 +2024,13 @@ public class GroupHelper {
                 return false;
             }
 
+            // temporary until Dialer gets CallStyle set
+            if ("com.android.dialer".equals(record.getSbn().getPackageName())
+                    && Notification.CATEGORY_CALL.equals(
+                            record.getSbn().getNotification().category)) {
+                return false;
+            }
+
             if (record.getSbn().getNotification().isMediaNotification()) {
                 return false;
             }
