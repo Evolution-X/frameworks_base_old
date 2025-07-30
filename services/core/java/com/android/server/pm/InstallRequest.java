@@ -823,6 +823,16 @@ final class InstallRequest {
         mName = packageName;
     }
 
+    private String mManifestPackageName;
+
+    void setManifestPackageName(String name) {
+        mManifestPackageName = name;
+    }
+
+    String getManifestPackageName() {
+        return mManifestPackageName;
+    }
+
     public void setOriginUsers(int[] userIds) {
         mOrigUsers = userIds;
     }
