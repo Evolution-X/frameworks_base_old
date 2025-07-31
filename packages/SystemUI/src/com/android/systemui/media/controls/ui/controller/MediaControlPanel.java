@@ -108,6 +108,7 @@ import com.android.systemui.media.controls.ui.viewmodel.SeekBarViewModel;
 import com.android.systemui.media.controls.util.MediaDataUtils;
 import com.android.systemui.media.controls.util.MediaUiEventLogger;
 import com.android.systemui.media.dialog.MediaOutputDialogManager;
+import com.android.systemui.media.MediaSessionManager;
 import com.android.systemui.monet.ColorScheme;
 import com.android.systemui.monet.Style;
 import com.android.systemui.plugins.ActivityStarter;
@@ -850,7 +851,7 @@ public class MediaControlPanel {
             int screenWidth = bounds.width();
             int screenHeight = bounds.height();
             Drawable albumArt = getScaledBackground(artworkIcon, screenWidth, screenHeight);
-            com.android.systemui.media.MediaSessionManager.Companion.get().onAlbumArtChanged(albumArt);
+            MediaSessionManager.Companion.get().onAlbumArtChanged(albumArt);
             WallpaperColors wallpaperColors = getWallpaperColor(artworkIcon);
             boolean darkTheme = !Flags.mediaControlsA11yColors();
             if (wallpaperColors != null) {
@@ -871,6 +872,8 @@ public class MediaControlPanel {
                     Log.w(TAG, "Cannot find icon for package " + data.getPackageName(), e);
                 }
             }
+
+        MediaSessionManager.Companion.get().onMediaColorsChanged(mutableColorScheme.getAccent1().getS100());
 
             final ColorScheme colorScheme = mutableColorScheme;
             mMainExecutor.execute(() -> {
