@@ -6,4 +6,8 @@
 <resources>
     <!-- Sfps arrow color -->
     <color name="sfps_chevron_fill">@color/material_dynamic_secondary20</color>
+
+    <!-- for fallback only (dual tone) -->
+    <color name="nt_scrim_behind_1">@android:color/system_neutral1_900</color>
+    <color name="nt_scrim_behind_2">@android:color/system_neutral1_1000</color>
 </resources>
