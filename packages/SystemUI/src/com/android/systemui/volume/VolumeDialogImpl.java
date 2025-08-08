@@ -2672,21 +2672,19 @@ public class VolumeDialogImpl implements VolumeDialog, Dumpable,
         if (!useActiveColoring && !mChangeVolumeRowTintWhenInactive) {
             return;
         }
-        final ColorStateList colorTint = useActiveColoring
-                ? Utils.getColorAccent(mContext)
-                : Utils.getColorAttr(mContext, com.android.internal.R.attr.colorAccentSecondary);
+        final ColorStateList colorTint = Utils.getColorAccent(mContext);
+
         final int alpha = useActiveColoring
                 ? Color.alpha(colorTint.getDefaultColor())
                 : getAlphaAttr(android.R.attr.secondaryContentAlpha);
 
-        final ColorStateList bgTint = useActiveColoring
-                ? Utils.getColorAttr(mContext, android.R.attr.colorBackgroundFloating)
-                : Utils.getColorAttr(mContext, com.android.internal.R.attr.textColorOnAccent);
+        final ColorStateList bgTint = Utils.getColorAttr(mContext, android.R.attr.colorBackgroundFloating);
 
         final ColorStateList inverseTextTint = Utils.getColorAttr(
                 mContext, com.android.internal.R.attr.textColorOnAccent);
 
         row.sliderProgressSolid.setTintList(colorTint);
+        row.sliderProgressSolid.setAlpha(alpha);
         if (row.sliderProgressIcon != null) {
             row.sliderProgressIcon.setTintList(bgTint);
         }
