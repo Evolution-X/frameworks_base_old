@@ -436,6 +436,8 @@
     <string name="accessibility_wallet_button">Wallet</string>
     <!-- Content description of the QR Code scanner for accessibility (not shown on the screen). [CHAR LIMIT=NONE] -->
     <string name="accessibility_qr_code_scanner_button">QR Code Scanner</string>
+    <!-- Content description of the Now Playing button for accessibility (not shown on the screen). [CHAR LIMIT=NONE] -->
+    <string name="accessibility_now_playing_button">Now Playing</string>
     <!-- Content description of the unlock button for accessibility (not shown on the screen). [CHAR LIMIT=NONE] -->
     <string name="accessibility_unlock_button">Unlocked</string>
     <!-- Content description of the lock icon for accessibility (not shown on the screen). [CHAR LIMIT=NONE] -->
