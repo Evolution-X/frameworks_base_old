@@ -31,6 +31,7 @@ object BuiltInKeyguardQuickAffordanceKeys {
     const val FLASHLIGHT = "flashlight"
     const val HOME_CONTROLS = "home"
     const val MUTE = "mute"
+    const val NOW_PLAYING = "now_playing"
     const val QR_CODE_SCANNER = "qr_code_scanner"
     const val QUICK_ACCESS_WALLET = "wallet"
     const val VIDEO_CAMERA = "video_camera"
