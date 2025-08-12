@@ -30,6 +30,9 @@ import android.content.pm.ActivityInfo;
 import android.content.res.ColorStateList;
 import android.content.res.Configuration;
 import android.content.res.Resources;
+import android.database.ContentObserver;
+import android.net.Uri;
+import android.os.Handler;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.ColorMatrixColorFilter;
@@ -191,6 +194,7 @@ public class StatusBarIconView extends AnimatedImageView implements StatusIconDi
     private final NotificationDozeHelper mDozer;
     private boolean mNewIconStyle;
     private boolean mShowNotificationCount;
+    private SettingsObserver mSettingsObserver;
 
     public StatusBarIconView(Context context, String slot, StatusBarNotification sbn) {
         this(context, slot, sbn, false);
@@ -202,10 +206,8 @@ public class StatusBarIconView extends AnimatedImageView implements StatusIconDi
         mDozer = new NotificationDozeHelper();
         mBlocked = blocked;
         mSlot = slot;
-        mNewIconStyle = Settings.System.getIntForUser(context.getContentResolver(),
-            Settings.System.STATUSBAR_COLORED_ICONS, 0, UserHandle.USER_CURRENT) == 1;
-        mShowNotificationCount = Settings.System.getIntForUser(context.getContentResolver(),
-            Settings.System.STATUSBAR_NOTIF_COUNT, 0, UserHandle.USER_CURRENT) == 1;
+        updateSettings();
+        setupSettingsObserver();
         mNumberPain = new Paint();
         mNumberPain.setTextAlign(Paint.Align.CENTER);
         mNumberPain.setColor(context.getColor(R.color.notification_number_text_color));
@@ -223,6 +225,58 @@ public class StatusBarIconView extends AnimatedImageView implements StatusIconDi
 
         if (Flags.statusBarMonochromeIconsFix()) {
             setCropToPadding(true);
+        }
+    }
+
+    private void updateSettings() {
+        mNewIconStyle = Settings.System.getIntForUser(getContext().getContentResolver(),
+            Settings.System.STATUSBAR_COLORED_ICONS, 0, UserHandle.USER_CURRENT) == 1;
+        mShowNotificationCount = Settings.System.getIntForUser(getContext().getContentResolver(),
+            Settings.System.STATUSBAR_NOTIF_COUNT, 0, UserHandle.USER_CURRENT) == 1;
+    }
+
+    private void setupSettingsObserver() {
+        if (mSettingsObserver == null) {
+            mSettingsObserver = new SettingsObserver(new Handler());
+            getContext().getContentResolver().registerContentObserver(
+                Settings.System.getUriFor(Settings.System.STATUSBAR_COLORED_ICONS),
+                false, mSettingsObserver, UserHandle.USER_ALL);
+            getContext().getContentResolver().registerContentObserver(
+                Settings.System.getUriFor(Settings.System.STATUSBAR_NOTIF_COUNT),
+                false, mSettingsObserver, UserHandle.USER_ALL);
+        }
+    }
+
+    private class SettingsObserver extends ContentObserver {
+        public SettingsObserver(Handler handler) {
+            super(handler);
+        }
+
+        @Override
+        public void onChange(boolean selfChange, Uri uri) {
+            boolean oldIconStyle = mNewIconStyle;
+            boolean oldShowCount = mShowNotificationCount;
+
+            updateSettings();
+
+            if (oldIconStyle != mNewIconStyle) {
+                post(() -> {
+                    updateDrawable();
+                    setStaticDrawableColor(mDrawableColor);
+                });
+            }
+
+            if (oldShowCount != mShowNotificationCount && mIcon != null) {
+                post(() -> set(mIcon, true));
+            }
+        }
+    }
+
+    public void onDetachedFromWindow() {
+        super.onDetachedFromWindow();
+        if (mSettingsObserver != null) {
+            getContext().getContentResolver().unregisterContentObserver(mSettingsObserver);
+            mSettingsObserver = null;
         }
     }
 
