@@ -930,9 +930,7 @@ public class GlobalActionsDialogLite implements DialogInterface.OnDismissListene
 
     @VisibleForTesting
     boolean shouldDisplayBugReport(@Nullable UserInfo user) {
-        return user != null && user.isAdmin()
-                && mSecureSettings.getIntForUser(Settings.Secure.BUGREPORT_IN_POWER_MENU, 0,
-                user.id) != 0;
+        return false;
     }
 
     @Override
@@ -1456,14 +1454,12 @@ public class GlobalActionsDialogLite implements DialogInterface.OnDismissListene
         }
 
         public boolean showDuringKeyguard() {
-            return true;
+            return false;
         }
 
         @Override
         public boolean showBeforeProvisioning() {
-            return Build.isDebuggable() && mSecureSettings.getIntForUser(
-                    Settings.Secure.BUGREPORT_IN_POWER_MENU, 0, getCurrentUser().id) != 0
-                    && getCurrentUser().isAdmin();
+            return false;
         }
     }
 
