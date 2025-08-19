@@ -4150,7 +4150,7 @@ public class KeyguardViewMediator implements CoreStartable,
                 updateActivityLockScreenState(showing, aodShowing, reason);
             }
         }
-        com.android.systemui.util.ScrimUtils.get().setKeyguardShowing(mShowing);
+
     }
 
     private void notifyDefaultDisplayCallbacks(boolean showing) {
