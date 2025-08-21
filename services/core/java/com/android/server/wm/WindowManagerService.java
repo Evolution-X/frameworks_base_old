@@ -4520,7 +4520,17 @@ public class WindowManagerService extends IWindowManager.Stub
         // TODO(multi-display): Track which display is rotated.
         if (!checkCallingPermission(android.Manifest.permission.SET_ORIENTATION,
                 "freezeRotation()")) {
-            throw new SecurityException("Requires SET_ORIENTATION permission");
+            final int callingUid = Binder.getCallingUid();
+            final int callingPid = Binder.getCallingPid();
+
+            if (callingUid == 1000 || callingUid == 0) {
+                Slog.w(TAG, "Allowing rotation freeze for system caller: " + caller
+                        + " (uid=" + callingUid + ", pid=" + callingPid + ")");
+            } else {
+                Slog.w(TAG, "Permission denied for rotation freeze. Caller: " + caller
+                        + " (uid=" + callingUid + ", pid=" + callingPid + ")");
+                return;
+            }
         }
         if (rotation < -1 || rotation > Surface.ROTATION_270) {
             throw new IllegalArgumentException("Rotation argument must be -1 or a valid "
@@ -4560,7 +4570,17 @@ public class WindowManagerService extends IWindowManager.Stub
     public void thawDisplayRotation(int displayId, String caller) {
         if (!checkCallingPermission(android.Manifest.permission.SET_ORIENTATION,
                 "thawRotation()")) {
-            throw new SecurityException("Requires SET_ORIENTATION permission");
+            final int callingUid = Binder.getCallingUid();
+            final int callingPid = Binder.getCallingPid();
+
+            if (callingUid == 1000 || callingUid == 0) {
+                Slog.w(TAG, "Allowing rotation thaw for system caller: " + caller
+                        + " (uid=" + callingUid + ", pid=" + callingPid + ")");
+            } else {
+                Slog.w(TAG, "Permission denied for rotation thaw. Caller: " + caller
+                        + " (uid=" + callingUid + ", pid=" + callingPid + ")");
+                return;
+            }
         }
 
         ProtoLog.v(WM_DEBUG_ORIENTATION, "thawRotation: mRotation=%d, caller=%s",
