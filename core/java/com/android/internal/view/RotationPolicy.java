@@ -196,7 +196,11 @@ public final class RotationPolicy {
                         wm.thawRotation(caller);
                     }
                 } catch (RemoteException exc) {
-                    Log.w(TAG, "Unable to save auto-rotate setting");
+                    Log.w(TAG, "Unable to save auto-rotate setting", exc);
+                } catch (SecurityException exc) {
+                    Log.w(TAG, "Permission denied when setting rotation lock. Caller: " + caller, exc);
+                } catch (Exception exc) {
+                    Log.w(TAG, "Unexpected error when setting rotation lock. Caller: " + caller, exc);
                 }
             }
         });
