@@ -1052,7 +1052,7 @@ private fun editTileShape(shapeMode: Int): RoundedCornerShape {
 
 @Composable
 private fun Modifier.tileBackground(color: () -> Color): Modifier {
-    val shapeMode by rememberTileShapeMode()
+    val shapeMode = rememberTileShapeMode()
     return clip(editTileShape(shapeMode)).drawBehind { drawRect(color()) }
 }
 
