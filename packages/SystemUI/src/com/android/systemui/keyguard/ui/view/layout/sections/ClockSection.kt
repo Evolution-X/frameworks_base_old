@@ -137,6 +137,12 @@ constructor(
 
     private fun constrainWeatherClockDateIconsBarrier(constraints: ConstraintSet) {
         constraints.apply {
+            createBarrier(
+                R.id.weather_clock_bc_smartspace_bottom,
+                Barrier.BOTTOM,
+                0,
+                (customR.id.weather_clock_time),
+            )
             if (
                 rootViewModel.isNotifIconContainerVisible.value.value &&
                     keyguardClockViewModel.hasAodIcons.value
