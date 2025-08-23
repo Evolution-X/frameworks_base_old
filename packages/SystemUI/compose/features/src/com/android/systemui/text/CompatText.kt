@@ -34,7 +34,8 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.graphics.CompositingStrategy
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.TextStyle
@@ -117,15 +118,13 @@ fun CompatMarqueeText(
     val measuredTextWidth = remember { mutableStateOf(0f) }
     val containerWidth = remember { mutableStateOf(0f) }
 
-    val drawModifier = Modifier.drawWithContent {
-        drawContent()
-        if (measuredTextWidth.value > containerWidth.value) {
-            drawEndBlur(blurEdgeWidthPx)
-        }
-    }
-
     AndroidView(
-        modifier = modifier.then(drawModifier),
+        modifier = modifier
+            .then(
+                if (measuredTextWidth.value > containerWidth.value) {
+                    Modifier.endBlur(blurEdgeWidthPx)
+                } else Modifier
+            ),
         factory = { context ->
             TextView(context).apply {
                 isSingleLine = true
@@ -224,6 +223,26 @@ private fun rememberLineHeightPx(lineHeight: TextUnit, density: Density): Float?
     }
 }
 
+@Composable
+fun Modifier.endBlur(edgeWidthPx: Float): Modifier =
+    this
+        .graphicsLayer {
+            compositingStrategy = CompositingStrategy.Offscreen
+        }
+        .drawWithContent {
+            drawContent()
+            drawRect(
+                topLeft = Offset(size.width - edgeWidthPx, 0f),
+                size = Size(edgeWidthPx, size.height),
+                brush = Brush.horizontalGradient(
+                    colors = listOf(Color.Transparent, Color.Black),
+                    startX = size.width,
+                    endX = size.width - edgeWidthPx,
+                ),
+                blendMode = BlendMode.DstIn,
+            )
+        }
+
 private fun TextView.applyResolvedStyle(
     resolved: ResolvedTextStyle,
     color: Color,
@@ -255,19 +274,6 @@ private fun TextView.applyOverflow(overflow: TextOverflow?) {
         TextOverflow.Clip -> null
         else -> null
     }
-}
-
-private fun DrawScope.drawEndBlur(edgeWidthPx: Float) {
-    drawRect(
-        topLeft = Offset(size.width - edgeWidthPx, 0f),
-        size = Size(edgeWidthPx, size.height),
-        brush = Brush.horizontalGradient(
-            colors = listOf(Color.Transparent, Color.Black),
-            startX = size.width,
-            endX = size.width - edgeWidthPx,
-        ),
-        blendMode = BlendMode.DstIn,
-    )
 }
 
 private data class ResolvedTextStyle(
