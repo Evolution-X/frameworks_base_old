@@ -7173,7 +7173,7 @@ public final class Settings {
          * @hide
          */
         public static final String STATUSBAR_BATTERY_BAR_LOW_COLOR = "statusbar_battery_bar_low_color";
-        
+
         /**
          * @hide
          */
@@ -7244,6 +7244,12 @@ public final class Settings {
          * @hide
          */
         public static final String QS_BRIGHTNESS_SLIDER_HAPTIC = "qs_brightness_slider_haptic";
+
+        /**
+         * Customize Brightness slider shape.
+         * @hide
+         */
+        public static final String QS_BRIGHTNESS_SLIDER_SHAPE = "qs_brightness_slider_shape";
 
         /**
          * Keys we no longer back up under the current schema, but want to continue to
