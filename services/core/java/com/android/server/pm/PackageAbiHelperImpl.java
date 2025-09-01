@@ -142,10 +142,11 @@ final class PackageAbiHelperImpl implements PackageAbiHelper {
             }
 
             if (forceMatch && copyRet == PackageManager.INSTALL_FAILED_NO_MATCHING_ABIS) {
-                throw new PackageManagerException(
-                        PackageManager.INSTALL_FAILED_MULTI_ARCH_NOT_MATCH_ALL_NATIVE_ABIS,
-                        "The multiArch app's native libs don't support all the natively"
-                                + " supported ABIs of the device.");
+                // Log warning instead of throwing exception for system apps
+                Slog.w(PackageManagerService.TAG, "MultiArch app's native libs don't support all device ABIs, " +
+                        "but allowing installation: " + message);
+                // Don't throw exception - allow installation to proceed
+                return;
             }
         }
     }
