@@ -164,4 +164,10 @@
 
     <!-- WiFi Standard icon -->
     <string name="wifi_standard_icon_title">Wi-Fi standard</string>
+
+    <!-- Flashlight strength dialog -->
+    <string name="flashlight_strength_dialog_title">Flashlight brightness</string>
+    <string name="flashlight_strength_off">Off</string>
+    <string name="flashlight_turn_on">Turn On</string>
+    <string name="flashlight_turn_off">Turn Off</string>
 </resources>
