@@ -60,6 +60,6 @@ constructor(@ShadeDisplayAware private val resources: Resources, private val the
                 activationState = QSTileState.ActivationState.INACTIVE
                 secondaryLabel = resources.getStringArray(R.array.tile_states_flashlight)[1]
             }
-            supportedActions = setOf(QSTileState.UserAction.CLICK)
+            supportedActions = setOf(QSTileState.UserAction.CLICK, QSTileState.UserAction.LONG_CLICK)
         }
 }
