@@ -22,12 +22,14 @@ import com.android.systemui.qs.tiles.base.domain.model.QSTileInput
 import com.android.systemui.qs.tiles.base.shared.model.QSTileUserAction
 import com.android.systemui.qs.tiles.impl.flashlight.domain.model.FlashlightTileModel
 import com.android.systemui.statusbar.policy.FlashlightController
+import com.android.systemui.statusbar.policy.FlashlightStrengthController
 import javax.inject.Inject
 
 /** Handles flashlight tile clicks. */
 class FlashlightTileUserActionInteractor
 @Inject
-constructor(private val flashlightController: FlashlightController) :
+constructor(private val flashlightController: FlashlightController, 
+        private val strengthController: FlashlightStrengthController) :
     QSTileUserActionInteractor<FlashlightTileModel> {
 
     override suspend fun handleInput(input: QSTileInput<FlashlightTileModel>) =
@@ -38,10 +40,15 @@ constructor(private val flashlightController: FlashlightController) :
                         !ActivityManager.isUserAMonkey() &&
                             input.data is FlashlightTileModel.FlashlightAvailable
                     ) {
-                        flashlightController.setFlashlight(!input.data.isEnabled)
+                        if (strengthController.supported) {
+                            strengthController.expandDialog(null)
+                        } else {
+                            flashlightController.setFlashlight(!input.data.isEnabled)
+                        }
                     }
                 }
-                is QSTileUserAction.ToggleClick -> {}
+                is QSTileUserAction.ToggleClick -> { strengthController.handleClick() }
+                is QSTileUserAction.LongClick -> { strengthController.expandDialog(null) }
                 else -> {}
             }
         }
