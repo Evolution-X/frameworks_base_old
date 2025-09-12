@@ -24,6 +24,7 @@ import static android.hardware.biometrics.BiometricRequestConstants.REASON_AUTH_
 import static android.hardware.biometrics.BiometricRequestConstants.REASON_AUTH_KEYGUARD;
 import static android.hardware.biometrics.BiometricRequestConstants.REASON_ENROLL_ENROLLING;
 import static android.hardware.biometrics.BiometricRequestConstants.REASON_ENROLL_FIND_SENSOR;
+import static android.hardware.biometrics.BiometricSourceType.FINGERPRINT;
 
 import static com.android.internal.util.LatencyTracker.ACTION_UDFPS_ILLUMINATE;
 
@@ -41,6 +42,7 @@ import android.database.ContentObserver;
 import android.graphics.Rect;
 import android.hardware.biometrics.BiometricFingerprintConstants;
 import android.hardware.biometrics.BiometricPrompt;
+import android.hardware.biometrics.BiometricSourceType;
 import android.hardware.biometrics.SensorProperties;
 import android.hardware.display.ColorDisplayManager;
 import android.hardware.display.DisplayManager;
@@ -78,6 +80,7 @@ import com.android.internal.annotations.VisibleForTesting;
 import com.android.internal.logging.InstanceId;
 import com.android.internal.util.LatencyTracker;
 import com.android.keyguard.KeyguardUpdateMonitor;
+import com.android.keyguard.KeyguardUpdateMonitorCallback;
 import com.android.keyguard.UserActivityNotifier;
 import com.android.systemui.Dumpable;
 import com.android.systemui.Flags;
@@ -241,6 +244,7 @@ public class UdfpsController implements DozeReceiver, Dumpable {
     private boolean mScreenOffFod;
 
     private UdfpsAnimation mUdfpsAnimation;
+    private boolean mKeyguardCallbackRegistered = false;
 
     private boolean mNightDisplayActivated;
     private ColorDisplayManager mColorDisplayManager;
@@ -296,6 +300,57 @@ public class UdfpsController implements DozeReceiver, Dumpable {
                     updateUdfpsAnimation();
                 }
             };
+
+    private final KeyguardUpdateMonitorCallback mKeyguardCallback = new KeyguardUpdateMonitorCallback() {
+        @Override
+        public void onBiometricAcquired(@NonNull BiometricSourceType type, int acquireInfo) {
+            if (type != FINGERPRINT || mOverlay == null) return;
+            mFgExecutor.execute(() -> {
+                if (isUltrasonic()) {
+                    if (acquireInfo == FINGERPRINT_ACQUIRED_START) {
+                        showUdfpsAnimation();
+                    } else {
+                        hideUdfpsAnimation();
+                    }
+                } else {
+                    if (acquireInfo == FINGERPRINT_ACQUIRED_START
+                        || acquireInfo == FINGERPRINT_ACQUIRED_GOOD) {
+                        showUdfpsAnimation();
+                    }
+                }
+            });
+        }
+
+        @Override
+        public void onBiometricAuthFailed(@NonNull BiometricSourceType type) {
+            if (type == FINGERPRINT && mOverlay != null) {
+                mFgExecutor.execute(() -> hideUdfpsAnimation());
+            }
+        }
+
+        @Override
+        public void onBiometricError(int msgId, String errString,
+                @NonNull BiometricSourceType type) {
+            if (type == FINGERPRINT && mOverlay != null) {
+                mFgExecutor.execute(() -> hideUdfpsAnimation());
+            }
+        }
+
+        @Override
+        public void onLockedOutStateChanged(@NonNull BiometricSourceType type) {
+            if (type == FINGERPRINT && mOverlay != null) {
+                mFgExecutor.execute(() -> hideUdfpsAnimation());
+            }
+        }
+
+        @Override
+        public void onBiometricAuthenticated(int userId, BiometricSourceType type,
+                boolean isStrongBiometric) {
+            if (mOverlay != null) {
+                mFgExecutor.execute(() -> hideUdfpsAnimation());
+            }
+        }
+    };
 
     @Override
     public void dump(@NonNull PrintWriter pw, @NonNull String[] args) {
@@ -364,14 +419,12 @@ public class UdfpsController implements DozeReceiver, Dumpable {
                         for (Callback cb : mCallbacks) {
                             cb.onFingerDown();
                         }
-                        showUdfpsAnimation();
                     });
                 } else {
                     mFgExecutor.execute(() -> {
                         for (Callback cb : mCallbacks) {
                             cb.onFingerUp();
                         }
-                        hideUdfpsAnimation();
                     });
                 }
             }
@@ -592,13 +645,11 @@ public class UdfpsController implements DozeReceiver, Dumpable {
     private boolean onTouch(long requestId, @NonNull MotionEvent event) {
         if (mOverlay == null) {
             Log.w(TAG, "ignoring onTouch with null overlay");
-            hideUdfpsAnimation();
             return false;
         }
         if (!mOverlay.matchesRequestId(requestId)) {
             Log.w(TAG, "ignoring stale touch event: " + requestId + " current: "
                     + mOverlay.getRequestId());
-            hideUdfpsAnimation();
             return false;
         }
         if (event.getAction() == MotionEvent.ACTION_DOWN
@@ -621,7 +672,6 @@ public class UdfpsController implements DozeReceiver, Dumpable {
                 mOverlayParams);
         if (result instanceof TouchProcessorResult.Failure) {
             Log.w(TAG, ((TouchProcessorResult.Failure) result).getReason());
-            hideUdfpsAnimation();
             return false;
         }
 
@@ -955,6 +1005,11 @@ public class UdfpsController implements DozeReceiver, Dumpable {
         } else {
             Log.d(TAG, "showUdfpsOverlay | the overlay is already showing");
         }
+
+        if (!mKeyguardCallbackRegistered) {
+            mKeyguardUpdateMonitor.registerCallback(mKeyguardCallback);
+            mKeyguardCallbackRegistered = true;
+        }
     }
 
     private void hideUdfpsOverlay() {
@@ -968,9 +1023,15 @@ public class UdfpsController implements DozeReceiver, Dumpable {
             }
             final boolean removed = mOverlay.hide();
             mKeyguardViewManager.hideAlternateBouncer(true);
+            hideUdfpsAnimation();
             Log.v(TAG, "hideUdfpsOverlay | removing window: " + removed);
         } else {
             Log.v(TAG, "hideUdfpsOverlay | the overlay is already hidden");
+        }
+
+        if (mKeyguardCallbackRegistered) {
+            mKeyguardUpdateMonitor.removeCallback(mKeyguardCallback);
+            mKeyguardCallbackRegistered = false;
         }
 
         mOverlay = null;
@@ -1198,7 +1259,6 @@ public class UdfpsController implements DozeReceiver, Dumpable {
             for (Callback cb : mCallbacks) {
                 cb.onFingerDown();
             }
-            showUdfpsAnimation();
         }
     }
 
@@ -1239,7 +1299,6 @@ public class UdfpsController implements DozeReceiver, Dumpable {
                 for (Callback cb : mCallbacks) {
                     cb.onFingerUp();
                 }
-                hideUdfpsAnimation();
             }
         }
         mOnFingerDown = false;
