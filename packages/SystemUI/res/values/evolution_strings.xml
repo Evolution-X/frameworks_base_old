@@ -150,4 +150,7 @@
 
     <!-- Notification counter -->
     <string name="status_bar_notification_info_overflow" translatable="false">\u221E</string>
+
+    <!-- Data disabled icon -->
+    <string name="data_disabled_icon_title">Data disabled icon</string>
 </resources>

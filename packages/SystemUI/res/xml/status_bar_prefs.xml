@@ -149,4 +149,10 @@
         android:title="@string/tuner_low_priority"
         sysui:defValue="false" />
 
+    <com.android.systemui.tuner.TunerSwitch
+        android:icon="@drawable/ic_statusbar_data_disabled"
+        android:key="system:data_disabled_icon"
+        android:title="@string/data_disabled_icon_title"
+        sysui:defValue="true" />
+
 </PreferenceScreen>
