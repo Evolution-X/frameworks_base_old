@@ -155,4 +155,22 @@
         android:title="@string/data_disabled_icon_title"
         sysui:defValue="true" />
 
+    <com.android.systemui.tuner.TunerSwitch
+        android:icon="@drawable/ic_statusbar_mic"
+        android:key="enable_camera_privacy_indicator"
+        android:title="@string/mic_camera_privacy_indicator_title"
+        sysui:defValue="true" />
+
+    <com.android.systemui.tuner.TunerSwitch
+        android:icon="@drawable/ic_statusbar_location"
+        android:key="enable_location_privacy_indicator"
+        android:title="@string/location_privacy_indicator_title"
+        sysui:defValue="true" />
+
+    <com.android.systemui.tuner.TunerSwitch
+        android:icon="@drawable/ic_statusbar_cast"
+        android:key="enable_projection_privacy_indicator"
+        android:title="@string/projection_privacy_indicator_title"
+        sysui:defValue="true" />
+
 </PreferenceScreen>
