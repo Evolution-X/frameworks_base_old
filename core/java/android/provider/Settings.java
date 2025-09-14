@@ -6637,6 +6637,13 @@ public final class Settings {
         public static final String LOCKSCREEN_BATTERY_INFO = "lockscreen_battery_info";
 
         /**
+         * Whether to show remaining charging time on the lockscreen while charging
+         * @hide
+         */
+        @Readable
+        public static final String LOCKSCREEN_CHARGING_TIME = "lockscreen_charging_time";
+
+        /**
          * Enable/disable Bluetooth Battery bar
          * @hide
          */
