@@ -1220,7 +1220,9 @@ public class KeyguardIndicationController {
         if (mPowerCharged) {
             return mContext.getResources().getString(R.string.keyguard_charged);
         }
-        final boolean hasChargingTime = mChargingTimeRemaining > 0;
+        final boolean chargingTimeEnabled = Settings.System.getIntForUser(mContext.getContentResolver(),
+                Settings.System.LOCKSCREEN_CHARGING_TIME, 1, UserHandle.USER_CURRENT) == 1;
+        final boolean hasChargingTime = mChargingTimeRemaining > 0 && chargingTimeEnabled;
         int chargingId;
         if (mPowerPluggedInWired) {
             switch (mChargingSpeed) {
