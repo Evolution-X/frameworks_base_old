@@ -52,7 +52,8 @@ constructor(
         "ambient_display" to CustomTileConfig(R.drawable.ic_qs_ambient_display, TileCategory.DISPLAY),
         "heads_up" to CustomTileConfig(R.drawable.ic_qs_heads_up, TileCategory.DISPLAY),
         "reading_mode" to CustomTileConfig(R.drawable.ic_qs_reader, TileCategory.DISPLAY),
-        "dns" to CustomTileConfig(R.drawable.ic_settings_dns, TileCategory.CONNECTIVITY)
+        "dns" to CustomTileConfig(R.drawable.ic_settings_dns, TileCategory.CONNECTIVITY),
+        "volume" to CustomTileConfig(R.drawable.ic_volume_media, TileCategory.UTILITIES)
     )
 
     private data class CustomTileConfig(
