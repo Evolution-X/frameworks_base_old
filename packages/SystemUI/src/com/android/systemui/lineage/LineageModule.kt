@@ -44,6 +44,7 @@ import com.android.systemui.qs.tiles.SoundTile
 import com.android.systemui.qs.tiles.SyncTile
 import com.android.systemui.qs.tiles.UsbTetherTile
 import com.android.systemui.qs.tiles.VPNTetheringTile
+import com.android.systemui.qs.tiles.VolumeQSTile
 import com.android.systemui.qs.tiles.VolumeTile
 import com.android.systemui.qs.tiles.VpnTile
 import com.android.systemui.qs.tiles.WifiTile
@@ -185,6 +186,12 @@ interface LineageModule {
     @IntoMap
     @StringKey(VPNTetheringTile.TILE_SPEC)
     fun bindVPNTetheringTile(vpnTetheringTile: VPNTetheringTile): QSTileImpl<*>
+    
+    /** Inject VolumeQSTile into tileMap in QSModule */
+    @Binds
+    @IntoMap
+    @StringKey(VolumeQSTile.TILE_SPEC)
+    fun bindVolumeQSTile(volumeQSTile: VolumeQSTile): QSTileImpl<*>
 
     /** Inject VolumeTile into tileMap in QSModule */
     @Binds
