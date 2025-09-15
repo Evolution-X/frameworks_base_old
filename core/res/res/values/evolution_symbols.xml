@@ -207,4 +207,7 @@
 
     <!-- Whether the device supports Smart Pixels -->
     <java-symbol type="bool" name="config_supportSmartPixels" />
+
+    <!-- Force Fullscreen apps -->
+    <java-symbol type="array" name="config_fullscreenCutoutApps" />
 </resources>
