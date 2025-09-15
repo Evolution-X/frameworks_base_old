@@ -81,6 +81,8 @@ import com.android.systemui.statusbar.policy.SplitShadeStateController;
 import com.android.systemui.statusbar.policy.SplitShadeStateControllerImpl;
 import com.android.systemui.statusbar.policy.UserInfoController;
 import com.android.systemui.statusbar.policy.UserInfoControllerImpl;
+import com.android.systemui.statusbar.policy.VolumeController;
+import com.android.systemui.statusbar.policy.VolumeDialogDelegate;
 import com.android.systemui.statusbar.policy.WalletController;
 import com.android.systemui.statusbar.policy.WalletControllerImpl;
 import com.android.systemui.statusbar.policy.ZenModeController;
@@ -320,6 +322,27 @@ public interface StatusBarPolicyModule {
         return new FlashlightStrengthController(
                 context,
                 bgExecutor,
+                dialogTransitionAnimator,
+                dialogDelegateProvider,
+                keyguardStateController,
+                activityStarter,
+                mainHandler
+        );
+    }
+    
+    /** Provides a {@link FlashlightStrengthController} */
+    @Provides
+    @SysUISingleton
+    static VolumeController provideVolumeController(
+            @Application Context context,
+            DialogTransitionAnimator dialogTransitionAnimator,
+            Provider<VolumeDialogDelegate> dialogDelegateProvider,
+            KeyguardStateController keyguardStateController,
+            ActivityStarter activityStarter,
+            @Main Handler mainHandler
+    ) {
+        return new VolumeController(
+                context,
                 dialogTransitionAnimator,
                 dialogDelegateProvider,
                 keyguardStateController,
