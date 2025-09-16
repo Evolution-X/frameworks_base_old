@@ -162,6 +162,12 @@
         sysui:defValue="true" />
 
     <com.android.systemui.tuner.TunerSwitch
+        android:icon="@drawable/ic_statusbar_wifi_standard_icon"
+        android:key="system:wifi_standard_icon"
+        android:title="@string/wifi_standard_icon_title"
+        sysui:defValue="false" />
+
+    <com.android.systemui.tuner.TunerSwitch
         android:icon="@drawable/ic_statusbar_mic"
         android:key="enable_camera_privacy_indicator"
         android:title="@string/mic_camera_privacy_indicator_title"
