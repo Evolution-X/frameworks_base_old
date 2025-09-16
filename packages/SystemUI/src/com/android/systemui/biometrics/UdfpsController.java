@@ -312,8 +312,6 @@ public class UdfpsController implements DozeReceiver, Dumpable {
                     } else {
                         hideUdfpsAnimation();
                     }
-                } else {
-                    showUdfpsAnimation();
                 }
             });
         }
@@ -1256,6 +1254,7 @@ public class UdfpsController implements DozeReceiver, Dumpable {
             for (Callback cb : mCallbacks) {
                 cb.onFingerDown();
             }
+            showUdfpsAnimation();
         }
     }
 
