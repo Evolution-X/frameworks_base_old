@@ -25,6 +25,7 @@ import android.os.Handler;
 import android.os.UserHandle;
 import android.provider.Settings;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
@@ -43,8 +44,10 @@ import com.android.systemui.tuner.TunerService;
 
 public class ClockStyle extends RelativeLayout implements TunerService.Tunable {
 
+    private static final String TAG = "ClockStyle";
+
     private static final int[] CLOCK_LAYOUTS = {
-            0,
+            0, // Disabled
             R.layout.keyguard_clock_oos,
             R.layout.keyguard_clock_center,
             R.layout.keyguard_clock_simple,
@@ -70,7 +73,11 @@ public class ClockStyle extends RelativeLayout implements TunerService.Tunable {
     public static final String CLOCK_STYLE_KEY = "clock_style";
     public static final String CLOCK_TEXT_COLOR_KEY = "clock_text_accent_color";
     public static final String CLOCK_TEXT_OPACITY_KEY = "clock_text_opacity";
-    
+
+    private static final int RISING_OS_CLOCK_MAX = 16;
+    private static final int AVIUM_CLOCK_START = 17;
+    private static final int AVIUM_CLOCK_END = 27;
+
     private static final int DEFAULT_OPACITY = 100;
 
     private final Context mContext;
@@ -78,7 +85,7 @@ public class ClockStyle extends RelativeLayout implements TunerService.Tunable {
     private final TunerService mTunerService;
 
     private View currentClockView;
-    private int mClockStyle;  
+    private int mClockStyle;
     private boolean mUseAccentColor = false;
     private int mClockOpacity = DEFAULT_OPACITY;
 
@@ -163,7 +170,7 @@ public class ClockStyle extends RelativeLayout implements TunerService.Tunable {
         super.onFinishInflate();
         updateClockView();
     }
-    
+
     @Override
     protected void onDetachedFromWindow() {
         super.onDetachedFromWindow();
@@ -174,12 +181,12 @@ public class ClockStyle extends RelativeLayout implements TunerService.Tunable {
     }
 
     private void startBurnInProtection() {
-        if (mClockStyle == 0) return;
+        if (mClockStyle == 0 || isAviumClock(mClockStyle)) return;
         mBurnInProtectionHandler.post(mBurnInProtectionRunnable);
     }
 
     private void stopBurnInProtection() {
-        if (mClockStyle == 0) return;
+        if (mClockStyle == 0 || isAviumClock(mClockStyle)) return;
         mBurnInProtectionHandler.removeCallbacks(mBurnInProtectionRunnable);
         if (currentClockView != null) {
             currentClockView.setTranslationX(0);
@@ -224,7 +231,7 @@ public class ClockStyle extends RelativeLayout implements TunerService.Tunable {
                 updateTextClockColor(childView);
             }
         }
-        
+
         if (view instanceof TextClock && !isExcludedClock(mClockStyle)) {
             TextClock textClock = (TextClock) view;
             int color;
@@ -246,30 +253,37 @@ public class ClockStyle extends RelativeLayout implements TunerService.Tunable {
             ((ViewGroup) currentClockView.getParent()).removeView(currentClockView);
             currentClockView = null;
         }
+
+        if (isAviumClock(mClockStyle)) {
+            Log.d(TAG, "Avium clock detected (style " + mClockStyle + "), handled by KeyguardClockStyleSection");
+            setVisibility(View.GONE);
+            return;
+        }
+
         if (mClockStyle > 0 && mClockStyle < CLOCK_LAYOUTS.length) {
             ViewStub stub = findViewById(R.id.clock_view_stub);
             if (stub != null) {
                 stub.setLayoutResource(CLOCK_LAYOUTS[mClockStyle]);
                 currentClockView = stub.inflate();
-                
+
                 ImageView userProfileIcon = currentClockView.findViewById(R.id.user_profile_icon);
                 if (userProfileIcon != null) {
                     Drawable profileDrawable = UserProfileUtils.getUserProfileIcon(mContext);
                     userProfileIcon.setImageDrawable(profileDrawable);
                 }
-                
+
                 TextView userNameView = currentClockView.findViewById(R.id.user_name);
                 if (userNameView != null) {
                     String username = UserProfileUtils.getUsername(mContext);
                     userNameView.setText(username);
                 }
-                
+
                 TextView deviceNameView = currentClockView.findViewById(R.id.device_name);
                 if (deviceNameView != null) {
                     String deviceName = UserProfileUtils.getDeviceName();
                     deviceNameView.setText(deviceName);
                 }
-            
+
                 int gravity = isCenterClock(mClockStyle) ? Gravity.CENTER : Gravity.START;
                 if (currentClockView instanceof LinearLayout) {
                     ((LinearLayout) currentClockView).setGravity(gravity);
@@ -280,7 +294,7 @@ public class ClockStyle extends RelativeLayout implements TunerService.Tunable {
             }
         }
         onTimeChanged();
-        setVisibility(mClockStyle != 0 ? View.VISIBLE : View.GONE);
+        setVisibility(mClockStyle != 0 && !isAviumClock(mClockStyle) ? View.VISIBLE : View.GONE);
     }
 
     @Override
@@ -300,7 +314,6 @@ public class ClockStyle extends RelativeLayout implements TunerService.Tunable {
                 break;
             case CLOCK_TEXT_OPACITY_KEY:
                 mClockOpacity = TunerService.parseInteger(newValue, DEFAULT_OPACITY);
-                // Keep opacity within valid range (0-100)
                 mClockOpacity = Math.max(0, Math.min(100, mClockOpacity));
                 updateClockTextColor();
                 break;
@@ -323,5 +336,12 @@ public class ClockStyle extends RelativeLayout implements TunerService.Tunable {
             }
         }
         return false;
+    }
+
+    /**
+     * Check if the clock style is an Avium custom clock (17-27)
+     */
+    private boolean isAviumClock(int clockStyle) {
+        return clockStyle >= AVIUM_CLOCK_START && clockStyle <= AVIUM_CLOCK_END;
     }
 }

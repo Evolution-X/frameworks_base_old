@@ -22,4 +22,23 @@
 
     <!-- default clock face description [CHAR LIMIT=NONE]-->
     <string name="clock_default_description">Digital default</string>
+
+    <!-- NT CLOCKS -->
+    <string name="clock_id_general">GENERAL</string>
+    <string name="clock_id_graphic">GRAPHIC</string>
+    <string name="clock_id_london_ug">LONDON_UG</string>
+    <string name="clock_id_ndot">NDOT</string>
+    <string name="clock_id_ntype">DEFAULT</string>
+    <string name="clock_id_old_quick_look">OLD_QUICKLOOK</string>
+    <string name="clock_id_quick_look">QUICKLOOK</string>
+    <string name="clock_image_placeholder">?</string>
+    <string name="clock_old_quick_look_image_placeholder">__°</string>
+    <string name="clock_text_placeholder">: )</string>
+    <string name="quick_look_setting_calendar_subtitle">Calendar events and reminders</string>
+    <string name="quick_look_setting_calendar_title">Schedule</string>
+    <string name="quick_look_widget_calendar_in_time">in %d min</string>
+    <string name="quick_look_widget_calendar_now">now</string>
+    <string name="quick_look_widget_calendar_tomorrow">Tomorrow</string>
+    <string name="quick_look_widget_calendar_yesterday">Yesterday</string>
+    <string name="system_ui_aod_date_pattern">EEEMMMd</string>
 </resources>

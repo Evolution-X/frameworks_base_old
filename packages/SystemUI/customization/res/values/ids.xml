@@ -18,4 +18,7 @@
     <item type="id" name="MINUTE_SECOND_DIGIT"/>
     <item type="id" name="TIME_FULL_FORMAT"/>
     <item type="id" name="DATE_FORMAT"/>
+
+    <!-- NT CLOCKS -->
+    <item name="view_cache_key" type="id" />
 </resources>
