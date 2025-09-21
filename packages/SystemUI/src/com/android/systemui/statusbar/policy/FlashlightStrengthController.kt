@@ -49,6 +49,8 @@ class FlashlightStrengthController @Inject constructor(
     fun interface OnTorchLevelChangedListener {
         fun onLevelChanged(level: Int)
     }
+    
+    private val featureSupport = SystemProperties.getBoolean("persist.sys.torch_str_support", true)
 
     private val cm: CameraManager = ctx.getSystemService(Context.CAMERA_SERVICE) as CameraManager
     private var torchId: String? = null
@@ -115,7 +117,7 @@ class FlashlightStrengthController @Inject constructor(
                         && c.get(CameraCharacteristics.LENS_FACING) == CameraCharacteristics.LENS_FACING_BACK
                 val max = c.get(CameraCharacteristics.FLASH_INFO_STRENGTH_MAXIMUM_LEVEL) ?: 1
                 val def = c.get(CameraCharacteristics.FLASH_INFO_STRENGTH_DEFAULT_LEVEL) ?: 0
-                if (ok && max > 1) {
+                if (ok && max > 1 && featureSupport) {
                     torchId = id
                     _maxLevel = max
                     _supported = true
