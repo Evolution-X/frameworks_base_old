@@ -90,6 +90,9 @@ public class OnGoingActionProgressController implements NotificationListener.Not
     private static final int DEFAULT_POSITION_Y = 0;
     private static final int MIN_CIRCULAR_SIZE = 20;
     private static final int MAX_CIRCULAR_SIZE = 100;
+    
+    private static final int STALE_PROGRESS_CHECK_INTERVAL_MS = 5000;
+    private static final int PROGRESS_TIMEOUT_MS = 30000;
 
     private final Context mContext;
     private final ContentResolver mContentResolver;
@@ -126,6 +129,7 @@ public class OnGoingActionProgressController implements NotificationListener.Not
     private boolean mIsTrackingProgress = false;
     private boolean mIsForceHidden = false;
     private boolean mHeadsUpPinned = false;
+    private long mLastProgressUpdateTime = 0;
     private boolean mIsEnabled;
     private boolean mIsCompactModeEnabled = false;
     private int mCurrentProgress = 0;
@@ -157,6 +161,18 @@ public class OnGoingActionProgressController implements NotificationListener.Not
             if (mShowMediaProgress && mMediaSessionHelper.isMediaPlaying()) {
                 updateMediaProgressOnly();
                 mMediaProgressHandler.postDelayed(this, MEDIA_UPDATE_INTERVAL_MS);
+            }
+        }
+    };
+
+    private final Runnable mStaleProgressChecker = new Runnable() {
+        @Override
+        public void run() {
+            synchronized (OnGoingActionProgressController.this) {
+                checkForStaleProgress();
+            }
+            if (mIsViewAttached) {
+                mHandler.postDelayed(this, STALE_PROGRESS_CHECK_INTERVAL_MS);
             }
         }
     };
@@ -234,6 +250,8 @@ public class OnGoingActionProgressController implements NotificationListener.Not
         
         mIsViewAttached = true;
         updateSettings();
+
+        mHandler.postDelayed(mStaleProgressChecker, STALE_PROGRESS_CHECK_INTERVAL_MS);
     }
 
     private void expandCompactView() {
@@ -587,11 +605,45 @@ public class OnGoingActionProgressController implements NotificationListener.Not
         requestUiUpdate();
     }
 
-    private void updateProgressIfNeeded(final StatusBarNotification sbn) {
-        if (!mIsTrackingProgress) {
+    private void clearProgressTracking() {
+        mIsTrackingProgress = false;
+        mTrackedNotificationKey = null;
+        mTrackedPackageName = null;
+        mCurrentProgress = 0;
+        mCurrentProgressMax = 0;
+        mLastProgressUpdateTime = 0;
+        requestUiUpdate();
+    }
+
+    private void checkForStaleProgress() {
+        if (!mIsTrackingProgress || mTrackedNotificationKey == null) return;
+
+        StatusBarNotification sbn = findNotificationByKey(mTrackedNotificationKey);
+        if (sbn == null) {
+            clearProgressTracking();
             return;
         }
+
+        if (!hasProgress(sbn.getNotification())) {
+            clearProgressTracking();
+            return;
+        }
+
+        if (System.currentTimeMillis() - mLastProgressUpdateTime > PROGRESS_TIMEOUT_MS) {
+            clearProgressTracking();
+        }
+    }
+
+    private void updateProgressIfNeeded(final StatusBarNotification sbn) {
+        if (!mIsTrackingProgress) return;
+
         if (sbn.getKey().equals(mTrackedNotificationKey)) {
+            if (!hasProgress(sbn.getNotification())) {
+                clearProgressTracking();
+                return;
+            }
+
+            mLastProgressUpdateTime = System.currentTimeMillis();
             extractProgress(sbn.getNotification());
             requestUiUpdate();
         }
@@ -685,48 +737,47 @@ public class OnGoingActionProgressController implements NotificationListener.Not
     }
 
     private void onNotificationPosted(final StatusBarNotification sbn) {
-        if (sbn == null) return;
-
-        if (!mIsEnabled) return;
+        if (sbn == null || !mIsEnabled) return;
 
         Notification notification = sbn.getNotification();
         if (notification == null) return;
 
-        mBackgroundExecutor.execute(() -> {
+        synchronized (this) {
             boolean hasValidProgress = hasProgress(notification);
+            String currentKey = mTrackedNotificationKey;
 
             if (!hasValidProgress) {
-                if (mTrackedNotificationKey != null && mTrackedNotificationKey.equals(sbn.getKey())) {
-                    Log.d(TAG, "Tracked notification has lost progress");
-                    synchronized (this) {
-                        mIsTrackingProgress = false;
-                        mTrackedPackageName = null;
-                        mHandler.post(this::requestUiUpdate);
-                    }
+                if (currentKey != null && currentKey.equals(sbn.getKey())) {
+                    clearProgressTracking();
                 }
                 return;
             }
-            
-            synchronized (this) {
-                if (!mIsTrackingProgress) {
-                    mHandler.post(() -> trackProgress(sbn));
-                } else {
-                    mHandler.post(() -> updateProgressIfNeeded(sbn));
-                }
+
+            if (!mIsTrackingProgress) {
+                trackProgress(sbn);
+            } else if (sbn.getKey().equals(currentKey)) {
+                updateProgressIfNeeded(sbn);
             }
-        });
+        }
     }
 
     private void onNotificationRemoved(final StatusBarNotification sbn) {
         if (sbn == null) return;
-        
+
         synchronized (this) {
-            if (!mIsTrackingProgress || !sbn.getKey().equals(mTrackedNotificationKey)) {
+            if (!mIsTrackingProgress) return;
+
+            if (sbn.getKey().equals(mTrackedNotificationKey)) {
+                clearProgressTracking();
                 return;
             }
-            mIsTrackingProgress = false;
-            mTrackedPackageName = null;
-            requestUiUpdate();
+
+            if (sbn.getPackageName().equals(mTrackedPackageName)) {
+                StatusBarNotification currentSbn = findNotificationByKey(mTrackedNotificationKey);
+                if (currentSbn == null || !hasProgress(currentSbn.getNotification())) {
+                    clearProgressTracking();
+                }
+            }
         }
     }
 
@@ -947,7 +998,9 @@ public class OnGoingActionProgressController implements NotificationListener.Not
 
     public void destroy() {
         mIsViewAttached = false;
-        
+
+        mHandler.removeCallbacks(mStaleProgressChecker);
+
         mSettingsObserver.unregister();
         mKeyguardStateController.removeCallback(this);
         mHeadsUpManager.removeListener(this);
