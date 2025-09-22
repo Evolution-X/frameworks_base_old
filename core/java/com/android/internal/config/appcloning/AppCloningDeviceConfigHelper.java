@@ -102,6 +102,6 @@ public class AppCloningDeviceConfigHelper {
      * @hide
      */
     public boolean getEnableAppCloningBuildingBlocks() {
-        return true /* mEnableAppCloningBuildingBlocks */;
+        return mEnableAppCloningBuildingBlocks;
     }
 }
