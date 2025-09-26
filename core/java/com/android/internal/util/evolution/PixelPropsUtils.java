@@ -76,6 +76,7 @@ public final class PixelPropsUtils {
     private static final String SPOOF_PIXEL_PROPS = "persist.sys.pixelprops";
     private static final String SPOOF_PIXEL_GAMES = "persist.sys.pixelprops.games";
     public static final String SPOOF_PIXEL_GMS = "persist.sys.pixelprops.gms";
+    private static final String ENABLE_KEYBOX_CHECK = "persist.sys.keybox.check.enabled";
 
     private static final String TAG = PixelPropsUtils.class.getSimpleName();
     private static final boolean DEBUG = false;
@@ -773,8 +774,10 @@ public final class PixelPropsUtils {
     }
 
     public static void onEngineGetCertificateChain() {
-        // If a keybox is found, don't block key attestation
-        if (KeyProviderManager.isKeyboxAvailable()) {
+        boolean isKeyboxCheckEnabled = SystemProperties.getBoolean(ENABLE_KEYBOX_CHECK, false);
+
+        // If keybox check is enabled and a keybox is found, don't block key attestation
+        if (isKeyboxCheckEnabled && KeyProviderManager.isKeyboxAvailable()) {
             dlog("Key attestation blocking is disabled because a keybox is defined to spoof");
             return;
         }
