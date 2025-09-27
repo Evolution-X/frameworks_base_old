@@ -54,7 +54,7 @@ internal fun RestrictedPreference(
         return
     }
     val restrictedMode = restrictionsProviderFactory.rememberRestrictedMode(restrictions).value
-    val restrictedModel = remember(restrictedMode) {
+    val restrictedModel = remember(model, restrictedMode) {
         RestrictedPreferenceModel(model, restrictedMode)
     }
     restrictedModel.RestrictionWrapper {
