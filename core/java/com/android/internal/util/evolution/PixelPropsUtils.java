@@ -754,20 +754,33 @@ public final class PixelPropsUtils {
     }
 
     private static boolean isCallerSafetyNet() {
-        return Arrays.stream(Thread.currentThread().getStackTrace())
-                        .anyMatch(elem -> elem.getClassName().toLowerCase()
-                            .contains("droidguard"));
+        for (StackTraceElement e : Thread.currentThread().getStackTrace()) {
+            final String cn = e.getClassName();
+            if (cn != null && (cn.contains("DroidGuard") || cn.contains("droidguard"))) return true;
+        }
+        return false;
     }
 
     public static void onEngineGetCertificateChain() {
+        Context context = ActivityThread.currentApplication() != null
+                ? ActivityThread.currentApplication().getApplicationContext()
+                : null;
+        if (context == null) {
+            dlog("Null received in onEngineGetCertificateChain.");
+            return;
+        }
+
+        boolean isKeyBoxAvailable = KeyProviderManager.isKeyboxAvailable();
+
         boolean isPixelGmsEnabled = SystemProperties.getBoolean(SPOOF_GMS, true);
-        if (!isPixelGmsEnabled) {
+        if (!isKeyBoxAvailable && !isPixelGmsEnabled) {
             dlog("onEngineGetCertificateChain disabled by setting");
             return;
         }
 
         // If a keybox is found, don't block key attestation
-        if (KeyProviderManager.isKeyboxAvailable()) {
+        if (isKeyBoxAvailable && Settings.Secure.getInt(context.getContentResolver(),
+                Settings.Secure.GMS_CERT_CHAIN, 0) == 1) {
             dlog("Key attestation blocking is disabled because a keybox is defined to spoof");
             return;
         }
