@@ -19534,8 +19534,6 @@ public class ActivityManagerService extends IActivityManager.Stub
 
         synchronized (this) {
             synchronized (mProcLock) {
-                mOomAdjuster.mCachedAppOptimizer.compactAllSystem();
-
                 mProcessList.forEachLruProcessesLOSP(false, proc -> {
                     if (proc == null || proc.getThread() == null) return;
 
@@ -19569,6 +19567,15 @@ public class ActivityManagerService extends IActivityManager.Stub
             });
             killed++;
         }
+    }
+
+    @Override
+    public void compactAllSystem() {
+        mHandler.post(() -> {
+            synchronized (mProcLock) {
+                mOomAdjuster.mCachedAppOptimizer.compactAllSystem();
+            }
+        });
     }
 
     public class ProcessComparator implements Comparator<ProcessToKill> {
