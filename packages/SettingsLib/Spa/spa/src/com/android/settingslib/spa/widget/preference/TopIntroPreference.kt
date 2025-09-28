@@ -59,11 +59,15 @@ interface TopIntroPreferenceModel {
 
     /** The text clicked to open other resources. Should be a resource Id. */
     val labelText: Int?
+
+    /** Whether to always expand and hide the expand and collapse fields */
+    val alwaysExpand: Boolean
+        get() = false
 }
 
 @Composable
 fun TopIntroPreference(model: TopIntroPreferenceModel) {
-    var expanded by remember { mutableStateOf(false) }
+    var expanded by remember { mutableStateOf(model.alwaysExpand) }
     Column(Modifier.background(MaterialTheme.colorScheme.surfaceContainer)) {
         // TopIntroPreference content.
         Column(
@@ -80,6 +84,10 @@ fun TopIntroPreference(model: TopIntroPreferenceModel) {
                 maxLines = if (expanded) MAX_LINE else MIN_LINE,
             )
             if (expanded) TopIntroAnnotatedText(model.labelText)
+        }
+
+        if (model.alwaysExpand) {
+            return
         }
 
         // TopIntroPreference collapse bar.
