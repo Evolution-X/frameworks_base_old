@@ -200,4 +200,19 @@ public class Utils {
             activityManager.forceStopPackageAsUser(getDefaultLauncher(context), UserHandle.USER_CURRENT);
         } catch (Exception ignored) {}
     }
+
+    public static boolean isCurrentlySupportedPixel() {
+        boolean isPixelDevice = SystemProperties.get("ro.product.model").matches("Pixel (3|4|5|6|7|8|9|10)[a-zA-Z ]*");
+        return isPixelDevice;
+    }
+
+    public static boolean isTensor() {
+        boolean isTensorDevice = SystemProperties.get("ro.product.model").matches("Pixel (6|7|8|9|10)[a-zA-Z ]*");
+        return isTensorDevice;
+    }
+
+    public static boolean isMainlineTensor() {
+        boolean isMainlineDevice = SystemProperties.get("ro.product.model").matches("Pixel (8|9|10)[a-zA-Z ]*");
+        return isMainlineDevice;
+    }
 }

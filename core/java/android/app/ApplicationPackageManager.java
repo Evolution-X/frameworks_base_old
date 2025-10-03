@@ -135,6 +135,7 @@ import com.android.internal.annotations.VisibleForTesting;
 import com.android.internal.os.SomeArgs;
 import com.android.internal.pm.RoSystemFeatures;
 import com.android.internal.util.UserIcons;
+import com.android.internal.util.evolution.Utils;
 
 import com.nvidia.NvAppProfileService;
 
@@ -938,17 +939,16 @@ public class ApplicationPackageManager extends PackageManager {
             if (Arrays.asList(featuresNexus).contains(name)) return true;
         }
         boolean enableTensorFeaturesOnNonTensor = SystemProperties.getBoolean("persist.sys.features.tensor", false);
-        boolean isTensorDevice = SystemProperties.get("ro.product.model").matches("Pixel (6|7|8|9|10)[a-zA-Z ]*");
         if (packageName != null && packageName.equals("com.google.android.as")) {
-            if (isTensorDevice && Arrays.asList(featuresTensor).contains(name)) {
+            if (Utils.isTensor() && Arrays.asList(featuresTensor).contains(name)) {
                 return true;
             }
-            if (!isTensorDevice && enableTensorFeaturesOnNonTensor && Arrays.asList(featuresTensor).contains(name)) {
+            if (!Utils.isTensor() && enableTensorFeaturesOnNonTensor && Arrays.asList(featuresTensor).contains(name)) {
                 return true;
             }
         }
         if (name != null && Arrays.asList(featuresTensor).contains(name)
-                && !isTensorDevice) {
+                && !Utils.isTensor()) {
             return enableTensorFeaturesOnNonTensor;
         }
         if (Arrays.asList(featuresNexus).contains(name)) return true;

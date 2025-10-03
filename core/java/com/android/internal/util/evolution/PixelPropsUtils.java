@@ -391,10 +391,6 @@ public final class PixelPropsUtils {
         sProcessName = processName;
         sIsGms = packageName.equals(PACKAGE_GMS) && processName.equals(PROCESS_GMS_UNSTABLE);
         sIsExcluded = isGoogleCameraPackage(packageName);
-        String model = SystemProperties.get("ro.product.model");
-        boolean isPixelDevice = SystemProperties.get("ro.soc.manufacturer").equalsIgnoreCase("Google");
-        boolean isMainlineDevice = isPixelDevice && model.matches("Pixel (8|9|10)[a-zA-Z ]*");
-        boolean isTensorDevice = isPixelDevice && model.matches("Pixel (6|7|8|9|10)[a-zA-Z ]*");
         boolean isPixelGmsEnabled = SystemProperties.getBoolean(SPOOF_PIXEL_GMS, true);
         propsToChangeGeneric.forEach((k, v) -> setPropValue(k, v));
         if (packageName == null || processName == null || packageName.isEmpty()) {
@@ -412,7 +408,7 @@ public final class PixelPropsUtils {
                 }
             }
         } else if (Arrays.asList(packagesToChangeRecentPixel).contains(packageName)) {
-            if (isMainlineDevice || !SystemProperties.getBoolean(SPOOF_PIXEL_PROPS, true)) {
+            if (Utils.isMainlineTensor() || !SystemProperties.getBoolean(SPOOF_PIXEL_PROPS, true)) {
                 return;
             } else if (packageName.equals(PACKAGE_QSB)) {
                 if (!SystemProperties.getBoolean(SPOOF_QSB, false)) {
