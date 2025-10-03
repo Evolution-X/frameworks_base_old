@@ -249,7 +249,7 @@ RenderPipelineType Properties::peekRenderPipelineType() {
         return sRenderPipelineType;
     }
     bool useVulkan = use_vulkan().value_or(false);
-    std::string rendererProperty = base::GetProperty(PROPERTY_RENDERER, useVulkan ? "skiavk" : "skiagl");
+    std::string rendererProperty = base::GetProperty("persist.sys.ax_hwui_renderer", useVulkan ? "skiavk" : "skiagl");
     if (rendererProperty == "skiavk") {
         return RenderPipelineType::SkiaVulkan;
     }
