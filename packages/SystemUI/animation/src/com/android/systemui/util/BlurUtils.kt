@@ -15,6 +15,8 @@
  */
 package com.android.systemui.util
 import android.app.ActivityManager
+import android.content.ContentResolver
+import android.provider.Settings
 import android.content.res.Resources
 import android.os.SystemProperties
 import android.util.MathUtils
@@ -27,6 +29,7 @@ import com.android.internal.R
  */
 class BlurUtils(
     private val resources: Resources,
+    private val contentResolver: ContentResolver
 ) {
     val minBlurRadius = resources.getDimensionPixelSize(R.dimen.min_window_blur_radius)
     val maxBlurRadius = resources.getDimensionPixelSize(R.dimen.max_window_blur_radius)
@@ -107,7 +110,18 @@ class BlurUtils(
      * @return {@code true} when supported.
      */
     fun supportsBlursOnWindows(): Boolean {
-        return CROSS_WINDOW_BLUR_SUPPORTED && ActivityManager.isHighEndGfx() &&
-                !SystemProperties.getBoolean("persist.sysui.disableBlur", false)
+        return CROSS_WINDOW_BLUR_SUPPORTED &&
+                ActivityManager.isHighEndGfx() &&
+                !SystemProperties.getBoolean("persist.sysui.disableBlur", false) &&
+                !areBlursDisabled()
+    }
+
+    private fun areBlursDisabled(): Boolean {
+        val blurEnabledByDefault = SystemProperties.getBoolean(
+            "ro.custom.blur.enable", false
+        )
+        val defaultSetting = if (blurEnabledByDefault) 0 else 1
+        return Settings.Global.getInt(contentResolver,
+                Settings.Global.DISABLE_WINDOW_BLURS, defaultSetting) == 1
     }
 }
