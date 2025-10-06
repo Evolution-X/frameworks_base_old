@@ -33,6 +33,7 @@ import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
+import android.os.SystemClock;
 import android.util.ArrayMap;
 import android.util.Slog;
 
@@ -270,8 +271,18 @@ public final class TwilightService extends SystemService
         }
     }
 
+    private long mLastAlarmTime = 0;
+    private static final long MIN_ALARM_INTERVAL = 1000; // Minimum interval of 1 second
+
     @Override
     public void onAlarm() {
+        long currentTime = SystemClock.elapsedRealtime();
+        if (currentTime - mLastAlarmTime < MIN_ALARM_INTERVAL) {
+            Slog.w(TAG, "Duplicate alarm detected, skipping");
+            return;
+        }
+        mLastAlarmTime = currentTime;
+
         Slog.d(TAG, "onAlarm");
         updateTwilightState();
     }
