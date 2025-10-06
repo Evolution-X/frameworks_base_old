@@ -50,6 +50,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
@@ -766,24 +767,31 @@ public final class PixelPropsUtils {
         return false;
     }
 
-    private static boolean isCallerSafetyNet() {
+    private static boolean isCallerPlayIntegrity() {
         return Arrays.stream(Thread.currentThread().getStackTrace())
-                        .anyMatch(elem -> elem.getClassName().toLowerCase()
-                            .contains("droidguard"));
+                .map(StackTraceElement::getClassName)
+                .anyMatch(name -> name.toLowerCase(Locale.US).contains("droidguard"));
     }
 
     public static void onEngineGetCertificateChain() {
-        // If a keybox is found, don't block key attestation
-        if (KeyProviderManager.isKeyboxAvailable()) {
-            dlog("Key attestation blocking is disabled because a keybox is defined to spoof");
+        Context context = ActivityThread.currentApplication();
+        if (context == null) {
+            Log.e(TAG, "Context is null in onEngineGetCertificateChain");
             return;
         }
+
+        if ((Settings.Secure.getInt(context.getContentResolver(), Settings.Secure.GMS_CERT_CHAIN, 0) == 1)
+                && KeyProviderManager.isKeyboxAvailable()) {
+            dlog("Allowing gms / finsky to get cert chain");
+            return;
+        }
+
         boolean isPixelGmsEnabled = SystemProperties.getBoolean(SPOOF_PIXEL_GMS, true);
         if (!isPixelGmsEnabled)
             return;
-        // Check stack for SafetyNet or Play Integrity
-        if (isCallerSafetyNet() && !sIsExcluded) {
-            dlog("Blocked key attestation");
+        // Check stack for Play Integrity
+        if (isCallerPlayIntegrity() && !sIsExcluded) {
+            dlog("Blocked key attestation for play integrity");
             throw new UnsupportedOperationException();
         }
     }
