@@ -30,9 +30,9 @@ import com.android.systemui.animation.Expandable
 import com.android.systemui.dagger.SysUISingleton
 import com.android.systemui.plugins.ActivityStarter
 import com.android.systemui.statusbar.phone.SystemUIDialog
+import java.util.concurrent.Executor
 import javax.inject.Inject
 import javax.inject.Provider
-import java.util.concurrent.Executor
 import kotlin.math.roundToInt
 
 @SysUISingleton
@@ -46,24 +46,23 @@ class FlashlightStrengthController @Inject constructor(
     private val mainHandler: Handler
 ) {
 
-    fun interface OnTorchLevelChangedListener {
+    interface OnTorchLevelChangedListener {
         fun onLevelChanged(level: Int)
+        fun onStatusChanged(enabled: Int)
     }
-    
-    private val featureSupport = SystemProperties.getBoolean("persist.sys.torch_str_support", true)
+
+    private val featureSupport =
+        SystemProperties.getBoolean("persist.sys.torch_str_support", true)
 
     private val cm: CameraManager = ctx.getSystemService(Context.CAMERA_SERVICE) as CameraManager
     private var torchId: String? = null
-    var listener: OnTorchLevelChangedListener? = null
-        set(value) {
-            field = value
-            value?.onLevelChanged(_torchLevel)
-        }
+    private val listeners = mutableSetOf<OnTorchLevelChangedListener>()
 
-    private val _torchOn
+    private val _torchOn: Boolean
         get() = Settings.Secure.getInt(
             ctx.contentResolver,
-            Settings.Secure.FLASHLIGHT_ENABLED, 0) != 0
+            Settings.Secure.FLASHLIGHT_ENABLED, 0
+        ) != 0
 
     var torchOn: Boolean
         get() = _torchOn
@@ -71,7 +70,13 @@ class FlashlightStrengthController @Inject constructor(
             if (value == torchOn) return
             executor.execute {
                 torchId?.let { id ->
-                    runCatching { cm.setTorchMode(id, value) }
+                    runCatching {
+                        cm.setTorchMode(id, value)
+                        _notifyStatusChanged(if (value) 1 else 0)
+                    }.onFailure { e ->
+                        Log.w(TAG, "Failed to set torch mode: $e")
+                        _notifyStatusChanged(if (_torchOn) 1 else 0)
+                    }
                 }
             }
         }
@@ -81,23 +86,56 @@ class FlashlightStrengthController @Inject constructor(
         get() = if (torchOn) _torchLevel else 0
         set(value) {
             val lvl = value.coerceIn(0, maxLevel)
-            _torchLevel = lvl
-            if (lvl == 0) torchOn = false
-            else {
-                torchOn = true
-                executor.execute {
-                    torchId?.let { id ->
+            executor.execute {
+                torchId?.let { id ->
+                    if (lvl == 0) {
+                        runCatching { cm.setTorchMode(id, false) }
+                            .onSuccess {
+                                _torchLevel = 0
+                                _notifyLevelChanged(0)
+                                _notifyStatusChanged(0)
+                            }
+                    } else {
                         runCatching {
                             cm.turnOnTorchWithStrengthLevel(id, lvl)
-                        }.onFailure { _torchLevel = 0 }
+                            _torchLevel = lvl
+                            _notifyLevelChanged(lvl)
+                            _notifyStatusChanged(1)
+                        }.onFailure { e ->
+                            Log.w(TAG, "Failed to change torch level: $e")
+                            _torchLevel = 0
+                            _notifyLevelChanged(0)
+                            _notifyStatusChanged(0)
+                        }
                     }
                 }
             }
-            listener?.onLevelChanged(lvl)
         }
 
     private var _supported = false
-    val supported get() = _supported
+    val supported: Boolean by lazy {
+        try {
+            for (id in cm.cameraIdList) {
+                val c = cm.getCameraCharacteristics(id)
+                val flashAvailable = c.get(CameraCharacteristics.FLASH_INFO_AVAILABLE) == true
+                val facingBack =
+                    c.get(CameraCharacteristics.LENS_FACING) == CameraCharacteristics.LENS_FACING_BACK
+                val max = c.get(CameraCharacteristics.FLASH_INFO_STRENGTH_MAXIMUM_LEVEL) ?: 1
+
+                if (flashAvailable && facingBack && max > 1 && featureSupport) {
+                    torchId = id
+                    _maxLevel = max
+                    Log.d(TAG, "Flashlight strength supported, max level=$max")
+                    return@lazy true
+                }
+            }
+            Log.d(TAG, "Flashlight strength not supported on any camera.")
+            false
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to initialize flashlight camera: $e")
+            false
+        }
+    }
 
     private var _maxLevel = 1
     val maxLevel get() = _maxLevel
@@ -105,27 +143,6 @@ class FlashlightStrengthController @Inject constructor(
     var lastPercent: Int
         get() = Prefs.getInt(ctx, PREF_KEY, 0)
         set(value) = Prefs.putInt(ctx, PREF_KEY, value.coerceIn(0, 100))
-
-    init { executor.execute { tryInitCamera() } }
-
-    @WorkerThread
-    fun tryInitCamera() {
-        runCatching {
-            for (id in cm.cameraIdList) {
-                val c = cm.getCameraCharacteristics(id)
-                val ok = c.get(CameraCharacteristics.FLASH_INFO_AVAILABLE) == true 
-                        && c.get(CameraCharacteristics.LENS_FACING) == CameraCharacteristics.LENS_FACING_BACK
-                val max = c.get(CameraCharacteristics.FLASH_INFO_STRENGTH_MAXIMUM_LEVEL) ?: 1
-                val def = c.get(CameraCharacteristics.FLASH_INFO_STRENGTH_DEFAULT_LEVEL) ?: 0
-                if (ok && max > 1 && featureSupport) {
-                    torchId = id
-                    _maxLevel = max
-                    _supported = true
-                    break
-                }
-            }
-        }.onFailure { _supported = false }
-    }
 
     fun handleClick() {
         torchLevel = when {
@@ -135,35 +152,31 @@ class FlashlightStrengthController @Inject constructor(
         }
     }
 
-    fun toTorchLevel(lvl: Int): Int {
-        return ((lvl / 100f) * maxLevel).roundToInt().coerceIn(0, maxLevel)
-    }
+    fun toTorchLevel(percent: Int): Int =
+        ((percent / 100f) * maxLevel).roundToInt().coerceIn(0, maxLevel)
 
-    fun toPercent(lvl: Int): Int {
-        return (lvl * 100f / maxLevel).roundToInt()
-    }
+    fun toPercent(level: Int): Int =
+        (level * 100f / maxLevel).roundToInt()
 
     fun expandDialog(expandable: Expandable?) {
         val animateFromExpandable = expandable != null && !keyguardStateController.isShowing
         val runnable = Runnable {
             val delegate = dialogDelegateProvider.get()
-            val dialog: SystemUIDialog = delegate.createDialog()
+            val dialog = delegate.createDialog()
             if (animateFromExpandable) {
-                val controller = expandable?.dialogTransitionController(
+                expandable?.dialogTransitionController(
                     DialogCuj(
                         InteractionJankMonitor.CUJ_SHADE_DIALOG_OPEN,
                         "flashlight_strength"
                     )
-                )
-                if (controller != null) {
+                )?.let { controller ->
                     dialogTransitionAnimator.show(dialog, controller)
-                } else {
-                    dialog.show()
-                }
+                } ?: dialog.show()
             } else {
                 dialog.show()
             }
         }
+
         mainHandler.post {
             activityStarter.executeRunnableDismissingKeyguard(
                 runnable, null, false, true, false
@@ -171,7 +184,38 @@ class FlashlightStrengthController @Inject constructor(
         }
     }
 
+    fun addListener(listener: OnTorchLevelChangedListener) {
+        synchronized(listeners) {
+            listeners.add(listener)
+        }
+        listener.onLevelChanged(_torchLevel)
+        listener.onStatusChanged(if (torchOn) 1 else 0)
+    }
+
+    fun removeListener(listener: OnTorchLevelChangedListener) {
+        synchronized(listeners) {
+            listeners.remove(listener)
+        }
+    }
+
+    private fun _notifyLevelChanged(level: Int) {
+        mainHandler.post {
+            synchronized(listeners) {
+                listeners.forEach { it.onLevelChanged(level) }
+            }
+        }
+    }
+
+    private fun _notifyStatusChanged(enabled: Int) {
+        mainHandler.post {
+            synchronized(listeners) {
+                listeners.forEach { it.onStatusChanged(enabled) }
+            }
+        }
+    }
+
     companion object {
+        private const val TAG = "FlashlightStrengthCtl"
         private const val PREF_KEY = "flashlight_strength_percent"
     }
 }
