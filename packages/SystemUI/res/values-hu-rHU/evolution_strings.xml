@@ -8,34 +8,10 @@
     <!-- Indication on the keyguard that is shown when the device is charging with a warp charger. Should match keyguard_plugged_in_warp_charging [CHAR LIMIT=40]-->
     <!-- Indication on the keyguard that is shown when the device is charging with a VOOC charger. Should match keyguard_plugged_in_vooc_charging [CHAR LIMIT=40]-->
     <!-- Indication on the keyguard that is shown when the device is charging with a turbo power charger. Should match keyguard_plugged_in_turbo_charging [CHAR LIMIT=40]-->
-    <!-- Text while recognizing face -->
-    <string name="face_unlock_recognizing">Arcfelismerés...</string>
     <!-- Statusbar Icons -->
     <string name="status_bar_nfc">NFC</string>
-    <!-- Kill button in notification guts -->
-    <string name="force_stop_dlg_title">Kényszeríti a leállítást?</string>
-    <string name="force_stop_dlg_text">Ha egy alkalmazást leállásra kényszerít, lehetséges, hogy az hibásan fog működni.</string>
-    <!-- Name of the roaming status bar icon. -->
-    <string name="status_bar_roaming">Barangoláskijelző</string>
-    <!-- Name of the HD calling status bar icon. -->
-    <string name="status_bar_hd_calling">HD-hívás (VoLTE/VoNR)</string>
-    <!-- Name of the VoWiFi status bar icon. -->
-    <string name="status_bar_vowifi">WiFi-hívás (VoWiFi)</string>
     <!-- Button to restart SystemUI, within the Restart Options dialog -->
     <string name="global_action_restart_systemui">Rendszerfelület</string>
-    <!-- On The Go -->
-    <string name="onthego_notif_ticker">A Menet közben mód aktiválva</string>
-    <string name="onthego_notif_title">A Menet közben mód aktív</string>
-    <string name="onthego_notif_stop">Leállítás</string>
-    <string name="onthego_notif_options">Lehetőségek</string>
-    <string name="onthego_notif_error">Nem lehet elindítani a Menet közben módot</string>
-    <string name="onthego_notif_restart">A Menet közben mód újraindítása</string>
-    <string name="onthego_notif_camera_changed">A Kameramód megváltoztatva</string>
-    <string name="onthego_transparency">Átlátszóság</string>
-    <string name="onthego_front_camera">Az előlapi kamera használata</string>
-    <string name="onthego_service_toggle">A szolgáltatás automatikus újraindítása</string>
-    <string name="onthego_channel_name">Elsődleges</string>
-    <string name="global_action_onthego">Menet közben (OnTheGo)</string>
     <!-- Sound QS Tile -->
     <string name="quick_settings_sound_label">Hang</string>
     <string name="quick_settings_sound_ring">Csengés</string>
@@ -52,10 +28,13 @@
     <string name="quick_settings_preferred_network_label">Előnyt élvező hálózat</string>
     <string name="quick_settings_preferred_network_lte">4G / LTE</string>
     <string name="quick_settings_preferred_network_nr">5G / NR</string>
+    <string name="quick_settings_preferred_network_3g">3G</string>
     <string name="quick_settings_preferred_network_unsupported">Nem támogatott</string>
     <!-- Statusbar Icons -->
     <string name="status_bar_data_saver">Adatforgalom-csökkentő</string>
     <string name="status_bar_call_strength">Jelerősség</string>
+    <!-- AI Assistant affordance [CHAR LIMIT=32] -->
+    <string name="accessibility_assistant_button">AI-asszisztens</string>
     <!-- Status bar network traffic monitor strings -->
     <string name="kilobitspersecond_short">kb/s</string>
     <string name="megabitspersecond_short">Mb/s</string>
@@ -65,12 +44,8 @@
     <string name="gigabytespersecond_short">GB/s</string>
     <!-- Refresh Rate Tile -->
     <string name="refresh_rate_tile_label">Frissítési gyakoriság</string>
+    <string name="refresh_rate_unknown">Ismeretlen</string>
     <string name="auto_mode_label">Automatikus</string>
-    <!-- Volume Tile -->
-    <string name="quick_settings_volume_tile_label">Hangerő</string>
-    <string name="quick_settings_volume_tile_muted">Némított</string>
-    <string name="quick_settings_volume_tile_low">Gyenge</string>
-    <string name="quick_settings_volume_tile_high">Nagyon jó</string>
     <!-- Compass QS Tile -->
     <string name="quick_settings_compass_label">Iránytű</string>
     <string name="quick_settings_compass_value"><xliff:g id="degrees">%1$.0f</xliff:g>\u00b0 <xliff:g id="direction">%2$s</xliff:g></string>
@@ -85,14 +60,6 @@
     <string name="quick_settings_compass_NW">ÉNy</string>
     <!-- Screenshot Tile -->
     <string name="screenshot_long_press">Hosszannyomás - kijelölt terület</string>
-    <!-- Notification counter -->
-    <!-- QuickSettings: InternetDialog: Summary for how many devices are connected to the hotspot [CHAR LIMIT=NONE] -->
-    <plurals name="quick_settings_internet_hotspot_summary_num_devices">
-        <item quantity="one">%d készülék csatlakoztatva</item>
-        <item quantity="other">%d készülék csatlakoztatva</item>
-    </plurals>
-    <!-- 5G toggle in Internet Dialog -->
-    <string name="enable_fiveg">Az 5G engedélyezése</string>
     <!-- Alert slide extras -->
     <string name="volume_ringer_priority_only">Fontosak</string>
     <string name="volume_ringer_alarms_only">Ébresztések</string>
@@ -108,6 +75,70 @@
     <string name="tristate_rotation_0">Álló (Portré)</string>
     <string name="tristate_rotation_90">Fekvő (90°)</string>
     <string name="tristate_rotation_270">Fekvő (270°)</string>
+    <!-- CPUInfo tile -->
+    <string name="quick_settings_cpuinfo_label">CPU-adatok</string>
+    <!-- FPS Info tile -->
+    <string name="quick_settings_fpsinfo_label">FPS-adatok</string>
+    <!-- FPS view text placeholder -->
+    <string name="fps_text_placeholder"><xliff:g id="fps" example="90">%1$d</xliff:g> FPS</string>
+    <!-- USB function dialog - copied from Settings -->
+    <string name="usb_use_charging_only">Nincs adatátvitel</string>
+    <string name="usb_use_file_transfers">Fájlátvitel</string>
+    <string name="usb_use_photo_transfers">PTP</string>
+    <string name="usb_use_uvc_webcam">Webkamera</string>
+    <string name="usb_use_tethering">USB-megosztás</string>
+    <string name="usb_use_MIDI">MIDI</string>
+    <string name="usb_use">USB-használat a következőhöz:</string>
+    <!-- Text while recognizing face -->
+    <string name="face_unlock_recognizing">Arcfelismerés...</string>
+    <!-- Name of the roaming status bar icon. -->
+    <string name="status_bar_roaming">Barangoláskijelző</string>
+    <!-- Name of the HD calling status bar icon. -->
+    <string name="status_bar_hd_calling">HD-hívás (VoLTE/VoNR)</string>
+    <!-- Name of the VoWiFi status bar icon. -->
+    <string name="status_bar_vowifi">WiFi-hívás (VoWiFi)</string>
+    <!-- Autobrightness tile -->
+    <string name="quick_settings_autobrightness_label">Automatikus fényerő</string>
+    <!-- Label for notification action to delete a screen recording file [CHAR LIMIT=35] -->
+    <string name="screenrecord_delete_label">Törlés</string>
+    <!-- A toast message shown after successfully deleting a screen recording [CHAR LIMIT=NONE] -->
+    <string name="screenrecord_delete_description">A képernyőfelvétel törölve</string>
+    <!-- VPN tethering QS tile -->
+    <string name="vpn_tethering_label">VPN-megosztás</string>
+    <string name="vpn_tethering_changed_off">A VPN-megosztás kikapcsolva.</string>
+    <string name="vpn_tethering_changed_on">A VPN-megosztás bekapcsolva.</string>
+    <!-- Data usage info in QS footer -->
+    <string name="usage_data">felhasználva ma</string>
+    <string name="usage_data_weekly">felhasználva ezen a héten</string>
+    <string name="usage_data_default_suffix">Adat</string>
+    <string name="usage_wifi_default_suffix">Wi-Fi</string>
+    <!-- Notification counter -->
+    <!-- Data disabled icon -->
+    <string name="data_disabled_icon_title">Az \'Adat letiltva\' ikonja</string>
+    <!-- Privacy Indicator -->
+    <string name="mic_camera_privacy_indicator_title">Mikrofon és kamerahasználati figyelmeztetés</string>
+    <string name="location_privacy_indicator_title">Helymeghatározási figyelmeztetés</string>
+    <string name="projection_privacy_indicator_title">A Médiavetítés adatvédelmi jelzője</string>
+    <!-- 4G icon -->
+    <string name="show_fourg_icon_title">4G-ikon</string>
+    <!-- WiFi Standard icon -->
+    <string name="wifi_standard_icon_title">Wi-Fi-szabvány</string>
+    <!-- Flashlight strength dialog -->
+    <string name="flashlight_strength_dialog_title">A vaku fényereje</string>
+    <string name="flashlight_strength_off">Ki</string>
+    <string name="flashlight_turn_on">Bekapcsolás</string>
+    <string name="flashlight_turn_off">Kikapcsolás</string>
+    <!-- Volume QS Tile -->
+    <string name="quick_settings_volume_label">Hangerő</string>
+    <string name="qs_volume_dialog_title">Hangerőszabályzó</string>
+    <string name="qs_volume_dialog_mute">Némítás</string>
+    <!-- QuickSettings: InternetDialog: Summary for how many devices are connected to the hotspot [CHAR LIMIT=NONE] -->
+    <plurals name="quick_settings_internet_hotspot_summary_num_devices">
+        <item quantity="one">%d készülék csatlakoztatva</item>
+        <item quantity="other">%d készülék csatlakoztatva</item>
+    </plurals>
+    <!-- 5G toggle in Internet Dialog -->
+    <string name="enable_fiveg">Az 5G engedélyezése</string>
     <!-- Smart Pixels QS Tile -->
     <string name="quick_settings_smart_pixels">Intelligens pixelek</string>
     <string name="quick_settings_smart_pixels_on_power_save">Intelligens pixelek automatikus engedélyezése</string>
