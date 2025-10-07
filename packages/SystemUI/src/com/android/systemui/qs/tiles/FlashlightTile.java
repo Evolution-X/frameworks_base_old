@@ -15,6 +15,8 @@
  */
 package com.android.systemui.qs.tiles;
 
+import static com.android.systemui.statusbar.policy.FlashlightStrengthController.OnTorchLevelChangedListener;
+
 import android.app.ActivityManager;
 import android.content.Intent;
 import android.os.Handler;
@@ -54,6 +56,18 @@ public class FlashlightTile extends QSTileImpl<BooleanState> implements
 
     private final FlashlightController mFlashlightController;
     private final FlashlightStrengthController mStrengthController;
+    
+    private final OnTorchLevelChangedListener mTorchListener = new OnTorchLevelChangedListener() {
+        @Override
+        public void onLevelChanged(int level) {
+            refreshState();
+        }
+
+        @Override
+        public void onStatusChanged(int enabled) {
+            refreshState();
+        }
+    };
 
     @Inject
     public FlashlightTile(
@@ -213,9 +227,10 @@ public class FlashlightTile extends QSTileImpl<BooleanState> implements
     
     private void setListening(boolean listening) {
         if (!mStrengthController.getSupported()) return;
-        FlashlightStrengthController.OnTorchLevelChangedListener r = !listening ? null : level -> {
-            refreshState();
-        };
-        mStrengthController.setListener(r);
+        if (listening) {
+            mStrengthController.addListener(mTorchListener);
+        } else {
+            mStrengthController.removeListener(mTorchListener);
+        }
     }
 }
