@@ -72,6 +72,34 @@ final class WirelessChargingLayout extends FrameLayout {
         init(c, attrs, -1, -1, isDozing, rippleShape);
     }
 
+    private int getDynamicRippleColor(int batteryLevel) {
+        if (mRippleView == null) return Color.GREEN;
+
+        Context context = mRippleView.getContext();
+
+        int accent = Utils.getColorAttr(context, android.R.attr.colorAccent).getDefaultColor();
+        int darkRed = Color.parseColor("#8B0000");
+        int red = Color.parseColor("#FF0000");
+        int orange = Color.parseColor("#FF9500");
+        int yellow = Color.parseColor("#FFD600");
+
+        if (batteryLevel < 0 || batteryLevel > 100) {
+                return accent;
+        }
+
+        if (batteryLevel <= 20) {
+                return darkRed;
+        } else if (batteryLevel <= 40) {
+                return red;
+        } else if (batteryLevel <= 60) {
+                return orange;
+        } else if (batteryLevel <= 70) {
+                return yellow;
+        } else {
+                return accent;
+        }
+        }
+
     private void init(Context context, AttributeSet attrs, int transmittingBatteryLevel,
             int batteryLevel, boolean isDozing, RippleShape rippleShape) {
         final boolean showTransmittingBatteryLevel =
@@ -182,12 +210,11 @@ final class WirelessChargingLayout extends FrameLayout {
 
         mRippleView = findViewById(R.id.wireless_charging_ripple);
         mRippleView.setupShader(rippleShape);
-        int color = Utils.getColorAttr(mRippleView.getContext(),
-                android.R.attr.colorAccent).getDefaultColor();
+        int color = getDynamicRippleColor(batteryLevel);
         if (mRippleView.getRippleShape() == RippleShape.ROUNDED_BOX) {
             mRippleView.setDuration(ROUNDED_BOX_RIPPLE_ANIMATION_DURATION);
-            mRippleView.setSparkleStrength(0.22f);
-            mRippleView.setColor(color, 102); // 40% of opacity.
+            mRippleView.setSparkleStrength(0.3f);
+            mRippleView.setColor(color, 110); // 43% of opacity.
             mRippleView.setBaseRingFadeParams(
                     /* fadeInStart = */ 0f,
                     /* fadeInEnd = */ 0f,
