@@ -7358,6 +7358,12 @@ public final class Settings {
         public static final String LS_MEDIA_ART_BLUR_LEVEL = "ls_media_art_blur_level";
 
         /**
+         * Use dynamic color based on battery level
+         * @hide
+         */
+        public static final String WIRELESS_CHARGING_DYNAMIC_COLOR = "wireless_charging_dynamic_color";
+
+        /**
          * Whether edge light is enabled
          * @hide
          */
