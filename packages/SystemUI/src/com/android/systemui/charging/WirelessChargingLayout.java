@@ -21,6 +21,8 @@ import android.animation.ObjectAnimator;
 import android.animation.ValueAnimator;
 import android.content.Context;
 import android.graphics.Color;
+import android.provider.Settings;
+import android.os.UserHandle;
 import android.util.AttributeSet;
 import android.util.TypedValue;
 import android.view.ContextThemeWrapper;
@@ -72,11 +74,7 @@ final class WirelessChargingLayout extends FrameLayout {
         init(c, attrs, -1, -1, isDozing, rippleShape);
     }
 
-    private int getDynamicRippleColor(int batteryLevel) {
-        if (mRippleView == null) return Color.GREEN;
-
-        Context context = mRippleView.getContext();
-
+    private int getDynamicRippleColor(Context context, int batteryLevel) {
         int accent = Utils.getColorAttr(context, android.R.attr.colorAccent).getDefaultColor();
         int darkRed = Color.parseColor("#8B0000");
         int red = Color.parseColor("#FF0000");
@@ -98,7 +96,7 @@ final class WirelessChargingLayout extends FrameLayout {
         } else {
                 return accent;
         }
-        }
+    }
 
     private void init(Context context, AttributeSet attrs, int transmittingBatteryLevel,
             int batteryLevel, boolean isDozing, RippleShape rippleShape) {
@@ -113,13 +111,23 @@ final class WirelessChargingLayout extends FrameLayout {
 
         inflate(new ContextThemeWrapper(context, style), R.layout.wireless_charging_layout, this);
 
-        // amount of battery:
         final TextView percentage = findViewById(R.id.wireless_charging_percentage);
-	final ImageView chargingIcon = findViewById(R.id.wireless_charging_icon);
+        final ImageView chargingIcon = findViewById(R.id.wireless_charging_icon);
 
         if (batteryLevel != WirelessChargingAnimation.UNKNOWN_BATTERY_LEVEL) {
+            int dynamicColor;
+
+            if (isDynamicColorEnabled(context)) {
+                dynamicColor = getDynamicRippleColor(context, batteryLevel);
+            } else {
+                dynamicColor = Utils.getColorAttr(context, android.R.attr.colorAccent).getDefaultColor();
+            }
+        
+            percentage.setTextColor(dynamicColor);
             percentage.setText(NumberFormat.getPercentInstance().format(batteryLevel / 100f));
             percentage.setAlpha(0);
+        
+            chargingIcon.setColorFilter(dynamicColor);
         }
 
         final long chargingAnimationFadeStartOffset = context.getResources().getInteger(
@@ -210,7 +218,12 @@ final class WirelessChargingLayout extends FrameLayout {
 
         mRippleView = findViewById(R.id.wireless_charging_ripple);
         mRippleView.setupShader(rippleShape);
-        int color = getDynamicRippleColor(batteryLevel);
+        int color;
+        if (isDynamicColorEnabled(context)) {
+            color = getDynamicRippleColor(context, batteryLevel);
+        } else {
+            color = Utils.getColorAttr(context, android.R.attr.colorAccent).getDefaultColor();
+        }
         if (mRippleView.getRippleShape() == RippleShape.ROUNDED_BOX) {
             mRippleView.setDuration(ROUNDED_BOX_RIPPLE_ANIMATION_DURATION);
             mRippleView.setSparkleStrength(0.3f);
@@ -372,5 +385,10 @@ final class WirelessChargingLayout extends FrameLayout {
         }
 
         mRippleView.setSizeAtProgresses(mSizeAtProgressArray);
+    }
+
+    private boolean isDynamicColorEnabled(Context context) {
+        return Settings.System.getIntForUser(context.getContentResolver(),
+            Settings.System.WIRELESS_CHARGING_DYNAMIC_COLOR, 1, UserHandle.USER_CURRENT) == 1;
     }
 }
