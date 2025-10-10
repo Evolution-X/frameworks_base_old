@@ -14,9 +14,8 @@
  */
 package com.android.internal.util.evolution;
 
-import static android.graphics.Typeface.*;
-
 import android.app.ActivityThread;
+import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.graphics.Typeface;
 import android.os.SystemProperties;
@@ -26,6 +25,7 @@ import android.util.Log;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.regex.Pattern;
 import java.util.Set;
 
 public class FontController {
@@ -65,23 +65,24 @@ public class FontController {
         return sInstance;
     }
 
-    private FontController() {
-    }
+    private FontController() {}
 
-    private void handleOnConfiguration(Resources res) {
-        String pkgName = ActivityThread.currentPackageName();
-        if (pkgName == null || EXCLUDED_APPS.contains(pkgName)) return;
-
-        logger("handleOnConfiguration: Changing default font to: " + getFontName());
-        changeFont(res);
+    public static void OnConfigurationChanged(Resources res) {
+        get().handleOnConfiguration(res);
     }
 
     public static Typeface getOverrideTypeface(String fontToOverride) {
         if (fontToOverride == null) return null;
 
-        String currentFont = getFontName();
+        String pkgName = getCurrentPackageName();
+        if (pkgName != null && EXCLUDED_APPS.contains(pkgName)) {
+            logger("Excluded app, skipping override: " + pkgName);
+            return null;
+        }
 
-        if (fontToOverride.matches("^" + java.util.regex.Pattern.quote(currentFont) + "(-.*)?$")) {
+        String currentFont = Typeface.getFontName();
+
+        if (fontToOverride.matches("^" + Pattern.quote(currentFont) + "(-.*)?$")) {
             logger(fontToOverride + " matches current font root '" + currentFont + "', skipping override!");
             return null;
         }
@@ -92,7 +93,45 @@ public class FontController {
             return null;
         }
 
-        return TypefaceFactory.create(fontToOverride, currentFont);
+        int adjustment = getFontWeightAdjustment();
+        return TypefaceFactory.create(fontToOverride, currentFont, adjustment);
+    }
+
+    private void handleOnConfiguration(Resources res) {
+        String pkgName = getCurrentPackageName();
+        if (pkgName == null || EXCLUDED_APPS.contains(pkgName)) return;
+        logger("handleOnConfiguration: Changing default font to: " + Typeface.getFontName());
+        Typeface.changeFont(res);
+    }
+
+    private static String getCurrentPackageName() {
+        try {
+            return ActivityThread.currentPackageName();
+        } catch (Exception e) {
+            logger("getCurrentPackageName failed: " + e.getMessage());
+            return null;
+        }
+    }
+
+    private static Resources getResources() {
+        try {
+            return Resources.getSystem();
+        } catch (Exception e) {
+            logger("getResources failed: " + e.getMessage());
+            return null;
+        }
+    }
+
+    private static int getFontWeightAdjustment() {
+        try {
+            Resources res = getResources();
+            if (res == null) return 0;
+            Configuration cfg = res.getConfiguration();
+            return cfg != null ? cfg.fontWeightAdjustment : 0;
+        } catch (Exception e) {
+            logger("getFontWeightAdjustment failed: " + e.getMessage());
+            return 0;
+        }
     }
 
     private static void logger(String msg) {
@@ -101,30 +140,31 @@ public class FontController {
         }
     }
 
-    public static void OnConfigurationChanged(Resources res) {
-        get().handleOnConfiguration(res);
-    }
-
     private static class TypefaceFactory {
 
-        public static Typeface create(String fontToOverride, String currentFont) {
+        public static Typeface create(String fontToOverride, String currentFont, int fontWeightAdjustment) {
             int weight = resolveWeightByName(fontToOverride);
+
+            if (fontWeightAdjustment != 0) {
+                weight = Math.min(1000, Math.max(100, weight + fontWeightAdjustment));
+            }
+
             boolean isBold = weight >= 700;
             boolean isItalic = fontToOverride.contains("italic");
 
-            int style = NORMAL;
-            if (isBold && isItalic) style = BOLD_ITALIC;
-            else if (isBold) style = BOLD;
-            else if (isItalic) style = ITALIC;
+            int style = Typeface.NORMAL;
+            if (isBold && isItalic) style = Typeface.BOLD_ITALIC;
+            else if (isBold) style = Typeface.BOLD;
+            else if (isItalic) style = Typeface.ITALIC;
 
-            Typeface base = getSystemDefaultTypeface(currentFont);
-
+            Typeface base = Typeface.getSystemDefaultTypeface(currentFont);
             Typeface result = Typeface.create(base, style);
             result = Typeface.create(result, weight, isItalic);
 
             logger("TypefaceFactory.create: fontToOverride=" + fontToOverride +
                    ", style=" + style +
                    ", weight=" + weight +
+                   ", adj=" + fontWeightAdjustment +
                    ", isItalic=" + isItalic +
                    ", success=" + (result != null));
 
