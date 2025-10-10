@@ -165,7 +165,7 @@ public class DataSwitchTile extends QSTileImpl<BooleanState> {
             Log.d(TAG, "handleClick:only one sim card");
         } else {
             AsyncTask.execute(() -> {
-                toggleMobileDataEnabled();
+                switchDefaultDataSub();
                 refreshState();
             });
             mPanelInteractor.collapsePanels();
@@ -199,6 +199,7 @@ public class DataSwitchTile extends QSTileImpl<BooleanState> {
                 state.icon = ResourceIcon.get(R.drawable.ic_qs_data_switch_0);
                 state.value = false;
                 state.secondaryLabel = mContext.getString(R.string.tile_unavailable);
+                state.state = 0;
                 break;
             case 1:
                 state.icon = ResourceIcon.get(activeSIMZero
@@ -206,6 +207,7 @@ public class DataSwitchTile extends QSTileImpl<BooleanState> {
                         : R.drawable.ic_qs_data_switch_2);
                 state.value = false;
                 state.secondaryLabel = mContext.getString(R.string.tile_unavailable);
+                state.state = 0;
                 break;
             case 2:
                 state.icon = ResourceIcon.get(activeSIMZero
@@ -213,20 +215,19 @@ public class DataSwitchTile extends QSTileImpl<BooleanState> {
                         : R.drawable.ic_qs_data_switch_2);
                 state.value = true;
                 state.secondaryLabel = getActiveSlotName();
+                if (!mCanSwitch) {
+                    state.state = 0;
+                    Log.d(TAG, "call state isn't idle, set to unavailable.");
+                } else {
+                    state.state = 2;
+                }
                 break;
             default:
                 state.icon = ResourceIcon.get(R.drawable.ic_qs_data_switch_1);
                 state.value = false;
                 state.secondaryLabel = mContext.getString(R.string.tile_unavailable);
+                state.state = 0;
                 break;
-        }
-        if (mSimCount < 2) {
-            state.state = 0;
-        } else if (!mCanSwitch) {
-            state.state = 0;
-            Log.d(TAG, "call state isn't idle, set to unavailable.");
-        } else {
-            state.state = state.value ? 2 : 1;
         }
 
         state.label = mContext.getString(R.string.qs_data_switch_label);
@@ -238,53 +239,40 @@ public class DataSwitchTile extends QSTileImpl<BooleanState> {
     }
 
     /**
-     * Set whether to enable data for {@code subId}, also whether to disable data for other
-     * subscription
+     * Switch the default data subscription without enabling/disabling mobile data
      */
-    private void toggleMobileDataEnabled() {
-        TelephonyManager telephonyManager;
-        boolean dataEnabled = false;
-        boolean foundActive = false;
-        int subId;
+    private void switchDefaultDataSub() {
         List<SubscriptionInfo> subInfoList =
                 mSubscriptionManager.getActiveSubscriptionInfoList(true);
-        if (subInfoList != null) {
-            for (SubscriptionInfo subInfo : subInfoList) {
-                subId = subInfo.getSubscriptionId();
-                telephonyManager =
-                    mTelephonyManager.createForSubscriptionId(subId);
-                dataEnabled = telephonyManager.getDataEnabled();
-                if (subInfo.isOpportunistic() && dataEnabled) {
-                    // We never disable mobile data for opportunistic subscriptions.
-                    continue;
-                } else {
-                    dataEnabled = !dataEnabled && !foundActive;
-                    telephonyManager.setDataEnabled(dataEnabled);
-                    if (dataEnabled) mSubscriptionManager.setDefaultDataSubId(subId);
-                    // Indicate we found sim with active data, disable data on remaining sim.
-                    if (!foundActive) foundActive = dataEnabled;
-                }
-                Log.d(TAG, "Changed subID " + subId + " to "
-                    + !dataEnabled);
+        if (subInfoList == null || subInfoList.size() < 2) {
+            Log.d(TAG, "Not enough subscriptions to switch");
+            return;
+        }
+
+        int currentDefaultSubId = mSubscriptionManager.getDefaultDataSubscriptionId();
+        Log.d(TAG, "Current default data subId: " + currentDefaultSubId);
+
+        for (SubscriptionInfo subInfo : subInfoList) {
+            int subId = subInfo.getSubscriptionId();
+            if (subId != currentDefaultSubId && !subInfo.isOpportunistic()) {
+                mSubscriptionManager.setDefaultDataSubId(subId);
+                Log.d(TAG, "Switched default data to subId: " + subId);
+                return;
             }
         }
     }
 
     private String getActiveSlotName() {
-        TelephonyManager telephonyManager;
-        String mInitialState = mContext.getString(R.string.tile_unavailable);
+        int defaultDataSubId = mSubscriptionManager.getDefaultDataSubscriptionId();
         List<SubscriptionInfo> subInfoList =
                 mSubscriptionManager.getActiveSubscriptionInfoList(true);
         if (subInfoList != null) {
             for (SubscriptionInfo subInfo : subInfoList) {
-                telephonyManager =
-                        mTelephonyManager.createForSubscriptionId(subInfo.getSubscriptionId());
-                if (telephonyManager.getDataEnabled()) {
-                    // Active SIM found
+                if (subInfo.getSubscriptionId() == defaultDataSubId) {
                     return subInfo.getDisplayName().toString();
                 }
             }
         }
-        return mInitialState;
+        return mContext.getString(R.string.tile_unavailable);
     }
 }
