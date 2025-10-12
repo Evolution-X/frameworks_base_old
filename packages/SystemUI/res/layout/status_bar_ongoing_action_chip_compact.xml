@@ -18,8 +18,8 @@
 <FrameLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/ongoing_action_chip_compact"
-    android:layout_width="@dimen/ongoing_action_chip_compact_size"
-    android:layout_height="@dimen/ongoing_action_chip_compact_size"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
     android:layout_gravity="center_vertical|start"
     android:layout_marginLeft="4dp"
     android:visibility="gone"
