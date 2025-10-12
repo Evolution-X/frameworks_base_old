@@ -6594,12 +6594,47 @@ public final class Settings {
         /**
          * @hide
          */
-         public static final String SHOW_MEDIA_PROGRESS = "show_media_progress";
+        public static final String SHOW_MEDIA_PROGRESS = "show_media_progress";
 
         /**
-          * @hide
-          */
-         public static final String PROGRESS_BAR_OPACITY = "progress_bar_opacity";
+         * @hide
+         */
+        public static final String PROGRESS_BAR_OPACITY = "progress_bar_opacity";
+
+        /**
+         * Horizontal position offset for standard progress chip in dp.
+         * Range: -100 to +100
+         * @hide
+         */
+        public static final String CHIP_POSITION_X = "chip_position_x";
+
+        /**
+         * Vertical position offset for standard progress chip in dp.
+         * Range: -20 to +40
+         * @hide
+         */
+        public static final String CHIP_POSITION_Y = "chip_position_y";
+
+        /**
+         * Size of the circular progress chip in dp.
+         * Range: 20 to 100
+         * @hide
+         */
+        public static final String CIRCULAR_CHIP_SIZE = "circular_chip_size";
+
+        /**
+         * Horizontal position offset for circular chip in dp.
+         * Range: -50 to +50
+         * @hide
+         */
+        public static final String CIRCULAR_POSITION_X = "circular_position_x";
+
+        /**
+         * Vertical position offset for circular chip in dp.
+         * Range: -20 to +40
+         * @hide
+         */
+        public static final String CIRCULAR_POSITION_Y = "circular_position_y";
 
         /**
          * Adaptive playback
