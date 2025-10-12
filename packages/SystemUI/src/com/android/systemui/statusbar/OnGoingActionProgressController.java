@@ -20,7 +20,6 @@ import android.app.Notification;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
-import android.content.res.ColorStateList;
 import android.database.ContentObserver;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
@@ -34,12 +33,15 @@ import android.service.notification.StatusBarNotification;
 import android.util.Log;
 import android.util.TypedValue;
 import android.view.GestureDetector;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.FrameLayout;
+import android.widget.LinearLayout;
 import android.widget.PopupWindow;
 import android.widget.ProgressBar;
 
@@ -68,6 +70,13 @@ public class OnGoingActionProgressController implements NotificationListener.Not
     private static final String SHOW_MEDIA_PROGRESS = "show_media_progress";
     private static final String PROGRESS_BAR_OPACITY = "progress_bar_opacity";
     private static final String COMPACT_MODE_ENABLED = "compact_progress_mode";
+    
+    private static final String CHIP_POSITION_X = "chip_position_x";
+    private static final String CHIP_POSITION_Y = "chip_position_y";
+    private static final String CIRCULAR_CHIP_SIZE = "circular_chip_size";
+    private static final String CIRCULAR_POSITION_X = "circular_position_x";
+    private static final String CIRCULAR_POSITION_Y = "circular_position_y";
+    
     private static final int SWIPE_THRESHOLD = 100;
     private static final int SWIPE_VELOCITY_THRESHOLD = 100;
     private static final int DEFAULT_OPACITY = 255;
@@ -75,6 +84,12 @@ public class OnGoingActionProgressController implements NotificationListener.Not
     private static final int MEDIA_UPDATE_INTERVAL_MS = 1000;
     private static final int DEBOUNCE_DELAY_MS = 150;
     private static final int MAX_ICON_CACHE_SIZE = 20;
+    
+    private static final int DEFAULT_CIRCULAR_SIZE = 28;
+    private static final int DEFAULT_POSITION_X = 0;
+    private static final int DEFAULT_POSITION_Y = 0;
+    private static final int MIN_CIRCULAR_SIZE = 20;
+    private static final int MAX_CIRCULAR_SIZE = 100;
 
     private final Context mContext;
     private final ContentResolver mContentResolver;
@@ -123,6 +138,13 @@ public class OnGoingActionProgressController implements NotificationListener.Not
     private boolean mNeedsFullUiUpdate = true;
     private boolean mIsViewAttached = false;
     private boolean mIsExpanded = false;
+    
+    // Position & Size variables (simplified)
+    private int mChipPositionX = DEFAULT_POSITION_X;
+    private int mChipPositionY = DEFAULT_POSITION_Y;
+    private int mCircularChipSize = DEFAULT_CIRCULAR_SIZE;
+    private int mCircularPositionX = DEFAULT_POSITION_X;
+    private int mCircularPositionY = DEFAULT_POSITION_Y;
     
     private boolean mUpdatePending = false;
     private long mLastUpdateTime = 0;
@@ -342,112 +364,108 @@ public class OnGoingActionProgressController implements NotificationListener.Not
         }
     }
 
-private void updateMediaProgressOnly() {
-    if (!mIsViewAttached) return;
-    
-    long totalDuration = mMediaSessionHelper.getTotalDuration();
-    
-    android.media.session.PlaybackState playbackState = mMediaSessionHelper.getMediaControllerPlaybackState();
-    long currentProgress = 0;
-    
-    if (playbackState != null) {
-        currentProgress = playbackState.getPosition();
-    }
-            
-    // Update the standard progress bar if visible
-    if (mProgressRootView.getVisibility() == View.VISIBLE && mProgressBar != null && totalDuration > 0) {
-        mProgressBar.setMax((int) totalDuration);
-        mProgressBar.setProgress((int) currentProgress);
-    }
-    
-    // Also update the circular progress bar for compact mode
-    if (mCompactRootView.getVisibility() == View.VISIBLE && mCircularProgressBar != null && totalDuration > 0) {
-        mCircularProgressBar.setMax((int) totalDuration);
-        mCircularProgressBar.setProgress((int) currentProgress);
-    }
-}
-
-private void updateMediaProgressFull() {
-    if (!mIsViewAttached) return;
-    
-    mProgressRootView.setVisibility(View.VISIBLE);
-    mMediaProgressHandler.removeCallbacks(mMediaProgressRunnable);
-    mMediaProgressHandler.post(mMediaProgressRunnable);
-
-    Drawable mediaAppIcon = mMediaSessionHelper.getMediaAppIcon();
-    
-    if (mediaAppIcon != null) {
-        mIconView.setImageDrawable(mediaAppIcon);
-    } else {
-        String packageName = null;
+    private void updateMediaProgressOnly() {
+        if (!mIsViewAttached) return;
         
-        // Add null check for playback state before accessing extras
+        long totalDuration = mMediaSessionHelper.getTotalDuration();
+        
         android.media.session.PlaybackState playbackState = mMediaSessionHelper.getMediaControllerPlaybackState();
-        if (playbackState != null && playbackState.getExtras() != null) {
-            packageName = playbackState.getExtras().getString("package");
+        long currentProgress = 0;
+        
+        if (playbackState != null) {
+            currentProgress = playbackState.getPosition();
+        }
+                
+        if (mProgressRootView.getVisibility() == View.VISIBLE && mProgressBar != null && totalDuration > 0) {
+            mProgressBar.setMax((int) totalDuration);
+            mProgressBar.setProgress((int) currentProgress);
         }
         
-        if (packageName != null) {
-            loadIconInBackground(packageName, drawable -> {
-                if (mIconView != null && drawable != null) {
-                    mIconView.setImageDrawable(drawable);
-                } else if (mIconView != null) {
-                    mIconView.setImageDrawable(mContext.getResources().getDrawable(R.drawable.ic_default_music_icon));
-                }
-            });
-        } else if (mIconView != null) {
-            mIconView.setImageDrawable(mContext.getResources().getDrawable(R.drawable.ic_default_music_icon));
+        if (mCompactRootView.getVisibility() == View.VISIBLE && mCircularProgressBar != null && totalDuration > 0) {
+            mCircularProgressBar.setMax((int) totalDuration);
+            mCircularProgressBar.setProgress((int) currentProgress);
         }
     }
 
-    updateMediaProgressOnly();
-}
+    private void updateMediaProgressFull() {
+        if (!mIsViewAttached) return;
+        
+        mProgressRootView.setVisibility(View.VISIBLE);
+        mMediaProgressHandler.removeCallbacks(mMediaProgressRunnable);
+        mMediaProgressHandler.post(mMediaProgressRunnable);
 
-private void updateMediaProgressCompact() {
-    if (!mIsViewAttached) return;
-    
-    mCompactRootView.setVisibility(View.VISIBLE);
-    mMediaProgressHandler.removeCallbacks(mMediaProgressRunnable);
-    mMediaProgressHandler.post(mMediaProgressRunnable);
-
-    long totalDuration = mMediaSessionHelper.getTotalDuration();
-    
-    // Add null check for playback state before accessing position
-    android.media.session.PlaybackState playbackState = mMediaSessionHelper.getMediaControllerPlaybackState();
-    long currentProgress = 0;
-    
-    if (playbackState != null) {
-        currentProgress = playbackState.getPosition();
-    }
+        Drawable mediaAppIcon = mMediaSessionHelper.getMediaAppIcon();
+        
+        if (mediaAppIcon != null) {
+            mIconView.setImageDrawable(mediaAppIcon);
+        } else {
+            String packageName = null;
             
-    if (totalDuration > 0 && mCircularProgressBar != null) {
-        mCircularProgressBar.setMax((int) totalDuration);
-        mCircularProgressBar.setProgress((int) currentProgress);
+            android.media.session.PlaybackState playbackState = mMediaSessionHelper.getMediaControllerPlaybackState();
+            if (playbackState != null && playbackState.getExtras() != null) {
+                packageName = playbackState.getExtras().getString("package");
+            }
+            
+            if (packageName != null) {
+                loadIconInBackground(packageName, drawable -> {
+                    if (mIconView != null && drawable != null) {
+                        mIconView.setImageDrawable(drawable);
+                    } else if (mIconView != null) {
+                        mIconView.setImageDrawable(mContext.getResources().getDrawable(R.drawable.ic_default_music_icon));
+                    }
+                });
+            } else if (mIconView != null) {
+                mIconView.setImageDrawable(mContext.getResources().getDrawable(R.drawable.ic_default_music_icon));
+            }
+        }
+
+        updateMediaProgressOnly();
     }
 
-    Drawable mediaAppIcon = mMediaSessionHelper.getMediaAppIcon();
-    
-    if (mediaAppIcon != null) {
-        mCompactIconView.setImageDrawable(mediaAppIcon);
-    } else {
-        String packageName = null;
-        if (playbackState != null && playbackState.getExtras() != null) {
-            packageName = playbackState.getExtras().getString("package");
-        }
+    private void updateMediaProgressCompact() {
+        if (!mIsViewAttached) return;
         
-        if (packageName != null) {
-            loadIconInBackground(packageName, drawable -> {
-                if (mCompactIconView != null && drawable != null) {
-                    mCompactIconView.setImageDrawable(drawable);
-                } else if (mCompactIconView != null) {
-                    mCompactIconView.setImageDrawable(mContext.getResources().getDrawable(R.drawable.ic_default_music_icon));
-                }
-            });
-        } else if (mCompactIconView != null) {
-            mCompactIconView.setImageDrawable(mContext.getResources().getDrawable(R.drawable.ic_default_music_icon));
+        mCompactRootView.setVisibility(View.VISIBLE);
+        mMediaProgressHandler.removeCallbacks(mMediaProgressRunnable);
+        mMediaProgressHandler.post(mMediaProgressRunnable);
+
+        long totalDuration = mMediaSessionHelper.getTotalDuration();
+        
+        android.media.session.PlaybackState playbackState = mMediaSessionHelper.getMediaControllerPlaybackState();
+        long currentProgress = 0;
+        
+        if (playbackState != null) {
+            currentProgress = playbackState.getPosition();
+        }
+                
+        if (totalDuration > 0 && mCircularProgressBar != null) {
+            mCircularProgressBar.setMax((int) totalDuration);
+            mCircularProgressBar.setProgress((int) currentProgress);
+        }
+
+        Drawable mediaAppIcon = mMediaSessionHelper.getMediaAppIcon();
+        
+        if (mediaAppIcon != null) {
+            mCompactIconView.setImageDrawable(mediaAppIcon);
+        } else {
+            String packageName = null;
+            if (playbackState != null && playbackState.getExtras() != null) {
+                packageName = playbackState.getExtras().getString("package");
+            }
+            
+            if (packageName != null) {
+                loadIconInBackground(packageName, drawable -> {
+                    if (mCompactIconView != null && drawable != null) {
+                        mCompactIconView.setImageDrawable(drawable);
+                    } else if (mCompactIconView != null) {
+                        mCompactIconView.setImageDrawable(mContext.getResources().getDrawable(R.drawable.ic_default_music_icon));
+                    }
+                });
+            } else if (mCompactIconView != null) {
+                mCompactIconView.setImageDrawable(mContext.getResources().getDrawable(R.drawable.ic_default_music_icon));
+            }
         }
     }
-}
 
     private void updateNotificationProgress() {
         if (!mIsViewAttached) return;
@@ -527,7 +545,6 @@ private void updateMediaProgressCompact() {
                 
                 if (iconResult != null && iconResult.drawable != null) {
                     synchronized (mLock) {
-                        // Limit cache size
                         if (mIconCache.size() >= MAX_ICON_CACHE_SIZE) {
                             mIconCache.clear();
                         }
@@ -745,6 +762,65 @@ private void updateMediaProgressCompact() {
         }
     }
 
+    // Position Control Methods (Simplified - Working ones only)
+    
+    private void applyLayoutChanges() {
+        if (!mIsViewAttached) return;
+        
+        mHandler.post(() -> {
+            applyChipLayout(mProgressRootView, mChipPositionX, mChipPositionY);
+            applyCircularChipLayout(mCompactRootView, mCircularChipSize, 
+                                   mCircularPositionX, mCircularPositionY);
+        });
+    }
+
+    private void applyChipLayout(View view, int offsetXDp, int offsetYDp) {
+        if (view == null) return;
+        
+        ViewGroup.LayoutParams params = view.getLayoutParams();
+        if (params instanceof ViewGroup.MarginLayoutParams) {
+            ViewGroup.MarginLayoutParams marginParams = 
+                    (ViewGroup.MarginLayoutParams) params;
+            
+            float density = mContext.getResources().getDisplayMetrics().density;
+            int offsetX = (int) (offsetXDp * density);
+            int offsetY = (int) (offsetYDp * density);
+            
+            marginParams.setMarginStart(offsetX);
+            marginParams.topMargin = offsetY;
+            
+            view.setLayoutParams(marginParams);
+        }
+    }
+
+    private void applyCircularChipLayout(View view, int sizeDp, int offsetXDp, int offsetYDp) {
+        if (view == null) return;
+        
+        ViewGroup.LayoutParams params = view.getLayoutParams();
+        if (params instanceof ViewGroup.MarginLayoutParams) {
+            ViewGroup.MarginLayoutParams marginParams = 
+                    (ViewGroup.MarginLayoutParams) params;
+            
+            float density = mContext.getResources().getDisplayMetrics().density;
+            int size = (int) (sizeDp * density);
+            int offsetX = (int) (offsetXDp * density);
+            int offsetY = (int) (offsetYDp * density);
+            
+            marginParams.width = size;
+            marginParams.height = size;
+            
+            marginParams.setMarginStart(offsetX);
+            marginParams.topMargin = offsetY;
+            
+            view.setLayoutParams(marginParams);
+        }
+    }
+
+    private int dpToPx(int dp) {
+        float density = mContext.getResources().getDisplayMetrics().density;
+        return (int) (dp * density);
+    }
+
     @Override
     public void onNotificationPosted(StatusBarNotification sbn, NotificationListenerService.RankingMap _rankingMap) {
         onNotificationPosted(sbn);
@@ -760,7 +836,7 @@ private void updateMediaProgressCompact() {
         onNotificationRemoved(sbn);
     }
 
-     @Override
+    @Override
     public void onHeadsUpPinnedModeChanged(boolean inPinnedMode) {
         mHeadsUpPinned = inPinnedMode;
         requestUiUpdate();
@@ -788,7 +864,12 @@ private void updateMediaProgressCompact() {
             if (uri.equals(Settings.System.getUriFor(ONGOING_ACTION_CHIP_ENABLED)) ||
                     uri.equals(Settings.System.getUriFor(SHOW_MEDIA_PROGRESS)) ||
                     uri.equals(Settings.System.getUriFor(PROGRESS_BAR_OPACITY)) ||
-                    uri.equals(Settings.System.getUriFor(COMPACT_MODE_ENABLED))) {
+                    uri.equals(Settings.System.getUriFor(COMPACT_MODE_ENABLED)) ||
+                    uri.equals(Settings.System.getUriFor(CHIP_POSITION_X)) ||
+                    uri.equals(Settings.System.getUriFor(CHIP_POSITION_Y)) ||
+                    uri.equals(Settings.System.getUriFor(CIRCULAR_CHIP_SIZE)) ||
+                    uri.equals(Settings.System.getUriFor(CIRCULAR_POSITION_X)) ||
+                    uri.equals(Settings.System.getUriFor(CIRCULAR_POSITION_Y))) {
                 updateSettings();
             }
         }
@@ -802,6 +883,18 @@ private void updateMediaProgressCompact() {
                     false, this, UserHandle.USER_ALL);
             mContentResolver.registerContentObserver(Settings.System.getUriFor(COMPACT_MODE_ENABLED), 
                     false, this, UserHandle.USER_ALL);
+            
+            mContentResolver.registerContentObserver(Settings.System.getUriFor(CHIP_POSITION_X), 
+                    false, this, UserHandle.USER_ALL);
+            mContentResolver.registerContentObserver(Settings.System.getUriFor(CHIP_POSITION_Y), 
+                    false, this, UserHandle.USER_ALL);
+            mContentResolver.registerContentObserver(Settings.System.getUriFor(CIRCULAR_CHIP_SIZE), 
+                    false, this, UserHandle.USER_ALL);
+            mContentResolver.registerContentObserver(Settings.System.getUriFor(CIRCULAR_POSITION_X), 
+                    false, this, UserHandle.USER_ALL);
+            mContentResolver.registerContentObserver(Settings.System.getUriFor(CIRCULAR_POSITION_Y), 
+                    false, this, UserHandle.USER_ALL);
+                    
             updateSettings();
         }
 
@@ -826,14 +919,29 @@ private void updateMediaProgressCompact() {
                 PROGRESS_BAR_OPACITY, DEFAULT_OPACITY_PERCENTAGE, UserHandle.USER_CURRENT);
         
         opacityPercentage = Math.max(0, Math.min(100, opacityPercentage));
-        
         mProgressBarOpacity = (int)(opacityPercentage * 2.55f);
         
-        if (wasEnabled != mIsEnabled || wasShowingMedia != mShowMediaProgress || wasCompactMode != mIsCompactModeEnabled) {
+        mChipPositionX = Settings.System.getIntForUser(mContentResolver, 
+                CHIP_POSITION_X, DEFAULT_POSITION_X, UserHandle.USER_CURRENT);
+        mChipPositionY = Settings.System.getIntForUser(mContentResolver, 
+                CHIP_POSITION_Y, DEFAULT_POSITION_Y, UserHandle.USER_CURRENT);
+        
+        int newCircularSize = Settings.System.getIntForUser(mContentResolver, 
+                CIRCULAR_CHIP_SIZE, DEFAULT_CIRCULAR_SIZE, UserHandle.USER_CURRENT);
+        mCircularChipSize = Math.max(MIN_CIRCULAR_SIZE, Math.min(MAX_CIRCULAR_SIZE, newCircularSize));
+        
+        mCircularPositionX = Settings.System.getIntForUser(mContentResolver, 
+                CIRCULAR_POSITION_X, DEFAULT_POSITION_X, UserHandle.USER_CURRENT);
+        mCircularPositionY = Settings.System.getIntForUser(mContentResolver, 
+                CIRCULAR_POSITION_Y, DEFAULT_POSITION_Y, UserHandle.USER_CURRENT);
+        
+        if (wasEnabled != mIsEnabled || wasShowingMedia != mShowMediaProgress || 
+                wasCompactMode != mIsCompactModeEnabled) {
             mNeedsFullUiUpdate = true;
             mIsExpanded = false;
         }
         
+        applyLayoutChanges();
         requestUiUpdate();
     }
 
@@ -867,7 +975,6 @@ private void updateMediaProgressCompact() {
             mCompactIconView.setImageDrawable(null);
         }
 
-        // Shutdown the background executor
         if (mBackgroundExecutor instanceof ExecutorService) {
             ((ExecutorService) mBackgroundExecutor).shutdown();
         }

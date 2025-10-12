@@ -15,13 +15,11 @@
      limitations under the License.
 -->
 
-<LinearLayout
+<FrameLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/ongoing_action_chip"
-    android:layout_width="@dimen/ongoing_action_chip_width"
-    android:layout_height="@dimen/ongoing_action_chip_height"
-    android:maxWidth="120dp"
-    android:minWidth="60dp"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
     android:orientation="horizontal"
     android:layout_gravity="center_vertical|start"
     android:padding="@dimen/ongoing_action_padding"
@@ -31,30 +29,37 @@
     android:clickable="true"
     android:focusable="true">
 
-    <ImageView
-        android:id="@+id/ongoing_action_app_icon"
-        android:layout_width="@dimen/ongoing_action_icon_size"
-        android:layout_height="@dimen/ongoing_action_icon_size"
-        android:gravity="center_vertical|start"
-        android:scaleType="centerInside"
-        android:contentDescription="App icon"
-        android:tint="@android:color/transparent"
-        android:src="@android:drawable/sym_def_app_icon" />
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
 
-    <View
-        android:layout_width="@dimen/ongoing_action_spacing"
-        android:layout_height="0dp" />
+        <ImageView
+            android:id="@+id/ongoing_action_app_icon"
+            android:layout_width="@dimen/ongoing_action_icon_size"
+            android:layout_height="@dimen/ongoing_action_icon_size"
+            android:gravity="center_vertical|start"
+            android:scaleType="centerInside"
+            android:contentDescription="App icon"
+            android:tint="@android:color/transparent"
+            android:src="@android:drawable/sym_def_app_icon" />
 
-    <ProgressBar
-        android:id="@+id/app_action_progress"
-        style="?android:attr/progressBarStyleHorizontal"
-        android:layout_width="0dp"
-        android:layout_height="@dimen/ongoing_action_progress_height"
-        android:layout_weight="1"
-        android:gravity="center_vertical"
-        android:indeterminate="false"
-        android:progress="0"
-        android:max="100"
-        android:clickable="false"
-        android:focusable="false" />
-</LinearLayout>
+        <View
+            android:layout_width="@dimen/ongoing_action_spacing"
+            android:layout_height="0dp" />
+
+        <ProgressBar
+            android:id="@+id/app_action_progress"
+            style="?android:attr/progressBarStyleHorizontal"
+            android:layout_width="0dp"
+            android:layout_height="@dimen/ongoing_action_progress_height"
+            android:layout_weight="1"
+            android:gravity="center_vertical"
+            android:indeterminate="false"
+            android:progress="0"
+            android:max="100"
+            android:clickable="false"
+            android:focusable="false" />
+    </LinearLayout>
+</FrameLayout>
