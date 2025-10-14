@@ -3288,10 +3288,15 @@ public class CentralSurfacesImpl implements CoreStartable, CentralSurfaces,
             updateResources();
             updateDisplaySize(); // populates mDisplayMetrics
 
+        if (mOnGoingActionProgressController != null) {
+            mOnGoingActionProgressController.onConfigurationChanged(newConfig);
+        }
+
             if (DEBUG) {
                 Log.v(TAG, "configuration changed: " + mContext.getResources().getConfiguration());
             }
         }
+
 
         @Override
         public void onDensityOrFontScaleChanged() {
