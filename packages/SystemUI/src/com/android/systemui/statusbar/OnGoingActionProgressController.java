@@ -16,10 +16,16 @@
 
 package com.android.systemui.statusbar;
 
+import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
+import android.animation.ObjectAnimator;
+import android.animation.ValueAnimator;
 import android.app.Notification;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.res.ColorStateList;
+import android.content.res.Configuration;
 import android.database.ContentObserver;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
@@ -38,6 +44,8 @@ import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.DecelerateInterpolator;
+import android.view.animation.PathInterpolator;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.FrameLayout;
@@ -50,6 +58,7 @@ import androidx.annotation.Nullable;
 
 import com.android.systemui.statusbar.notification.headsup.HeadsUpManager;
 import com.android.systemui.statusbar.notification.headsup.OnHeadsUpChangedListener;
+import android.content.res.Configuration;
 import com.android.systemui.res.R;
 import com.android.systemui.util.IconFetcher;
 import com.android.systemui.statusbar.OnGoingActionProgressGroup;
@@ -93,6 +102,13 @@ public class OnGoingActionProgressController implements NotificationListener.Not
     
     private static final int STALE_PROGRESS_CHECK_INTERVAL_MS = 5000;
     private static final int PROGRESS_TIMEOUT_MS = 30000;
+    
+    // Animation constants
+    private static final int PROGRESS_ANIMATION_DURATION = 300;
+    private static final int ENTRY_ANIMATION_DURATION = 400;
+    private static final int EXIT_ANIMATION_DURATION = 300;
+    private static final int EXPAND_ANIMATION_DURATION = 350;
+    private static final float ENTRY_TRANSLATION_Y = 50f;
 
     private final Context mContext;
     private final ContentResolver mContentResolver;
@@ -124,6 +140,17 @@ public class OnGoingActionProgressController implements NotificationListener.Not
     private final ImageView mCompactIconView;
 
     private final HashMap<String, IconFetcher.AdaptiveDrawableResult> mIconCache = new HashMap<>();
+    
+    // Animation related
+    private ObjectAnimator mProgressAnimator;
+    private ObjectAnimator mCircularProgressAnimator;
+    private ObjectAnimator mEntryAnimator;
+    private ObjectAnimator mExitAnimator;
+    private ObjectAnimator mCompactEntryAnimator;
+    private ObjectAnimator mCompactExitAnimator;
+    private int mAccentColor;
+    private boolean mIsAnimatingEntry = false;
+    private boolean mIsAnimatingExit = false;
     
     private boolean mShowMediaProgress = true;
     private boolean mIsTrackingProgress = false;
@@ -227,6 +254,19 @@ public class OnGoingActionProgressController implements NotificationListener.Not
 
         mGestureDetector = new GestureDetector(mContext, new MediaGestureListener());
 
+        // Initialize accent color
+        updateAccentColor();
+        applySystemTheming();
+
+        // Initialize views with invisible state for entry animation
+        mProgressRootView.setAlpha(0f);
+        mProgressRootView.setTranslationY(ENTRY_TRANSLATION_Y);
+        mProgressRootView.setVisibility(View.GONE);
+        
+        mCompactRootView.setAlpha(0f);
+        mCompactRootView.setTranslationY(ENTRY_TRANSLATION_Y);
+        mCompactRootView.setVisibility(View.GONE);
+
         mKeyguardStateController.addCallback(this);
         mHeadsUpManager.addListener(this);
         mNotificationListener.addNotificationHandler(this);
@@ -254,10 +294,22 @@ public class OnGoingActionProgressController implements NotificationListener.Not
         mHandler.postDelayed(mStaleProgressChecker, STALE_PROGRESS_CHECK_INTERVAL_MS);
     }
 
+    private void updateAccentColor() {
+        mAccentColor = getThemeColor(mContext, android.R.attr.colorAccent);
+    }
+
+    private void applySystemTheming() {
+        if (mProgressBar != null) {
+            mProgressBar.setProgressTintList(ColorStateList.valueOf(mAccentColor));
+        }
+        if (mCircularProgressBar != null) {
+            mCircularProgressBar.setProgressTintList(ColorStateList.valueOf(mAccentColor));
+        }
+    }
+
     private void expandCompactView() {
         mIsExpanded = true;
-        mCompactRootView.setVisibility(View.GONE);
-        mProgressRootView.setVisibility(View.VISIBLE);
+        animateViewTransition(mCompactRootView, mProgressRootView, true);
         
         mHandler.postDelayed(() -> {
             if (mIsCompactModeEnabled && mIsExpanded) {
@@ -265,6 +317,28 @@ public class OnGoingActionProgressController implements NotificationListener.Not
                 requestUiUpdate();
             }
         }, 5000);
+    }
+
+    private void animateViewTransition(View fromView, View toView, boolean isExpanding) {
+        // Exit animation for fromView
+        fromView.animate()
+                .alpha(0f)
+                .translationY(isExpanding ? -ENTRY_TRANSLATION_Y : ENTRY_TRANSLATION_Y)
+                .setDuration(EXPAND_ANIMATION_DURATION)
+                .setInterpolator(new PathInterpolator(0.4f, 0f, 0.2f, 1f))
+                .withEndAction(() -> fromView.setVisibility(View.GONE))
+                .start();
+
+        // Entry animation for toView
+        toView.setVisibility(View.VISIBLE);
+        toView.setAlpha(0f);
+        toView.setTranslationY(isExpanding ? ENTRY_TRANSLATION_Y : -ENTRY_TRANSLATION_Y);
+        toView.animate()
+                .alpha(1f)
+                .translationY(0f)
+                .setDuration(EXPAND_ANIMATION_DURATION)
+                .setInterpolator(new PathInterpolator(0.4f, 0f, 0.2f, 1f))
+                .start();
     }
 
     private class MediaGestureListener extends GestureDetector.SimpleOnGestureListener {
@@ -338,37 +412,53 @@ public class OnGoingActionProgressController implements NotificationListener.Not
         if (!mIsViewAttached) return;
         
         float opacity = mProgressBarOpacity / 255f;
-        mProgressRootView.setAlpha(opacity);
-        mCompactRootView.setAlpha(opacity);
         
+        // Always hide both views if force hidden or heads up is pinned
         if (mIsForceHidden || mHeadsUpPinned) {
-            mProgressRootView.setVisibility(View.GONE);
-            mCompactRootView.setVisibility(View.GONE);
+            animateExit(mProgressRootView);
+            animateExit(mCompactRootView);
             return;
         }
 
         boolean isMediaPlaying = mShowMediaProgress && mMediaSessionHelper.isMediaPlaying();
+        boolean shouldShowProgress = mIsEnabled && (mIsTrackingProgress || isMediaPlaying);
         
-        if (mIsCompactModeEnabled && !mIsExpanded) {
-            mProgressRootView.setVisibility(View.GONE);
-            
-            if (!mIsEnabled && !isMediaPlaying) {
-                mCompactRootView.setVisibility(View.GONE);
-                return;
+        // If nothing to show, hide both views
+        if (!shouldShowProgress) {
+            animateExit(mProgressRootView);
+            animateExit(mCompactRootView);
+            return;
+        }
+        
+        // Determine which view should be visible based on compact mode and expanded state
+        // Priority: Compact mode takes precedence unless manually expanded
+        boolean shouldShowCompact = mIsCompactModeEnabled && !mIsExpanded;
+        boolean shouldShowNormal = !shouldShowCompact;
+        
+        // CRITICAL: Ensure mutual exclusivity - hide one before showing the other
+        if (shouldShowCompact) {
+            // First, ensure normal view is hidden
+            if (mProgressRootView.getVisibility() == View.VISIBLE) {
+                animateExit(mProgressRootView);
             }
             
-            mCompactRootView.setVisibility(View.VISIBLE);
+            // Then show compact view
+            animateEntry(mCompactRootView, opacity);
             
             if (isMediaPlaying) {
                 updateMediaProgressCompact();
             } else {
                 updateNotificationProgressCompact();
             }
-        } else {
-            mCompactRootView.setVisibility(View.GONE);
+        } else if (shouldShowNormal) {
+            // First, ensure compact view is hidden
+            if (mCompactRootView.getVisibility() == View.VISIBLE) {
+                animateExit(mCompactRootView);
+            }
             
+            // Then show normal view
             if (isMediaPlaying) {
-                mProgressRootView.setVisibility(View.VISIBLE);
+                animateEntry(mProgressRootView, opacity);
 
                 if (mNeedsFullUiUpdate) {
                     updateMediaProgressFull();
@@ -377,8 +467,103 @@ public class OnGoingActionProgressController implements NotificationListener.Not
                     updateMediaProgressOnly();
                 }
             } else {
-                updateNotificationProgress();
+                updateNotificationProgress(opacity);
             }
+        }
+    }
+
+    private void animateEntry(View view, float targetAlpha) {
+        if (view.getVisibility() == View.VISIBLE && !mIsAnimatingEntry) {
+            return;
+        }
+
+        cancelAnimations(view);
+        
+        if (view.getVisibility() != View.VISIBLE) {
+            view.setVisibility(View.VISIBLE);
+            view.setAlpha(0f);
+            view.setTranslationY(ENTRY_TRANSLATION_Y);
+        }
+
+        mIsAnimatingEntry = true;
+
+        view.animate()
+                .alpha(targetAlpha)
+                .translationY(0f)
+                .setDuration(ENTRY_ANIMATION_DURATION)
+                .setInterpolator(new PathInterpolator(0f, 0f, 0.2f, 1f))
+                .setListener(new AnimatorListenerAdapter() {
+                    @Override
+                    public void onAnimationEnd(Animator animation) {
+                        mIsAnimatingEntry = false;
+                    }
+                })
+                .start();
+    }
+
+    private void animateExit(View view) {
+        if (view.getVisibility() == View.GONE || mIsAnimatingExit) {
+            return;
+        }
+
+        cancelAnimations(view);
+        
+        mIsAnimatingExit = true;
+
+        view.animate()
+                .alpha(0f)
+                .translationY(-ENTRY_TRANSLATION_Y)
+                .setDuration(EXIT_ANIMATION_DURATION)
+                .setInterpolator(new PathInterpolator(0.4f, 0f, 1f, 1f))
+                .setListener(new AnimatorListenerAdapter() {
+                    @Override
+                    public void onAnimationEnd(Animator animation) {
+                        view.setVisibility(View.GONE);
+                        view.setTranslationY(ENTRY_TRANSLATION_Y);
+                        mIsAnimatingExit = false;
+                    }
+                })
+                .start();
+    }
+
+    private void cancelAnimations(View view) {
+        view.animate().cancel();
+        if (view == mProgressRootView) {
+            if (mProgressAnimator != null && mProgressAnimator.isRunning()) {
+                mProgressAnimator.cancel();
+            }
+        } else if (view == mCompactRootView) {
+            if (mCircularProgressAnimator != null && mCircularProgressAnimator.isRunning()) {
+                mCircularProgressAnimator.cancel();
+            }
+        }
+    }
+
+    private void animateProgress(ProgressBar progressBar, int targetProgress) {
+        if (progressBar == null) return;
+
+        int currentProgress = progressBar.getProgress();
+        
+        if (Math.abs(targetProgress - currentProgress) < 2) {
+            progressBar.setProgress(targetProgress);
+            return;
+        }
+
+        ObjectAnimator animator = progressBar == mProgressBar ? mProgressAnimator : mCircularProgressAnimator;
+        
+        if (animator != null && animator.isRunning()) {
+            animator.cancel();
+        }
+
+        animator = ObjectAnimator.ofInt(progressBar, "progress", currentProgress, targetProgress);
+        animator.setDuration(PROGRESS_ANIMATION_DURATION);
+        animator.setInterpolator(new DecelerateInterpolator());
+        animator.start();
+
+        if (progressBar == mProgressBar) {
+            mProgressAnimator = animator;
+        } else {
+            mCircularProgressAnimator = animator;
         }
     }
 
@@ -443,7 +628,6 @@ public class OnGoingActionProgressController implements NotificationListener.Not
     private void updateMediaProgressCompact() {
         if (!mIsViewAttached) return;
         
-        mCompactRootView.setVisibility(View.VISIBLE);
         mMediaProgressHandler.removeCallbacks(mMediaProgressRunnable);
         mMediaProgressHandler.post(mMediaProgressRunnable);
 
@@ -458,7 +642,7 @@ public class OnGoingActionProgressController implements NotificationListener.Not
                 
         if (totalDuration > 0 && mCircularProgressBar != null) {
             mCircularProgressBar.setMax((int) totalDuration);
-            mCircularProgressBar.setProgress((int) currentProgress);
+            animateProgress(mCircularProgressBar, (int) currentProgress);
         }
 
         Drawable mediaAppIcon = mMediaSessionHelper.getMediaAppIcon();
@@ -485,16 +669,17 @@ public class OnGoingActionProgressController implements NotificationListener.Not
         }
     }
 
-    private void updateNotificationProgress() {
+    private void updateNotificationProgress(float opacity) {
         if (!mIsViewAttached) return;
         
         if (!mIsEnabled || !mIsTrackingProgress) {
-            mProgressRootView.setVisibility(View.GONE);
+            animateExit(mProgressRootView);
             mMediaProgressHandler.removeCallbacks(mMediaProgressRunnable);
             return;
         }
 
-        mProgressRootView.setVisibility(View.VISIBLE);
+        animateEntry(mProgressRootView, opacity);
+        
         if (mCurrentProgressMax <= 0) {
             Log.w(TAG, "updateViews: invalid max progress " + mCurrentProgressMax + ", using 100");
             mCurrentProgressMax = 100;
@@ -502,7 +687,7 @@ public class OnGoingActionProgressController implements NotificationListener.Not
 
         if (mProgressBar != null) {
             mProgressBar.setMax(mCurrentProgressMax);
-            mProgressBar.setProgress(mCurrentProgress);
+            animateProgress(mProgressBar, mCurrentProgress);
         }
 
         if (mTrackedPackageName != null) {
@@ -518,12 +703,10 @@ public class OnGoingActionProgressController implements NotificationListener.Not
         if (!mIsViewAttached) return;
         
         if (!mIsEnabled || !mIsTrackingProgress) {
-            mCompactRootView.setVisibility(View.GONE);
             mMediaProgressHandler.removeCallbacks(mMediaProgressRunnable);
             return;
         }
 
-        mCompactRootView.setVisibility(View.VISIBLE);
         if (mCurrentProgressMax <= 0) {
             Log.w(TAG, "updateViews: invalid max progress " + mCurrentProgressMax + ", using 100");
             mCurrentProgressMax = 100;
@@ -531,7 +714,7 @@ public class OnGoingActionProgressController implements NotificationListener.Not
 
         if (mCircularProgressBar != null) {
             mCircularProgressBar.setMax(mCurrentProgressMax);
-            mCircularProgressBar.setProgress(mCurrentProgress);
+            animateProgress(mCircularProgressBar, mCurrentProgress);
         }
 
         if (mTrackedPackageName != null) {
@@ -542,6 +725,24 @@ public class OnGoingActionProgressController implements NotificationListener.Not
             });
         }
     }
+
+public void onConfigurationChanged(Configuration newConfig) {
+    Log.d(TAG, "onConfigurationChanged called");
+    
+    // Update accent color on configuration change
+    int oldAccentColor = mAccentColor;
+    updateAccentColor();
+    
+    if (oldAccentColor != mAccentColor) {
+        Log.d(TAG, "Accent color changed from configuration: " + 
+              Integer.toHexString(oldAccentColor) + " -> " + Integer.toHexString(mAccentColor));
+        applySystemTheming();
+        
+        // Force a full UI update to refresh everything with new colors
+        mNeedsFullUiUpdate = true;
+        requestUiUpdate();
+    }
+}
 
     private void loadIconInBackground(String packageName, IconCallback callback) {
         if (packageName == null) return;
@@ -994,12 +1195,28 @@ public class OnGoingActionProgressController implements NotificationListener.Not
         
         applyLayoutChanges();
         requestUiUpdate();
+        updateAccentColor();
+        applySystemTheming();
     }
 
     public void destroy() {
         mIsViewAttached = false;
 
         mHandler.removeCallbacks(mStaleProgressChecker);
+
+        // Cancel all animations
+        cancelAnimations(mProgressRootView);
+        cancelAnimations(mCompactRootView);
+        
+        if (mProgressAnimator != null) {
+            mProgressAnimator.cancel();
+            mProgressAnimator = null;
+        }
+        
+        if (mCircularProgressAnimator != null) {
+            mCircularProgressAnimator.cancel();
+            mCircularProgressAnimator = null;
+        }
 
         mSettingsObserver.unregister();
         mKeyguardStateController.removeCallback(this);
