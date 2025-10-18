@@ -73,6 +73,7 @@ public final class PixelPropsUtils {
     private static final String SPOOF_QSB = "persist.sys.pp.qsb";
     private static final String SPOOF_PP = "persist.sys.pp";
     private static final String SPOOF_GAMES = "persist.sys.pp.games";
+    private static final String SPOOF_GMS_CERT_CHAIN = "persist.sys.pp.gmscertchain";
     public static final String SPOOF_GMS = "persist.sys.pp.gms";
 
     private static final String TAG = PixelPropsUtils.class.getSimpleName();
@@ -754,9 +755,11 @@ public final class PixelPropsUtils {
     }
 
     private static boolean isCallerSafetyNet() {
-        return Arrays.stream(Thread.currentThread().getStackTrace())
-                        .anyMatch(elem -> elem.getClassName().toLowerCase()
-                            .contains("droidguard"));
+        for (StackTraceElement e : Thread.currentThread().getStackTrace()) {
+            final String cn = e.getClassName();
+            if (cn != null && (cn.contains("DroidGuard") || cn.contains("droidguard"))) return true;
+        }
+        return false;
     }
 
     public static void onEngineGetCertificateChain() {
@@ -767,7 +770,8 @@ public final class PixelPropsUtils {
         }
 
         // If a keybox is found, don't block key attestation
-        if (KeyProviderManager.isKeyboxAvailable()) {
+        if (SystemProperties.getBoolean(SPOOF_GMS_CERT_CHAIN, false)
+                && KeyProviderManager.isKeyboxAvailable()) {
             dlog("Key attestation blocking is disabled because a keybox is defined to spoof");
             return;
         }
