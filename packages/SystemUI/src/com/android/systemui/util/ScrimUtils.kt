@@ -40,13 +40,14 @@ class ScrimUtils private constructor() {
 
     private val listeners = WeakListenerManager<ScrimEventListener>()
 
-    private var mIsDozing = false
-    private val mQsVisible = AtomicBoolean(false)
-    private val mPulsing = AtomicBoolean(false)
+    private val mQsVisible = AtomicBoolean()
+    private val mPulsing = AtomicBoolean()
 
-    @Volatile private var mExpandedFraction = 0f
-    @Volatile private var mBarState = -1
-    @Volatile private var mKeyguardShowing = false
+    @Volatile private var mIsDozing: Boolean? = null
+    @Volatile private var mKeyguardShowing: Boolean? = null
+    @Volatile private var mExpandedFraction: Float? = null
+    @Volatile private var mBarState: Int? = null
+    @Volatile private var mAwake: Boolean? = null
 
     companion object {
         @Volatile private var instance: ScrimUtils? = null
@@ -66,23 +67,27 @@ class ScrimUtils private constructor() {
     }
 
     fun setKeyguardShowing(showing: Boolean) {
-        if (mKeyguardShowing != showing) {
+        if (mKeyguardShowing == null || mKeyguardShowing != showing) {
             mKeyguardShowing = showing
             notifyListeners(Consumer { it.onKeyguardShowingChanged(showing) })
         }
     }
 
     fun setExpandedFraction(fraction: Float) {
-        if ((fraction == 0.0f || fraction == 1.0f) && mExpandedFraction != fraction) {
+        if (mExpandedFraction == null || (fraction == 0.0f || fraction == 1.0f && mExpandedFraction != fraction)) {
             mExpandedFraction = fraction
             notifyListeners(Consumer { it.onExpandedFractionChanged(fraction) })
         }
     }
 
     fun onDozingChanged(dozing: Boolean) {
-        if (mIsDozing != dozing) {
+        if (mIsDozing == null || mIsDozing != dozing) {
             mIsDozing = dozing
             listeners.notifyOnMain { it.onDozingChanged() }
+            if (mIsDozing == true) {
+                mKeyguardShowing = true
+                notifyListeners(Consumer { it.onKeyguardShowingChanged(true) })
+            }
         }
     }
 
@@ -96,42 +101,51 @@ class ScrimUtils private constructor() {
         notifyListeners(Consumer { it.onPrimaryBouncerShowingChanged(showing) })
 
     fun setBarState(state: Int) {
-        if (mBarState != state) {
+        if (mBarState == null || mBarState != state) {
             mBarState = state
             notifyListeners(Consumer { it.onBarStateChanged(state) })
         }
     }
 
     fun setQsVisible(visible: Boolean) {
-        if (mQsVisible.getAndSet(visible) != visible) {
+        if (!mQsVisible.getAndSet(visible)) {
             notifyListeners(Consumer { it.onQsVisibilityChanged(visible) })
         }
     }
-    
+
     fun setPulsing(pulsing: Boolean) {
-        if (mPulsing.getAndSet(pulsing) != pulsing) {
+        if (!mPulsing.getAndSet(pulsing)) {
             notifyListeners(Consumer { it.setPulsing(pulsing) })
         }
     }
 
-    fun onStartedWakingUp() =
+    fun onStartedWakingUp() {
+        mAwake = true
         notifyListeners(Consumer { it.onStartedWakingUp() })
+    }
 
-    fun onScreenTurnedOff() =
+    fun onScreenTurnedOff() {
+        mAwake = false
         notifyListeners(Consumer { it.onScreenTurnedOff() })
+    }
 
     fun onNotificationPosted(sbn: StatusBarNotification) {
         listeners.notifyOnMain { it.onNotificationPosted(sbn) }
     }
 
-    fun isDozing(): Boolean = mIsDozing
+    fun isDozing(): Boolean = mIsDozing ?: false
 
-    fun isKeyguardShowing(): Boolean = mKeyguardShowing || mBarState == KEYGUARD
+    fun isAwake(): Boolean = mAwake ?: false
+
+    fun isPulsing(): Boolean = mPulsing.get() ?: false
+
+    fun isKeyguardShowing(): Boolean =
+        mKeyguardShowing ?: (mBarState == KEYGUARD)
 
     fun isPanelFullyCollapsed(): Boolean =
         if (mBarState == SHADE_LOCKED || mBarState == KEYGUARD) {
             !mQsVisible.get()
         } else {
-            mExpandedFraction <= 0.0f
+            (mExpandedFraction ?: 0.0f) <= 0.0f
         }
 }
