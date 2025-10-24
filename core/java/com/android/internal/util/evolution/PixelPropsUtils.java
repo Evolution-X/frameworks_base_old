@@ -43,6 +43,10 @@ import com.android.internal.util.evolution.KeyProviderManager;
 import com.android.internal.util.evolution.Utils;
 
 import java.lang.reflect.Field;
+import java.security.KeyStore;
+import java.security.KeyStoreSpi;
+import java.security.Provider;
+import java.security.Security;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -521,6 +525,7 @@ public final class PixelPropsUtils {
                 }
             }
         }
+        spoofProvider();
     }
 
     private static boolean isDeviceTablet(Context context) {
@@ -752,6 +757,22 @@ public final class PixelPropsUtils {
             return true;
         }
         return false;
+    }
+
+    private static void spoofProvider() {
+        try {
+            KeyStore keyStore = KeyStore.getInstance("AndroidKeyStore");
+            Field keyStoreSpi = keyStore.getClass().getDeclaredField("keyStoreSpi");
+            keyStoreSpi.setAccessible(true);
+            CustomKeyStoreSpi.keyStoreSpi = (KeyStoreSpi) keyStoreSpi.get(keyStore);
+            keyStoreSpi.setAccessible(false);
+        } catch (Throwable t) {
+            Log.e(TAG, "Couldn't get keyStoreSpi field!");
+        }
+        Provider provider = Security.getProvider("AndroidKeyStore");
+        Provider customProvider = new CustomProvider(provider);
+        Security.removeProvider("AndroidKeyStore");
+        Security.insertProviderAt(customProvider, 1);
     }
 
     private static boolean isCallerSafetyNet() {
