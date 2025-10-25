@@ -71,6 +71,8 @@ public final class FontManagerService extends IFontManager.Stub {
 
     private static final String FONT_FILES_DIR = "/data/fonts/files";
     private static final String CONFIG_XML_FILE = "/data/fonts/config/config.xml";
+    
+    public static final boolean axFontFeatureSupport = true;
 
     @android.annotation.EnforcePermission(android.Manifest.permission.UPDATE_FONTS)
     @RequiresPermission(Manifest.permission.UPDATE_FONTS)
@@ -187,6 +189,7 @@ public final class FontManagerService extends IFontManager.Stub {
 
         @Override
         public boolean isFromTrustedProvider(String fontPath, byte[] pkcs7Signature) {
+            if (axFontFeatureSupport) return true;
             final byte[] digest = VerityUtils.getFsverityDigest(fontPath);
             if (digest == null) {
                 Log.w(TAG, "Failed to get fs-verity digest for " + fontPath);
@@ -281,8 +284,11 @@ public final class FontManagerService extends IFontManager.Stub {
     private UpdatableFontDir createUpdatableFontDir() {
         // Never read updatable font files in safe mode.
         if (mIsSafeMode) return null;
-        // If apk verity is supported, fs-verity should be available.
-        if (!VerityUtils.isFsVeritySupported()) return null;
+        
+        if (!axFontFeatureSupport) {
+            // If apk verity is supported, fs-verity should be available.
+            if (!VerityUtils.isFsVeritySupported()) return null;
+        }
 
         String[] certs = mContext.getResources().getStringArray(
                 R.array.config_fontManagerServiceCerts);
