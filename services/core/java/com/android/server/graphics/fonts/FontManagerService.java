@@ -367,7 +367,8 @@ public final class FontManagerService extends IFontManager.Stub {
      * <p>CAUTION: this method is not safe. Existing processes may crash due to missing font files.
      * This method is only for {@link FontManagerShellCommand}.
      */
-    /* package */ void clearUpdates() {
+    @Override
+    public void clearUpdates() {
         UpdatableFontDir.deleteAllFiles(new File(FONT_FILES_DIR), new File(CONFIG_XML_FILE));
         initialize();
     }
