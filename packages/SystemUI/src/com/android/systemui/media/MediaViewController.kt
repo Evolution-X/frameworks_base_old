@@ -420,7 +420,6 @@ class MediaViewController @Inject constructor(
         if (showing) {
             cleanupResources(true)
         }
-        retry()
     }
 
     override fun onKeyguardGoingAwayChanged(goingAway: Boolean) {
@@ -428,7 +427,6 @@ class MediaViewController @Inject constructor(
         if (goingAway) {
             cleanupResources(true)
         }
-        retry()
     }
 
     override fun onKeyguardFadingAwayChanged(fadingAway: Boolean) {
@@ -436,7 +434,6 @@ class MediaViewController @Inject constructor(
         if (fadingAway) {
             cleanupResources(true)
         }
-        retry()
     }
 
     override fun onDozingChanged(dozing: Boolean) {
@@ -482,21 +479,6 @@ class MediaViewController @Inject constructor(
         coroutineScope.launch {
             onMediaStateChanged()
         }
-    }
-
-    fun retry() {
-        retryRunnable?.let { mediaScrim.removeCallbacks(it) }
-        val r = Runnable {
-            if (!featureEnabled) return@Runnable
-            coroutineScope.launch {
-                if (shouldShowMediaArt()) {
-                    dismissingKeyguard = false
-                    onMediaStateChanged()
-                }
-            }
-        }
-        retryRunnable = r
-        mediaScrim.postDelayed(r, 500)
     }
 
     private suspend fun onMediaStateChanged() {
