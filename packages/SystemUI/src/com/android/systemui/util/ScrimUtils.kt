@@ -17,6 +17,8 @@ package com.android.systemui.util
 
 import com.android.systemui.statusbar.StatusBarState.KEYGUARD
 import com.android.systemui.statusbar.StatusBarState.SHADE_LOCKED
+import android.os.Handler
+import android.os.Looper
 import android.service.notification.StatusBarNotification
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.function.Consumer
@@ -39,9 +41,13 @@ class ScrimUtils private constructor() {
     }
 
     private val listeners = WeakListenerManager<ScrimEventListener>()
+    
+    private val mainHandler = Handler(Looper.getMainLooper())
 
     private val mQsVisible = AtomicBoolean()
     private val mPulsing = AtomicBoolean()
+    private val mKeyguardRetryPending = AtomicBoolean()
+    private val mFadingAwayDuration = 500L
 
     @Volatile private var mIsDozing: Boolean? = null
     @Volatile private var mKeyguardShowing: Boolean? = null
@@ -70,6 +76,35 @@ class ScrimUtils private constructor() {
         if (mKeyguardShowing == null || mKeyguardShowing != showing) {
             mKeyguardShowing = showing
             notifyListeners(Consumer { it.onKeyguardShowingChanged(showing) })
+            postKeyguardRetry()
+        }
+    }
+
+    fun onKeyguardFadingAwayChanged(fadingAway: Boolean) {
+        notifyListeners(Consumer { it.onKeyguardFadingAwayChanged(fadingAway) })
+        postKeyguardRetry()
+    }
+
+    fun onKeyguardGoingAwayChanged(goingAway: Boolean) {
+        notifyListeners(Consumer { it.onKeyguardGoingAwayChanged(goingAway) })
+        postKeyguardRetry()
+    }
+
+    fun onPrimaryBouncerShowingChanged(showing: Boolean) {
+        notifyListeners(Consumer { it.onPrimaryBouncerShowingChanged(showing) })
+        postKeyguardRetry()
+    }
+
+    private fun postKeyguardRetry() {
+        if (!mKeyguardRetryPending.getAndSet(true)) {
+            mainHandler.postDelayed({
+                mKeyguardRetryPending.set(false)
+                val currentShowing = isKeyguardShowing()
+                if (currentShowing != mKeyguardShowing) {
+                    mKeyguardShowing = currentShowing
+                    notifyListeners(Consumer { it.onKeyguardShowingChanged(currentShowing) })
+                }
+            }, mFadingAwayDuration)
         }
     }
 
@@ -90,15 +125,6 @@ class ScrimUtils private constructor() {
             }
         }
     }
-
-    fun onKeyguardGoingAwayChanged(goingAway: Boolean) =
-        notifyListeners(Consumer { it.onKeyguardGoingAwayChanged(goingAway) })
-
-    fun onKeyguardFadingAwayChanged(fadingAway: Boolean) =
-        notifyListeners(Consumer { it.onKeyguardFadingAwayChanged(fadingAway) })
-
-    fun onPrimaryBouncerShowingChanged(showing: Boolean) =
-        notifyListeners(Consumer { it.onPrimaryBouncerShowingChanged(showing) })
 
     fun setBarState(state: Int) {
         if (mBarState == null || mBarState != state) {
@@ -144,7 +170,7 @@ class ScrimUtils private constructor() {
 
     fun isPanelFullyCollapsed(): Boolean =
         if (mBarState == SHADE_LOCKED || mBarState == KEYGUARD) {
-            !mQsVisible.get()
+            !mQsVisible.get() ?: false
         } else {
             (mExpandedFraction ?: 0.0f) <= 0.0f
         }
