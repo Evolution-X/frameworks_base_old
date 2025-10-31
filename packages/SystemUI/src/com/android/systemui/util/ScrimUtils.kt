@@ -13,17 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.android.systemui.util
 
-import com.android.systemui.statusbar.StatusBarState.KEYGUARD
-import com.android.systemui.statusbar.StatusBarState.SHADE_LOCKED
 import android.os.Handler
 import android.os.Looper
 import android.service.notification.StatusBarNotification
+import com.android.systemui.dagger.SysUISingleton
+import com.android.systemui.Dependency
+import com.android.systemui.dump.DumpManager
+import com.android.systemui.Dumpable
+import com.android.systemui.statusbar.StatusBarState.KEYGUARD
+import com.android.systemui.statusbar.StatusBarState.SHADE_LOCKED
+import javax.inject.Inject
+import java.io.FileDescriptor
+import java.io.PrintWriter
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.function.Consumer
 
-class ScrimUtils private constructor() {
+@SysUISingleton
+class ScrimUtils @Inject constructor(dumpManager: DumpManager) : Dumpable {
 
     interface ScrimEventListener {
         fun onKeyguardShowingChanged(showing: Boolean) {}
@@ -41,12 +50,10 @@ class ScrimUtils private constructor() {
     }
 
     private val listeners = WeakListenerManager<ScrimEventListener>()
-    
     private val mainHandler = Handler(Looper.getMainLooper())
 
     private val mQsVisible = AtomicBoolean()
     private val mPulsing = AtomicBoolean()
-    private val mKeyguardRetryPending = AtomicBoolean()
     private val mFadingAwayDuration = 500L
 
     @Volatile private var mIsDozing: Boolean? = null
@@ -54,15 +61,18 @@ class ScrimUtils private constructor() {
     @Volatile private var mExpandedFraction: Float? = null
     @Volatile private var mBarState: Int? = null
     @Volatile private var mAwake: Boolean? = null
+    
+    private var keyguardRetryRunnable: Runnable? = null
 
     companion object {
         @Volatile private var instance: ScrimUtils? = null
 
         @JvmStatic
-        fun get(): ScrimUtils =
-            instance ?: synchronized(this) {
-                instance ?: ScrimUtils().also { instance = it }
-            }
+        fun get(): ScrimUtils = Dependency.get(ScrimUtils::class.java)
+    }
+
+    init {
+        dumpManager.registerNormalDumpable("ScrimUtils", this)
     }
 
     fun addListener(listener: ScrimEventListener) = listeners.addListener(listener)
@@ -76,7 +86,6 @@ class ScrimUtils private constructor() {
         if (mKeyguardShowing == null || mKeyguardShowing != showing) {
             mKeyguardShowing = showing
             notifyListeners(Consumer { it.onKeyguardShowingChanged(showing) })
-            postKeyguardRetry()
         }
     }
 
@@ -96,16 +105,11 @@ class ScrimUtils private constructor() {
     }
 
     private fun postKeyguardRetry() {
-        if (!mKeyguardRetryPending.getAndSet(true)) {
-            mainHandler.postDelayed({
-                mKeyguardRetryPending.set(false)
-                val currentShowing = isKeyguardShowing()
-                if (currentShowing != mKeyguardShowing) {
-                    mKeyguardShowing = currentShowing
-                    notifyListeners(Consumer { it.onKeyguardShowingChanged(currentShowing) })
-                }
-            }, mFadingAwayDuration)
+        keyguardRetryRunnable?.let { mainHandler.removeCallbacks(it) }
+        keyguardRetryRunnable = Runnable {
+            notifyListeners(Consumer { it.onKeyguardShowingChanged(mKeyguardShowing ?: false) })
         }
+        mainHandler.postDelayed(keyguardRetryRunnable!!, mFadingAwayDuration)
     }
 
     fun setExpandedFraction(fraction: Float) {
@@ -119,10 +123,6 @@ class ScrimUtils private constructor() {
         if (mIsDozing == null || mIsDozing != dozing) {
             mIsDozing = dozing
             listeners.notifyOnMain { it.onDozingChanged() }
-            if (mIsDozing == true) {
-                mKeyguardShowing = true
-                notifyListeners(Consumer { it.onKeyguardShowingChanged(true) })
-            }
         }
     }
 
@@ -130,17 +130,21 @@ class ScrimUtils private constructor() {
         if (mBarState == null || mBarState != state) {
             mBarState = state
             notifyListeners(Consumer { it.onBarStateChanged(state) })
+            // hack 4 bug: 
+            // 1. user is on keyguard but is mBarState == SHADE
+            // 2. keyguard update monitor wrong state when dozing 
+            setKeyguardShowing(mBarState == KEYGUARD || mIsDozing ?: false || mPulsing.get())
         }
     }
 
     fun setQsVisible(visible: Boolean) {
-        if (!mQsVisible.getAndSet(visible)) {
+        if (mQsVisible.getAndSet(visible) != visible) {
             notifyListeners(Consumer { it.onQsVisibilityChanged(visible) })
         }
     }
 
     fun setPulsing(pulsing: Boolean) {
-        if (!mPulsing.getAndSet(pulsing)) {
+        if (mPulsing.getAndSet(pulsing) != pulsing) {
             notifyListeners(Consumer { it.setPulsing(pulsing) })
         }
     }
@@ -160,18 +164,27 @@ class ScrimUtils private constructor() {
     }
 
     fun isDozing(): Boolean = mIsDozing ?: false
-
     fun isAwake(): Boolean = mAwake ?: false
-
-    fun isPulsing(): Boolean = mPulsing.get() ?: false
-
-    fun isKeyguardShowing(): Boolean =
-        mKeyguardShowing ?: (mBarState == KEYGUARD)
+    fun isPulsing(): Boolean = mPulsing.get()
+    fun isKeyguardShowing(): Boolean = mKeyguardShowing ?: false
 
     fun isPanelFullyCollapsed(): Boolean =
         if (mBarState == SHADE_LOCKED || mBarState == KEYGUARD) {
-            !mQsVisible.get() ?: false
+            !mQsVisible.get()
         } else {
             (mExpandedFraction ?: 0.0f) <= 0.0f
         }
+
+    // adb shell dumpsys activity service com.android.systemui | grep "ScrimUtils states:" -A10
+    override fun dump(pw: PrintWriter, args: Array<String>) {
+        pw.println("ScrimUtils states:")
+        pw.println("  mKeyguardShowing = $mKeyguardShowing")
+        pw.println("  mIsDozing = $mIsDozing")
+        pw.println("  mAwake = $mAwake")
+        pw.println("  mPulsing = ${mPulsing.get()}")
+        pw.println("  mQsVisible = ${mQsVisible.get()}")
+        pw.println("  mExpandedFraction = $mExpandedFraction")
+        pw.println("  mBarState = $mBarState")
+        pw.println("  isPanelFullyCollapsed() = ${isPanelFullyCollapsed()}")
+    }
 }

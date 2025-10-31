@@ -840,8 +840,6 @@ public class KeyguardUpdateMonitor implements TrustManager.TrustListener, CoreSt
             return;
         }
         
-        ScrimUtils.get().setKeyguardShowing(showing);
-
         final boolean wasKeyguardVisible = isKeyguardVisible();
         mKeyguardShowing = showing;
         mKeyguardOccluded = occluded;
