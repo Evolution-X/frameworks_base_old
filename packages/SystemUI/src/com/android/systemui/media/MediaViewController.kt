@@ -440,7 +440,7 @@ class MediaViewController @Inject constructor(
         retry()
     }
 
-    override fun onDozingChanged() {
+    override fun onDozingChanged(dozing: Boolean) {
         coroutineScope.launch {
             onMediaStateChanged()
         }
