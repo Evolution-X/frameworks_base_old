@@ -26,9 +26,6 @@
     <string name="quick_settings_locale_more_locales_toast">Hãy thêm nhiều ngôn ngữ để bật chức năng chuyển đổi</string>
     <!-- Preferred network tile -->
     <string name="quick_settings_preferred_network_label">Mạng ưu tiên</string>
-    <string name="quick_settings_preferred_network_lte">4G/LTE</string>
-    <string name="quick_settings_preferred_network_nr">5G/NR</string>
-    <string name="quick_settings_preferred_network_3g">3G</string>
     <string name="quick_settings_preferred_network_unsupported">Không hỗ trợ</string>
     <!-- Statusbar Icons -->
     <string name="status_bar_data_saver">Tiết kiệm dữ liệu</string>
@@ -44,7 +41,6 @@
     <string name="gigabytespersecond_short">GB/s</string>
     <!-- Refresh Rate Tile -->
     <string name="refresh_rate_tile_label">Tần số quét</string>
-    <string name="refresh_rate_unknown">Không rõ</string>
     <string name="auto_mode_label">Tự động</string>
     <!-- Compass QS Tile -->
     <string name="quick_settings_compass_label">La bàn</string>
