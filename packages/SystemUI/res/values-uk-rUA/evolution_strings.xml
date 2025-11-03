@@ -26,9 +26,6 @@
     <string name="quick_settings_locale_more_locales_toast">Будь ласка, налаштуйте кілька мов, щоб увімкнути функцію перемикання</string>
     <!-- Preferred network tile -->
     <string name="quick_settings_preferred_network_label">Бажана мережа</string>
-    <string name="quick_settings_preferred_network_lte">4G / LTE</string>
-    <string name="quick_settings_preferred_network_nr">5G / NR</string>
-    <string name="quick_settings_preferred_network_3g">3G</string>
     <string name="quick_settings_preferred_network_unsupported">Не підтримується</string>
     <!-- Statusbar Icons -->
     <string name="status_bar_data_saver">Заощадження трафіку</string>
@@ -44,7 +41,6 @@
     <string name="gigabytespersecond_short">ГБ/с</string>
     <!-- Refresh Rate Tile -->
     <string name="refresh_rate_tile_label">Частота оновлення</string>
-    <string name="refresh_rate_unknown">Невідомо</string>
     <string name="auto_mode_label">Автоматично</string>
     <!-- Compass QS Tile -->
     <string name="quick_settings_compass_label">Компас</string>
