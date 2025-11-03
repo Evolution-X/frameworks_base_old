@@ -26,9 +26,6 @@
     <string name="quick_settings_locale_more_locales_toast">A kapcsolónak csak több nyelv esetén van értelme, állítson be többet</string>
     <!-- Preferred network tile -->
     <string name="quick_settings_preferred_network_label">Előnyt élvező hálózat</string>
-    <string name="quick_settings_preferred_network_lte">4G / LTE</string>
-    <string name="quick_settings_preferred_network_nr">5G / NR</string>
-    <string name="quick_settings_preferred_network_3g">3G</string>
     <string name="quick_settings_preferred_network_unsupported">Nem támogatott</string>
     <!-- Statusbar Icons -->
     <string name="status_bar_data_saver">Adatforgalom-csökkentő</string>
@@ -44,7 +41,6 @@
     <string name="gigabytespersecond_short">GB/s</string>
     <!-- Refresh Rate Tile -->
     <string name="refresh_rate_tile_label">Frissítési gyakoriság</string>
-    <string name="refresh_rate_unknown">Ismeretlen</string>
     <string name="auto_mode_label">Automatikus</string>
     <!-- Compass QS Tile -->
     <string name="quick_settings_compass_label">Iránytű</string>
