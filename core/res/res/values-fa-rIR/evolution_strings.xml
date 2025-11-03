@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+     Copyright (C) 2019-2024 The Evolution X Project
+     SPDX-License-Identifier: Apache-2.0
+-->
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <!-- Button that copies the url to the log of a crashed application -->
+    <string name="aerr_copy">کپی کردن آدرس گزارش خرابی</string>
+    <string name="url_copy_success">آدرس با موفقیت کپی شد</string>
+    <string name="url_copy_failed">هنگام بارگزاری گزارش در Pasty خطایی روی داد</string>
+    <!-- Lock gesture -->
+    <string name="gesture_locked_warning">برای باز کردن قفل حرکات، دوباره بکشید</string>
+    <!-- Cycle through ringer modes -->
+    <string name="volume_dialog_ringer_guidance_normal">تماس‌ها و اعلان‌ها زنگ می‌خورند</string>
+    <!-- Settings Restart -->
+    <string name="settings_restart_title">تنظیمات نیاز به راه‌اندازی مجدد دارند</string>
+    <string name="settings_restart_message">برای اعمال همه تغییرات، راه‌اندازی مجدد برنامه تنظیمات لازم است. آیا برنامه تنظیمات را همین الان راه‌اندازی مجدد می‌کنید؟</string>
+    <!-- System Reboot -->
+    <string name="system_restart_title">راه‌اندازی مجدد سیستم مورد نیاز است</string>
+    <string name="system_restart_message">برای اعمال همه تغییرات، راه‌اندازی مجدد سیستم لازم است. آیا اکنون سیستم را راه‌اندازی مجدد می‌کنید؟</string>
+    <!-- SystemUI Restart -->
+    <string name="systemui_restart_title">رابط کاربری نیازمندِ راه‌اندازی مجدد است</string>
+    <string name="systemui_restart_message">اِعمال همه تغییرات ، به راه‌اندازی مجدد رابط کاربری نیاز دارد. رابط کاربری راه اندازی مجدد شود?</string>
+    <!-- Launcher Restart -->
+    <string name="launcher_restart_title">راه‌اندازی مجدد راه‌انداز مورد نیاز است</string>
+    <string name="launcher_restart_message">برای اعمال همه تغییرات، راه‌اندازی مجدد راه‌انداز لازم است. آیا آن را همین الان راه‌اندازی مجدد می‌کنید؟</string>
+    <!-- Game Space -->
+    <string name="gamespace_new_game_added"><xliff:g id="name" example="MyApp">%s</xliff:g> به فضای بازی اضافه شد</string>
+    <!-- PowerOffAlarmService -->
+    <string name="notification_channel_poweroff_alarm">زنگ هشدار خاموش‌کردن</string>
+    <string name="poweroff_alarm_title">تنظیم زنگ هشدار خاموش‌کردن</string>
+    <string name="poweroff_alarm_body">زنگ هشدار شناسایی شد و دستگاه ۲ دقیقه قبل از سررسید روشن می‌شود</string>
+    <!-- Pocket Lock -->
+    <string name="pocket_mode_title">حالت جیب فعال است</string>
+    <string name="pocket_mode_illustration_description">تصویر گوشی در جیب</string>
+    <string name="pocket_mode_instructions_header">برای استفاده از تلفن‌تان:</string>
+    <string name="pocket_mode_instruction_step1">1. مطمئن شوید که ناحیه آبی (حسگر مجاورت) نشان داده شده در بالا بدون مانع و عاری از خاک یا گرد و غبار است.</string>
+    <string name="pocket_mode_instruction_step2">2. دکمه نیرو را فشار داده و نگه دارید تا از حالت جیبی خارج شوید.</string>
+    <!-- App lock -->
+    <string name="unlock_application">بازکردن قفل <xliff:g id="label" example="Telegram">%1$s</xliff:g></string>
+</resources>
