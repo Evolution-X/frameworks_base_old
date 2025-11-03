@@ -26,9 +26,6 @@
     <string name="quick_settings_locale_more_locales_toast">Es necesario configurar múltiples idiomas para que este interruptor funcione</string>
     <!-- Preferred network tile -->
     <string name="quick_settings_preferred_network_label">Red preferida</string>
-    <string name="quick_settings_preferred_network_lte">4G / LTE</string>
-    <string name="quick_settings_preferred_network_nr">5G / NR</string>
-    <string name="quick_settings_preferred_network_3g">3G</string>
     <string name="quick_settings_preferred_network_unsupported">No compatible</string>
     <!-- Statusbar Icons -->
     <string name="status_bar_data_saver">Ahorro de datos</string>
@@ -44,7 +41,6 @@
     <string name="gigabytespersecond_short">GB/s</string>
     <!-- Refresh Rate Tile -->
     <string name="refresh_rate_tile_label">Tasa de refresco</string>
-    <string name="refresh_rate_unknown">Desconocido</string>
     <string name="auto_mode_label">Automático</string>
     <!-- Compass QS Tile -->
     <string name="quick_settings_compass_label">Brújula</string>
