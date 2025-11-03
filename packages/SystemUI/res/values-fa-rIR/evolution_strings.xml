@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+     Copyright (C) 2019-2024 The Evolution X Project
+     SPDX-License-Identifier: Apache-2.0
+-->
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <!-- Indication on the keyguard that is shown when the device is charging with a dash charger. Should match keyguard_plugged_in_dash_charging [CHAR LIMIT=40]-->
+    <!-- Indication on the keyguard that is shown when the device is charging with a warp charger. Should match keyguard_plugged_in_warp_charging [CHAR LIMIT=40]-->
+    <!-- Indication on the keyguard that is shown when the device is charging with a VOOC charger. Should match keyguard_plugged_in_vooc_charging [CHAR LIMIT=40]-->
+    <!-- Indication on the keyguard that is shown when the device is charging with a turbo power charger. Should match keyguard_plugged_in_turbo_charging [CHAR LIMIT=40]-->
+    <!-- Statusbar Icons -->
+    <string name="status_bar_nfc">NFC</string>
+    <!-- Button to restart SystemUI, within the Restart Options dialog -->
+    <string name="global_action_restart_systemui">رابط سیستم</string>
+    <!-- Sound QS Tile -->
+    <string name="quick_settings_sound_label">صدا</string>
+    <string name="quick_settings_sound_ring">زنگ زدن</string>
+    <string name="quick_settings_sound_vibrate">لرزش</string>
+    <string name="quick_settings_sound_mute">بی‌صدا</string>
+    <!-- DataSwitch Tile -->
+    <string name="qs_data_switch_label">تعویض سیم کارت اینترنت</string>
+    <!-- Volume panel QS tile -->
+    <string name="quick_settings_volume_panel_label">پنل صدا</string>
+    <!-- Language toggle tile -->
+    <string name="quick_settings_locale_label">زبان</string>
+    <string name="quick_settings_locale_more_locales_toast">ابتدا چندین زبان را پیکربندی کنید</string>
+    <!-- Preferred network tile -->
+    <string name="quick_settings_preferred_network_label">شبکه ترجیحی</string>
+    <string name="quick_settings_preferred_network_unsupported">پشتیبانی نشده</string>
+    <!-- Statusbar Icons -->
+    <string name="status_bar_data_saver">صرفه‌جویی در مصرف دیتا</string>
+    <string name="status_bar_call_strength">قدرت تماس</string>
+    <!-- AI Assistant affordance [CHAR LIMIT=32] -->
+    <string name="accessibility_assistant_button">دستیار هوش‌مصنوعی</string>
+    <!-- Status bar network traffic monitor strings -->
+    <string name="kilobitspersecond_short">ک‌ب/ث</string>
+    <string name="megabitspersecond_short">م‌‍گ/ث</string>
+    <string name="gigabitspersecond_short">گ‌ب/ث</string>
+    <string name="kilobytespersecond_short">ک‌ب/ث</string>
+    <string name="megabytespersecond_short">م‌ب/ث</string>
+    <string name="gigabytespersecond_short">گ‌ب/ث</string>
+    <!-- Refresh Rate Tile -->
+    <string name="refresh_rate_tile_label">نرخ تازه‌سازی</string>
+    <string name="auto_mode_label">خودکار</string>
+    <!-- Compass QS Tile -->
+    <string name="quick_settings_compass_label">قطب‌نما</string>
+    <string name="quick_settings_compass_value"><xliff:g id="degrees">%1$.0f</xliff:g>\u00b0 <xliff:g id="direction">%2$s</xliff:g></string>
+    <string name="quick_settings_compass_init">مقداردهی اولیه\u2026</string>
+    <string name="quick_settings_compass_N">شمال</string>
+    <string name="quick_settings_compass_NE">شمال.ش</string>
+    <string name="quick_settings_compass_E">شرق</string>
+    <string name="quick_settings_compass_SE">جنوب.ش</string>
+    <string name="quick_settings_compass_S">جنوب</string>
+    <string name="quick_settings_compass_SW">جنوب.غ</string>
+    <string name="quick_settings_compass_W">غرب</string>
+    <string name="quick_settings_compass_NW">شمال.غ</string>
+    <!-- Screenshot Tile -->
+    <string name="screenshot_long_press">فشار طولانی - منطقه انتخاب شده</string>
+    <!-- Alert slide extras -->
+    <string name="volume_ringer_priority_only">اولویت</string>
+    <string name="volume_ringer_alarms_only">زنگها</string>
+    <string name="volume_ringer_dnd">مزاحم نشو</string>
+    <string name="tristate_flashlight">چراغ‌قوه</string>
+    <string name="tristate_flashlight_on">چراغ‌قوه روشن</string>
+    <string name="tristate_flashlight_off">چراغ‌قوه خاموش</string>
+    <string name="tristate_flashlight_blink">چشمک چراغ‌قوه</string>
+    <string name="tristate_brightness_bright">حداکثر روشنایی</string>
+    <string name="tristate_brightness_dark">حداقل روشنایی</string>
+    <string name="tristate_brightness_auto">روشنایی خودکار</string>
+    <string name="tristate_rotation_auto">چرخش خودکار</string>
+    <string name="tristate_rotation_0">عمودی</string>
+    <string name="tristate_rotation_90">افقی (۹۰ درجه)</string>
+    <string name="tristate_rotation_270">افقی (۲۷۰ درجه)</string>
+    <!-- CPUInfo tile -->
+    <string name="quick_settings_cpuinfo_label">اطلاعات پردازنده</string>
+    <!-- FPS Info tile -->
+    <string name="quick_settings_fpsinfo_label">اطلاعات فریم</string>
+    <!-- FPS view text placeholder -->
+    <string name="fps_text_placeholder">فریم: <xliff:g id="fps" example="90">%1$d</xliff:g></string>
+    <!-- USB function dialog - copied from Settings -->
+    <string name="usb_use_charging_only">بدون انتقال داده</string>
+    <string name="usb_use_file_transfers">انتقال فایل</string>
+    <string name="usb_use_photo_transfers">رسانه‌</string>
+    <string name="usb_use_uvc_webcam">وب‌کم</string>
+    <string name="usb_use_tethering">همرسانی شبکه با کابل</string>
+    <string name="usb_use_MIDI">موسیقی</string>
+    <string name="usb_use">استفاده USB برای</string>
+    <!-- Text while recognizing face -->
+    <string name="face_unlock_recognizing">تشخیص چهره...</string>
+    <!-- Name of the roaming status bar icon. -->
+    <string name="status_bar_roaming">نشانگر رومینگ</string>
+    <!-- Name of the HD calling status bar icon. -->
+    <string name="status_bar_hd_calling">تماس اچ‌دی (VoLTE/VoNR)</string>
+    <!-- Name of the VoWiFi status bar icon. -->
+    <string name="status_bar_vowifi">تماس با وای فای (VoWiFi)</string>
+    <!-- Autobrightness tile -->
+    <string name="quick_settings_autobrightness_label">روشنایی خودکار</string>
+    <!-- Label for notification action to delete a screen recording file [CHAR LIMIT=35] -->
+    <string name="screenrecord_delete_label">حذف</string>
+    <!-- A toast message shown after successfully deleting a screen recording [CHAR LIMIT=NONE] -->
+    <string name="screenrecord_delete_description">ضبط صفحه حذف شد</string>
+    <!-- VPN tethering QS tile -->
+    <string name="vpn_tethering_label">همرسانی فیلترشکن</string>
+    <string name="vpn_tethering_changed_off">همرسانی فیلترشکن خاموش است.</string>
+    <string name="vpn_tethering_changed_on">همرسانی فیلترشکن روشن است.</string>
+    <!-- Data usage info in QS footer -->
+    <string name="usage_data">مصرف امروز</string>
+    <string name="usage_data_weekly">مصرفی این هفته</string>
+    <string name="usage_data_default_suffix">داده‌</string>
+    <string name="usage_wifi_default_suffix">وای-فای</string>
+    <!-- Notification counter -->
+    <!-- Data disabled icon -->
+    <string name="data_disabled_icon_title">آیکون خاموشی داده</string>
+    <!-- Privacy Indicator -->
+    <string name="mic_camera_privacy_indicator_title">نمایش نشانگر حریم خصوصی میکروفون و دوربین</string>
+    <string name="location_privacy_indicator_title">نشانگر حریم خصوصی مکان</string>
+    <string name="projection_privacy_indicator_title">نشانگر حریم خصوصی رسانه</string>
+    <!-- 4G icon -->
+    <string name="show_fourg_icon_title">نماد نسل چهارم</string>
+    <!-- WiFi Standard icon -->
+    <string name="wifi_standard_icon_title">استاندارد وای‌فای</string>
+    <!-- Flashlight strength dialog -->
+    <string name="flashlight_strength_dialog_title">روشنایی چراغ قوه</string>
+    <string name="flashlight_strength_off">خاموش</string>
+    <string name="flashlight_turn_on">روشن کردن</string>
+    <string name="flashlight_turn_off">خاموش کردن</string>
+    <!-- Volume QS Tile -->
+    <string name="quick_settings_volume_label">بلندی صدا</string>
+    <string name="qs_volume_dialog_title">کنترل حجم صدا</string>
+    <string name="qs_volume_dialog_mute">بی‌صدا</string>
+    <!-- QuickSettings: InternetDialog: Summary for how many devices are connected to the hotspot [CHAR LIMIT=NONE] -->
+    <plurals name="quick_settings_internet_hotspot_summary_num_devices">
+        <item quantity="one">%d دستگاه متصل</item>
+        <item quantity="other">%d دستگاه متصل</item>
+    </plurals>
+    <!-- 5G toggle in Internet Dialog -->
+    <string name="enable_fiveg">فعال‌کردن نسل پنجم</string>
+    <!-- Smart Pixels QS Tile -->
+    <string name="quick_settings_smart_pixels">پیکسل هوشمند</string>
+    <string name="quick_settings_smart_pixels_on_power_save">پیکسل هوشمند درحالت خودکار</string>
+</resources>
