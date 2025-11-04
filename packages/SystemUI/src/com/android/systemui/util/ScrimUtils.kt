@@ -31,6 +31,7 @@ import java.io.PrintWriter
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.function.Consumer
 
+/* Scrim - aka testing utils */
 @SysUISingleton
 class ScrimUtils @Inject constructor(dumpManager: DumpManager) : Dumpable {
 
@@ -107,7 +108,7 @@ class ScrimUtils @Inject constructor(dumpManager: DumpManager) : Dumpable {
     private fun postKeyguardRetry() {
         keyguardRetryRunnable?.let { mainHandler.removeCallbacks(it) }
         keyguardRetryRunnable = Runnable {
-            notifyListeners(Consumer { it.onKeyguardShowingChanged(mKeyguardShowing ?: false) })
+            notifyListeners(Consumer { it.onKeyguardShowingChanged(mKeyguardShowing == true) })
         }
         mainHandler.postDelayed(keyguardRetryRunnable!!, mFadingAwayDuration)
     }
@@ -127,14 +128,16 @@ class ScrimUtils @Inject constructor(dumpManager: DumpManager) : Dumpable {
     }
 
     fun setBarState(state: Int) {
-        if (mBarState == null || mBarState != state) {
+        val stateChanged = mBarState == null || mBarState != state
+        if (stateChanged) {
             mBarState = state
             notifyListeners(Consumer { it.onBarStateChanged(state) })
-            // hack 4 bug: 
-            // 1. user is on keyguard but is mBarState == SHADE
-            // 2. keyguard update monitor wrong state when dozing 
-            setKeyguardShowing(mBarState == KEYGUARD || mIsDozing ?: false || mPulsing.get())
         }
+        // hack 4 bug: 
+        // 1. user is on keyguard but is mBarState == SHADE
+        // 2. keyguard update monitor wrong state when dozing 
+        val shouldShowKeyguard = state == KEYGUARD || mIsDozing == true || mPulsing.get()
+        setKeyguardShowing(shouldShowKeyguard)
     }
 
     fun setQsVisible(visible: Boolean) {
@@ -163,10 +166,10 @@ class ScrimUtils @Inject constructor(dumpManager: DumpManager) : Dumpable {
         listeners.notifyOnMain { it.onNotificationPosted(sbn) }
     }
 
-    fun isDozing(): Boolean = mIsDozing ?: false
-    fun isAwake(): Boolean = mAwake ?: false
+    fun isDozing(): Boolean = mIsDozing == true
+    fun isAwake(): Boolean = mAwake == true
     fun isPulsing(): Boolean = mPulsing.get()
-    fun isKeyguardShowing(): Boolean = mKeyguardShowing ?: false
+    fun isKeyguardShowing(): Boolean = mKeyguardShowing == true
 
     fun isPanelFullyCollapsed(): Boolean =
         if (mBarState == SHADE_LOCKED || mBarState == KEYGUARD) {
