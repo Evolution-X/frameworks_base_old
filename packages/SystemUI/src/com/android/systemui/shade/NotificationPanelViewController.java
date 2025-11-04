@@ -1185,12 +1185,15 @@ public final class NotificationPanelViewController implements
         }
         if (!onKeyguard) {
             if (mSplitShadeEnabled) {
-                // Quick settings are not on the top of the notifications
-                // when in split shade mode (they are on the left side),
-                // so we should not add a padding for them
                 stackScrollerPadding = 0;
             } else {
-                stackScrollerPadding = mQsController.getHeaderHeight();
+                // Add safety check for invalid header height
+                int headerHeight = mQsController.getHeaderHeight();
+                if (headerHeight < 0) {
+                    Log.w(TAG, "Invalid QS header height, skipping positioning this frame");
+                    return; // Skip this layout pass
+                }
+                stackScrollerPadding = headerHeight;
             }
         } else {
             stackScrollerPadding = mClockPositionResult.stackScrollerPaddingExpanded;

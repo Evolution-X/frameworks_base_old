@@ -518,7 +518,12 @@ public class QuickSettingsControllerImpl implements QuickSettingsController, Dum
             if (QSComposeFragment.isEnabled()) {
                 return mQs.getHeaderHeight();
             } else {
-                return mQs.getHeader().getHeight();
+                View header = mQs.getHeader();
+                if (header == null) {
+                    Log.w(TAG, "QS header view is null, returning 0");
+                    return 0;
+                }
+                return header.getHeight();
             }
         } else {
             return 0;
