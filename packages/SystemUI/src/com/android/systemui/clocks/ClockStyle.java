@@ -41,6 +41,7 @@ import com.android.systemui.res.R;
 import com.android.systemui.Dependency;
 import com.android.systemui.plugins.statusbar.StatusBarStateController;
 import com.android.systemui.tuner.TunerService;
+import com.android.internal.util.evolution.ThemeUtils;
 
 public class ClockStyle extends RelativeLayout implements TunerService.Tunable {
 
@@ -83,6 +84,8 @@ public class ClockStyle extends RelativeLayout implements TunerService.Tunable {
     private final Context mContext;
     private final KeyguardManager mKeyguardManager;
     private final TunerService mTunerService;
+
+    private ThemeUtils mThemeUtils;
 
     private View currentClockView;
     private int mClockStyle;
@@ -163,6 +166,19 @@ public class ClockStyle extends RelativeLayout implements TunerService.Tunable {
         filter.addAction(Intent.ACTION_TIME_CHANGED);
         filter.addAction("com.android.systemui.doze.pulse");
         mContext.registerReceiver(mScreenReceiver, filter, Context.RECEIVER_EXPORTED);
+        mThemeUtils = new ThemeUtils(context);
+    }
+
+    private void updateClockOverlays(boolean enable) {
+        mThemeUtils.setOverlayEnabled(
+                "android.theme.customization.smartspace",
+                enable ? "com.android.systemui.hide.smartspace" : "com.android.systemui",
+                "com.android.systemui");
+        mThemeUtils.setOverlayEnabled(
+                "android.theme.customization.smartspace_offset",
+                enable ? "com.android.systemui.smartspace_offset.smartspace"
+                        : "com.android.systemui",
+                "com.android.systemui");
     }
 
     @Override
@@ -307,6 +323,7 @@ public class ClockStyle extends RelativeLayout implements TunerService.Tunable {
                         Settings.Secure.LOCK_SCREEN_CUSTOM_CLOCK_FACE, 0, UserHandle.USER_CURRENT);
                 }
                 updateClockView();
+                updateClockOverlays(mClockStyle != 0 || isAviumClock(mClockStyle));
                 break;
             case CLOCK_TEXT_COLOR_KEY:
                 mUseAccentColor = TunerService.parseIntegerSwitch(newValue, false);
