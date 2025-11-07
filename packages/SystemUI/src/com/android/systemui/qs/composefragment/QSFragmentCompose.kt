@@ -280,14 +280,6 @@ constructor(
                                     }
                                 }
                                 .graphicsLayer { alpha = viewModel.panelAlpha }
-                                .thenIf(!Flags.notificationShadeBlur()) {
-                                    Modifier.offset {
-                                        IntOffset(
-                                            x = 0,
-                                            y = viewModel.viewTranslationY.fastRoundToInt(),
-                                        )
-                                    }
-                                }
                                 // Disable touches in the whole composable while the mirror is
                                 // showing. While the mirror is showing, an ancestor of the
                                 // ComposeView is made alpha 0, but touches are still being captured
