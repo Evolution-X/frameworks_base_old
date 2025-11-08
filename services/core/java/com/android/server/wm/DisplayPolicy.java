@@ -1456,10 +1456,11 @@ public class DisplayPolicy {
         displayFrames = win.getDisplayFrames(displayFrames);
 
         if (win.mActivityRecord != null 
-            && win.mActivityRecord.shouldForceLongScreen()) {
+            && win.mActivityRecord.shouldForceLongScreen(win.getOwningPackage())) {
             int forceFullCutoutMode = LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES;
             if (win.mAttrs.layoutInDisplayCutoutMode != forceFullCutoutMode) {
                 win.mAttrs.layoutInDisplayCutoutMode = forceFullCutoutMode;
+                Slog.d("ForceFullImpl", "layoutWindowLw: forcing to fullscreen: package=" + win.getOwningPackage());
             }
         }
 

@@ -9749,6 +9749,10 @@ public final class ActivityRecord extends WindowToken {
     }
 
     public boolean shouldForceLongScreen() {
-        return mAtmService.shouldForceLongScreen(packageName);
+        return shouldForceLongScreen(info.packageName);
+    }
+
+    public boolean shouldForceLongScreen(String pkg) {
+        return mAtmService.shouldForceLongScreen(pkg);
     }
 }
